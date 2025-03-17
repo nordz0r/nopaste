@@ -48,14 +48,11 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["tests"]
 addopts = "-v --strict-markers"
 norecursedirs = ["__pycache__", "dist", "build", ".venv"]
-pythonpath = "src"
 
 [tool.coverage.run]
 branch = true
-source = ["src"]
 omit = [
     "tests/*",
     "__pycache__/*"

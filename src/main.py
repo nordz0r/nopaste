@@ -25,7 +25,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
     description="Отображает форму для создания нового nopaste.",
 )
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(request, "index.html", {"request": request})
 
 
 @app.post(
@@ -51,7 +51,7 @@ async def get_paste(request: Request, paste_id: str):
     if not content:
         raise HTTPException(status_code=404, detail="Paste not found")
     return templates.TemplateResponse(
-        "paste.html", {"request": request, "paste_id": paste_id, "content": content}
+        request, "paste.html", {"request": request, "paste_id": paste_id, "content": content}
     )
 
 
@@ -63,7 +63,7 @@ async def get_paste(request: Request, paste_id: str):
 async def list_pastes(request: Request):
     pastes = list(storage.keys())
     return templates.TemplateResponse(
-        "list.html", {"request": request, "pastes": pastes}
+        request, "list.html", {"request": request, "pastes": pastes}
     )
 
 
