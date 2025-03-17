@@ -23,17 +23,10 @@ dev = [
     "mypy",
 ]
 
-[build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.black]
+[tool.ruff]
 line-length = 88
-target-version = ["py311"]
-
-[tool.flake8]
-max-line-length = 88
-exclude = ["__pycache__", "dist", "build", ".venv"]
+lint.select = ["E", "F", "I", "UP"]
+output-format = "gitlab"
 
 [tool.mypy]
 python_version = "3.11"
@@ -45,14 +38,11 @@ minversion = "7.0"
 testpaths = ["tests"]
 addopts = "-v --strict-markers"
 norecursedirs = ["__pycache__", "dist", "build", ".venv"]
-pythonpath = "src"  # Указываем, что модули находятся в src/
-
-[tool.isort]
-profile = "black"
+pythonpath = "src"
 
 [tool.coverage.run]
 branch = true
-source = ["src"]  # Исходный код для coverage находится в src/
+source = ["src"]
 omit = [
     "tests/*",
     "__pycache__/*"
