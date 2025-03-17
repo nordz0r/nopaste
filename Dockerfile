@@ -1,10 +1,11 @@
 # Финальный образ
 FROM gitlab.dellin.ru:5005/docker/origin/python:3.11-slim
-#FROM gitlab.dellin.ru:5005/biaotzovik/devops/python:3.11-slim-pytest
 
-ENV \
-  PIP_INDEX_URL=https://nexus.bia-tech.ru/repository/pypi.org/simple/ \
-  UV_INDEX_URL=https://nexus.bia-tech.ru/repository/pypi.org/simple/
+ENV APP_HOME=/app \
+    USER_NAME=sam \
+    PIP_INDEX_URL=https://nexus.bia-tech.ru/repository/pypi.org/simple/ \
+    UV_INDEX_URL=https://nexus.bia-tech.ru/repository/pypi.org/simple/ \
+    UV_CACHE_DIR=/app/.cache
 
 RUN sed -i 's|^URIs: http://deb.debian.org/debian$|URIs: https://nexus.bia-tech.ru/repository/debian-bookworm|' /etc/apt/sources.list.d/debian.sources && \
     sed -i 's|^URIs: http://deb.debian.org/debian-security$|URIs: https://nexus.bia-tech.ru/repository/debian-bookworm-security|' /etc/apt/sources.list.d/debian.sources && \
@@ -17,17 +18,32 @@ RUN sed -i 's|^URIs: http://deb.debian.org/debian$|URIs: https://nexus.bia-tech.
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+# Устанавливаем зависимости Python от имени root
+RUN python -m pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir uv
 
-# Копируем pyproject.toml и src/
-COPY pyproject.toml .
-COPY src .
+# Создаем группу и пользователя с системными правами
+RUN addgroup --system $USER_NAME && adduser --system --ingroup $USER_NAME $USER_NAME
 
-# Устанавливаем зависимости и сам проект
-RUN uv pip install --system --no-cache-dir .
+# Переключаемся на пользователя sam один раз
+USER $USER_NAME
+
+WORKDIR $APP_HOME
+
+RUN chown -R $USER_NAME:$USER_NAME $APP_HOME
+
+# Копируем pyproject.toml
+COPY --chown=$USER_NAME:$USER_NAME pyproject.toml .
+
+# Копируем исходники
+COPY --chown=$USER_NAME:$USER_NAME src .
+
+# Создаем виртуальную среду в $APP_HOME и устанавливаем зависимости
+RUN uv venv && \
+    uv pip install --no-cache-dir .
 
 # Открываем порт
 EXPOSE 8000
 
-# Команда для запуска приложения
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Команда для запуска приложения с использованием интерпретатора из .venv
+CMD [".venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
