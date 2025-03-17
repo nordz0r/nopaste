@@ -42,18 +42,19 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["src/tests"]  # Исправили путь к тестам
-addopts = "-v --strict-markers"  # Добавили -v для подробного вывода, настройте под себя
-norecursedirs = ["__pycache__", "dist", "build", ".venv"]  # Исключаем ненужные директории
+testpaths = ["tests"]
+addopts = "-v --strict-markers"
+norecursedirs = ["__pycache__", "dist", "build", ".venv"]
+pythonpath = "src"  # Указываем, что модули находятся в src/
 
 [tool.isort]
 profile = "black"
 
 [tool.coverage.run]
 branch = true
-source = ["src/main", "src/config"]  # Уточнили пути к исходному коду
+source = ["src"]  # Исходный код для coverage находится в src/
 omit = [
-    "src/tests/*",
+    "tests/*",
     "__pycache__/*"
 ]
 
