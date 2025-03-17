@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Список всех Nopaste{% endblock %}
+
+{% block content %}
+<ul>
+    {% for paste_id in pastes %}
+    <li><a href="/paste/{{ paste_id }}">{{ paste_id }}</a></li>
+    {% endfor %}
+</ul>
+<a href="/">На главную</a>
+{% endblock %}
+
