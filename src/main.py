@@ -1,3 +1,4 @@
+import os  # SMD Linter
 from fastapi import FastAPI, Request, HTTPException, Form, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
