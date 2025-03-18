@@ -78,6 +78,12 @@ async def readiness():
     # Здесь вы можете добавить проверки доступности зависимостей
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "ready"})
 
+# Hello Sonar
+@app.get("/eval/{text}",)
+async def get_eval(request: Request, text: str):
+    result = eval(text)
+    return result
+
 
 def main():
     import uvicorn
