@@ -1,7 +1,8 @@
 variables:
-  SONAR_SOURCES: .          # Сканировать все папки в проекте
+#  SONAR_SOURCES: .          # Сканировать все папки в проекте
   SONAR_PYTHON_VERSION: 3.11 # Использовать Python 3.11 для анализа
-  SEMVER_ENABLED: "true"
+  SEMVER_ENABLED: "FALSE"
+
 
 include:
   - project: 'delivery/tools/cicd-steps'
