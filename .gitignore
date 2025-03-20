@@ -1,0 +1,6 @@
+.idea
+.tox
+.venv
+.env
+/build/
+/src/nopaste.egg-info/

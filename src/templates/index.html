@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Создать Nopaste{% endblock %}
+
+{% block content %}
+<form action="/paste" method="post">
+    <textarea name="content" rows="10" cols="50"></textarea><br>
+    <input type="submit" value="Сохранить">
+</form>
+<a href="/list">Список всех Nopaste</a>
+{% endblock %}
+
