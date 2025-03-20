@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block title %}Nopaste {{ paste_id }}{% endblock %}
+
+{% block content %}
+<pre>{{ content }}</pre>
+<a href="/">На главную</a> | <a href="/list">Список всех Nopaste</a>
+{% endblock %}
+
