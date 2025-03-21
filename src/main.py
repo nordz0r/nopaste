@@ -8,7 +8,6 @@ from pathlib import Path  # Добавляем импорт pathlib
 app = FastAPI(
     title="Nopaste API",
     description="API для простого nopaste приложения",
-    version="0.1.0",
     debug=settings.DEBUG,  # Используем настройку DEBUG
 )
 

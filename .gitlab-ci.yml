@@ -1,7 +1,7 @@
 variables:
   SONAR_SOURCES: src
   SONAR_PYTHON_VERSION: 3.11
-  SEMVER_ENABLED: "FALSE"
+  SEMVER_ENABLED: "TRUE"
 
 
 include:
