@@ -1,6 +1,6 @@
 variables:
-#  SONAR_SOURCES: .          # Сканировать все папки в проекте
-  SONAR_PYTHON_VERSION: 3.11 # Использовать Python 3.11 для анализа
+  SONAR_SOURCES: src
+  SONAR_PYTHON_VERSION: 3.11
   SEMVER_ENABLED: "FALSE"
 
 

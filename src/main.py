@@ -1,4 +1,3 @@
-import os  # SMD Linter
 from fastapi import FastAPI, Request, HTTPException, Form, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -9,7 +8,7 @@ from pathlib import Path  # Добавляем импорт pathlib
 app = FastAPI(
     title="Nopaste API",
     description="API для простого nopaste приложения",
-    version="1.0.0",
+    version="0.1.0",
     debug=settings.DEBUG,  # Используем настройку DEBUG
 )
 
@@ -52,7 +51,9 @@ async def get_paste(request: Request, paste_id: str):
     if not content:
         raise HTTPException(status_code=404, detail="Paste not found")
     return templates.TemplateResponse(
-        request, "paste.html", {"request": request, "paste_id": paste_id, "content": content}
+        request,
+        "paste.html",
+        {"request": request, "paste_id": paste_id, "content": content},
     )
 
 
@@ -77,12 +78,6 @@ async def liveness():
 async def readiness():
     # Здесь вы можете добавить проверки доступности зависимостей
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "ready"})
-
-# Hello Sonar
-@app.get("/eval/{text}",)
-async def get_eval(request: Request, text: str):
-    result = eval(text)
-    return result
 
 
 def main():
