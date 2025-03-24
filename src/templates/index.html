@@ -3,10 +3,9 @@
 {% block title %}Создать Nopaste{% endblock %}
 
 {% block content %}
+<h2></h2>
 <form action="/paste" method="post">
-    <textarea name="content" rows="10" cols="50"></textarea><br>
+    <textarea name="content" rows="10" placeholder="Вставьте ваш текст здесь..."></textarea><br>
     <input type="submit" value="Сохранить">
 </form>
-<a href="/list">Список всех Nopaste</a>
 {% endblock %}
-

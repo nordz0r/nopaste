@@ -19,14 +19,10 @@ RUN sed -i 's|^URIs: http://deb.debian.org/debian$|URIs: https://nexus.bia-tech.
     rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем зависимости Python от имени root
-RUN python -m pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir uv
+RUN pip install --no-cache-dir uv
 
 # Создаем группу и пользователя с системными правами
 RUN addgroup --system $USER_NAME && adduser --system --ingroup $USER_NAME $USER_NAME
-
-# Переключаемся на пользователя sam один раз
-USER $USER_NAME
 
 WORKDIR $APP_HOME
 
@@ -35,15 +31,17 @@ RUN chown -R $USER_NAME:$USER_NAME $APP_HOME
 # Копируем pyproject.toml
 COPY --chown=$USER_NAME:$USER_NAME pyproject.toml .
 
+# Создаем виртуальную среду в $APP_HOME и устанавливаем зависимости
+RUN uv pip install --no-cache-dir --system .
+
 # Копируем исходники
 COPY --chown=$USER_NAME:$USER_NAME src .
 
-# Создаем виртуальную среду в $APP_HOME и устанавливаем зависимости
-RUN uv venv && \
-    uv pip install --no-cache-dir .
+# Переключаемся на пользователя sam один раз
+USER $USER_NAME
 
 # Открываем порт
 EXPOSE 8000
 
 # Команда для запуска приложения с использованием интерпретатора из .venv
-CMD [".venv/bin/uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

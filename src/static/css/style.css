@@ -1,0 +1,110 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    padding: 10px 20px;
+}
+
+.header-container {
+    // max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo img {
+    height: 40px;
+    width: auto;
+    vertical-align: middle;
+}
+
+.title h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+textarea {
+    width: 100%;
+    max-width: 600px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button, input[type="submit"] {
+    background-color: #333;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover, input[type="submit"]:hover {
+    background-color: #555;
+}
+
+.paste-container {
+    position: relative;
+    width: 100%;
+}
+
+#copy-btn {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #333;
+}
+
+#copy-btn:hover {
+    color: #555;
+}
+
+pre#paste-content {
+    background-color: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 100%; /* На всю ширину */
+    box-sizing: border-box;
+    overflow-x: auto;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul li {
+    padding: 5px 0;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}

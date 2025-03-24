@@ -2,11 +2,32 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Nopaste{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <h1>{% block header %}Nopaste{% endblock %}</h1>
-    {% block content %}{% endblock %}
+    <header>
+        <div class="header-container">
+            <a href="/" class="logo">
+                <img src="/static/images/logo_bia_color_w.svg" alt="NOPASTE Logo">
+            </a>
+            <div class="title">
+                <h1>
+                    {% if paste_id %}
+                        Nopaste {{ paste_id }}
+                    {% else %}
+                        Nopaste
+                    {% endif %}
+                </h1>
+            </div>
+            <nav>
+                <a href="/list">List</a>
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
 </body>
 </html>
-
