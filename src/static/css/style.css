@@ -12,11 +12,12 @@ header {
 }
 
 .header-container {
-    // max-width: 800px;
-    margin: 0 auto;
+    margin: 0 auto; /* Центрирование */
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%; /* Растягивается на всю ширину с учетом padding от body */
+    box-sizing: border-box;
 }
 
 .logo img {
@@ -66,8 +67,10 @@ button:hover, input[type="submit"]:hover {
 }
 
 .paste-container {
+    margin: 0 auto; /* Центрирование как у header-container */
     position: relative;
-    width: 100%;
+    width: 100%; /* Совпадает с header-container */
+    box-sizing: border-box;
 }
 
 #copy-btn {
@@ -90,7 +93,7 @@ pre#paste-content {
     padding: 15px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    width: 100%; /* На всю ширину */
+    width: 100%; /* Занимает всю ширину .paste-container */
     box-sizing: border-box;
     overflow-x: auto;
 }
@@ -105,6 +108,7 @@ ul li {
 }
 
 .container {
-    max-width: 800px;
     margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
 }
