@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException, Form, status
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from uuid import uuid4
 from config import settings  # Импортируем настройки из config.py
 from pathlib import Path  # Добавляем импорт pathlib
@@ -16,7 +17,7 @@ storage = {}
 # Получаем путь к директории с шаблонами
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 @app.get(
     "/",

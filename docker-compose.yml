@@ -1,3 +1,4 @@
+---
 version: '3.8'
 
 services:
@@ -5,17 +6,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-#      target: final
-    container_name: nopaste-container
-#    command: "tail -f /dev/null"
+    container_name: nopaste-app
     ports:
       - '8000:8000'
-
-  nopaste-tests:
-    build:
-      context: .
-      dockerfile: Dockerfile
-#      target: test
-    container_name: nopaste-tests
-    command: sh -c "pip install .[dev] && pytest src/tests -v"
-
+#
+#  nopaste-tests:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+##      target: test
+#    container_name: nopaste-tests
+#    command: sh -c "uv pip install --no-cache-dir --system ".[test] && uv run pytest"
+#
