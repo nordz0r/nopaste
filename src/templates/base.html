@@ -14,11 +14,7 @@
             </a>
             <div class="title">
                 <h1>
-                    {% if request.path == '/' %}
-                        Создать новый Nopaste
-                    {% elif paste_id %}
-                        Nopaste {{ paste_id }}
-                    {% elif request.path == '/list' %}
+                    {% if paste_id %}
                         Nopaste {{ paste_id }}
                     {% else %}
                         Nopaste
@@ -26,8 +22,7 @@
                 </h1>
             </div>
             <nav>
-                <a href="/">Главная</a>
-                <a href="/list">Список всех Nopaste</a>
+                <a href="/list">List</a>
             </nav>
         </div>
     </header>

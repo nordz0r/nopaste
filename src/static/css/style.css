@@ -12,6 +12,7 @@ header {
 }
 
 .header-container {
+    // max-width: 800px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
@@ -19,9 +20,14 @@ header {
 }
 
 .logo img {
-    height: 40px; /* Задаём высоту логотипа */
-    width: auto; /* Ширина подстраивается автоматически */
+    height: 40px;
+    width: auto;
     vertical-align: middle;
+}
+
+.title h1 {
+    margin: 0;
+    font-size: 24px;
 }
 
 nav {
@@ -40,7 +46,7 @@ nav a:hover {
 
 textarea {
     width: 100%;
-    max-width: 100%;
+    max-width: 600px;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -59,12 +65,33 @@ button:hover, input[type="submit"]:hover {
     background-color: #555;
 }
 
-pre {
+.paste-container {
+    position: relative;
+    width: 100%;
+}
+
+#copy-btn {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #333;
+}
+
+#copy-btn:hover {
+    color: #555;
+}
+
+pre#paste-content {
     background-color: #fff;
     padding: 15px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    max-width: 600px;
+    width: 100%; /* На всю ширину */
+    box-sizing: border-box;
     overflow-x: auto;
 }
 
