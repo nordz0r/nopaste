@@ -3,21 +3,27 @@ from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from uuid import uuid4
-from config import settings  # Импортируем настройки из config.py
-from pathlib import Path  # Добавляем импорт pathlib
+from config import settings
+from pathlib import Path
 
 app = FastAPI(
     title="Nopaste API",
     description="API для простого nopaste приложения",
-    debug=settings.DEBUG,  # Используем настройку DEBUG
+    debug=settings.DEBUG,
 )
+
+# Кастомный класс для добавления заголовков кэширования
+class CacheStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "public, max-age=31536000"
+        return response
 
 storage = {}
 
-# Получаем путь к директории с шаблонами
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+app.mount("/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 @app.get(
     "/",
@@ -26,7 +32,6 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 )
 async def read_root(request: Request):
     return templates.TemplateResponse(request, "index.html", {"request": request})
-
 
 @app.post(
     "/paste",
@@ -40,7 +45,6 @@ async def create_paste(content: str = Form(..., description="Содержимо�
     storage[paste_id] = content
     return RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
 
-
 @app.get(
     "/paste/{paste_id}",
     summary="Просмотреть nopaste",
@@ -49,13 +53,13 @@ async def create_paste(content: str = Form(..., description="Содержимо�
 async def get_paste(request: Request, paste_id: str):
     content = storage.get(paste_id)
     if not content:
-        raise HTTPException(status_code=404, detail="Paste not found")
+        # Перенаправление на главную страницу, если paste не найден
+        return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse(
         request,
         "paste.html",
         {"request": request, "paste_id": paste_id, "content": content},
     )
-
 
 @app.get(
     "/list",
@@ -68,23 +72,17 @@ async def list_pastes(request: Request):
         request, "list.html", {"request": request, "pastes": pastes}
     )
 
-
 @app.get("/health/live", tags=["Health"], include_in_schema=False)
 async def liveness():
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "alive"})
 
-
 @app.get("/health/ready", tags=["Health"], include_in_schema=False)
 async def readiness():
-    # Здесь вы можете добавить проверки доступности зависимостей
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "ready"})
-
 
 def main():
     import uvicorn
-
     uvicorn.run("main:app", host="0.0.0.0", port=settings.APP_PORT)
-
 
 if __name__ == "__main__":
     main()

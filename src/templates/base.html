@@ -10,8 +10,21 @@
     <header>
         <div class="header-container">
             <a href="/" class="logo">
-                <img src="https://portal.bia-tech.ru/wp-content/uploads/2024/04/logo_bia_color_w.svg" alt="NOPASTE Logo">
+                <img src="/static/images/logo_bia_color_w.svg" alt="NOPASTE Logo">
             </a>
+            <div class="title">
+                <h1>
+                    {% if request.path == '/' %}
+                        Создать новый Nopaste
+                    {% elif paste_id %}
+                        Nopaste {{ paste_id }}
+                    {% elif request.path == '/list' %}
+                        Nopaste {{ paste_id }}
+                    {% else %}
+                        Nopaste
+                    {% endif %}
+                </h1>
+            </div>
             <nav>
                 <a href="/">Главная</a>
                 <a href="/list">Список всех Nopaste</a>

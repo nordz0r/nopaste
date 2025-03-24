@@ -3,6 +3,20 @@
 {% block title %}Nopaste {{ paste_id }}{% endblock %}
 
 {% block content %}
-<h2>Nopaste {{ paste_id }}</h2>
-<pre>{{ content }}</pre>
+<h2></h2>
+<div class="paste-container">
+    <button id="copy-btn" title="Скопировать в буфер обмена">📋</button>
+    <pre id="paste-content">{{ content }}</pre>
+</div>
+
+<script>
+document.getElementById("copy-btn").addEventListener("click", function() {
+    const content = document.getElementById("paste-content").innerText;
+    navigator.clipboard.writeText(content).then(() => {
+        alert("Скопировано в буфер обмена!");
+    }).catch(err => {
+        alert("Ошибка при копировании: " + err);
+    });
+});
+</script>
 {% endblock %}
