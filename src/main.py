@@ -12,6 +12,7 @@ app = FastAPI(
     debug=settings.DEBUG,
 )
 
+
 # Кастомный класс для добавления заголовков кэширования
 class CacheStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope):
@@ -19,12 +20,16 @@ class CacheStaticFiles(StaticFiles):
         response.headers["Cache-Control"] = "public, max-age=31536000"
         return response
 
+
 storage = {}
 new_pastes = set()  # Временное хранилище для новых paste
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-app.mount("/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static")
+app.mount(
+    "/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static"
+)
+
 
 @app.get(
     "/",
@@ -34,12 +39,15 @@ app.mount("/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name=
 async def read_root(request: Request):
     return templates.TemplateResponse(request, "index.html", {"request": request})
 
+
 @app.post(
     "/paste",
     summary="Создать новый nopaste",
     response_description="Перенаправление на страницу нового nopaste",
 )
-async def create_paste(request: Request, content: str = Form(..., description="Содержимое nopaste")):
+async def create_paste(
+    request: Request, content: str = Form(..., description="Содержимое nopaste")
+):
     if not content:
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     paste_id = str(uuid4())[:8]
@@ -47,6 +55,7 @@ async def create_paste(request: Request, content: str = Form(..., description="�
     new_pastes.add(paste_id)  # Отмечаем paste как новый
     url = f"{request.url.scheme}://{request.url.hostname}:{request.url.port}/paste/{paste_id}"
     return RedirectResponse(url=url, status_code=303)
+
 
 @app.get(
     "/paste/{paste_id}",
@@ -64,8 +73,14 @@ async def get_paste(request: Request, paste_id: str):
     return templates.TemplateResponse(
         request,
         "paste.html",
-        {"request": request, "paste_id": paste_id, "content": content, "is_new": is_new},
+        {
+            "request": request,
+            "paste_id": paste_id,
+            "content": content,
+            "is_new": is_new,
+        },
     )
+
 
 @app.get(
     "/list",
@@ -78,17 +93,22 @@ async def list_pastes(request: Request):
         request, "list.html", {"request": request, "pastes": pastes}
     )
 
+
 @app.get("/health/live", tags=["Health"], include_in_schema=False)
 async def liveness():
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "alive"})
+
 
 @app.get("/health/ready", tags=["Health"], include_in_schema=False)
 async def readiness():
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "ready"})
 
+
 def main():
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=settings.APP_PORT)
+
 
 if __name__ == "__main__":
     main()
