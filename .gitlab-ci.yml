@@ -1,7 +1,7 @@
-#variables:
+variables:
+  SEMVER_ENABLED: "FALSE"
 #  SONAR_SOURCES: src
 #  SONAR_PYTHON_VERSION: 3.11
-#  SEMVER_ENABLED: "TRUE"
 #  GIT_AUTHOR_NAME: "Semantic Release"
 #  GIT_AUTHOR_EMAIL: "semver@bia-tech.ru"
 #  GIT_COMMITTER_NAME: "Semantic Release"
