@@ -3,20 +3,48 @@
 {% block title %}Nopaste {{ paste_id }}{% endblock %}
 
 {% block content %}
-<h2></h2>
-<div class="paste-container">
-    <button id="copy-btn" title="Скопировать в буфер обмена">📋</button>
+<div class="paste-container" data-is-new="{{ is_new|lower }}">
+    <button id="copy-btn" title="Скопировать ссылку">📋</button>
     <pre id="paste-content">{{ content }}</pre>
+    <div id="notification" class="notification"></div>
 </div>
 
 <script>
-document.getElementById("copy-btn").addEventListener("click", function() {
-    const content = document.getElementById("paste-content").innerText;
-    navigator.clipboard.writeText(content).then(() => {
-        alert("Скопировано в буфер обмена!");
+// Функция для показа всплывающей подсказки
+function showNotification(message) {
+    const notification = document.getElementById("notification");
+    notification.textContent = message;
+    notification.style.display = "block";
+    setTimeout(() => {
+        notification.style.opacity = "0";
+        setTimeout(() => {
+            notification.style.display = "none";
+            notification.style.opacity = "1"; // Сбрасываем для следующего раза
+        }, 500); // Время затухания
+    }, 2000); // Время отображения
+}
+
+// Функция для копирования ссылки
+function copyPasteUrl() {
+    const pasteUrl = window.location.href; // Чистый URL без параметров
+    navigator.clipboard.writeText(pasteUrl).then(() => {
+        showNotification("Ссылка скопирована!");
     }).catch(err => {
-        alert("Ошибка при копировании: " + err);
+        showNotification("Ошибка: " + err);
     });
+}
+
+// Автоматическое копирование при загрузке страницы, только если это новый paste
+window.addEventListener("load", function() {
+    const pasteContainer = document.querySelector(".paste-container");
+    if (pasteContainer.dataset.isNew === "true") {
+        copyPasteUrl();
+    }
+});
+
+// Копирование ссылки по нажатию кнопки
+document.getElementById("copy-btn").addEventListener("click", function() {
+    copyPasteUrl();
 });
 </script>
 {% endblock %}

@@ -12,6 +12,7 @@ app = FastAPI(
     debug=settings.DEBUG,
 )
 
+
 # Кастомный класс для добавления заголовков кэширования
 class CacheStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope):
@@ -19,11 +20,16 @@ class CacheStaticFiles(StaticFiles):
         response.headers["Cache-Control"] = "public, max-age=31536000"
         return response
 
+
 storage = {}
+new_pastes = set()  # Временное хранилище для новых paste
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-app.mount("/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static")
+app.mount(
+    "/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static"
+)
+
 
 @app.get(
     "/",
@@ -33,17 +39,29 @@ app.mount("/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name=
 async def read_root(request: Request):
     return templates.TemplateResponse(request, "index.html", {"request": request})
 
+
 @app.post(
     "/paste",
     summary="Создать новый nopaste",
     response_description="Перенаправление на страницу нового nopaste",
 )
-async def create_paste(content: str = Form(..., description="Содержимое nopaste")):
+async def create_paste(
+        request: Request, content: str = Form(..., description="Содержимое nopaste")
+):
     if not content:
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     paste_id = str(uuid4())[:8]
     storage[paste_id] = content
-    return RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
+    new_pastes.add(paste_id)  # Отмечаем paste как новый
+
+    # Формируем URL без явного указания порта, если он None
+    base_url = f"{request.url.scheme}://{request.url.hostname}"
+    if request.url.port and request.url.port not in (80, 443):
+        base_url += f":{request.url.port}"
+    url = f"{base_url}/paste/{paste_id}"
+
+    return RedirectResponse(url=url, status_code=303)
+
 
 @app.get(
     "/paste/{paste_id}",
@@ -53,13 +71,22 @@ async def create_paste(content: str = Form(..., description="Содержимо�
 async def get_paste(request: Request, paste_id: str):
     content = storage.get(paste_id)
     if not content:
-        # Перенаправление на главную страницу, если paste не найден
         return RedirectResponse(url="/", status_code=303)
+    # Проверяем, новый ли paste, и сразу убираем из списка новых
+    is_new = paste_id in new_pastes
+    if is_new:
+        new_pastes.remove(paste_id)
     return templates.TemplateResponse(
         request,
         "paste.html",
-        {"request": request, "paste_id": paste_id, "content": content},
+        {
+            "request": request,
+            "paste_id": paste_id,
+            "content": content,
+            "is_new": is_new,
+        },
     )
+
 
 @app.get(
     "/list",
@@ -72,17 +99,22 @@ async def list_pastes(request: Request):
         request, "list.html", {"request": request, "pastes": pastes}
     )
 
+
 @app.get("/health/live", tags=["Health"], include_in_schema=False)
 async def liveness():
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "alive"})
+
 
 @app.get("/health/ready", tags=["Health"], include_in_schema=False)
 async def readiness():
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "ready"})
 
+
 def main():
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=settings.APP_PORT)
+
 
 if __name__ == "__main__":
     main()
