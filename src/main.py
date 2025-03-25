@@ -46,14 +46,20 @@ async def read_root(request: Request):
     response_description="Перенаправление на страницу нового nopaste",
 )
 async def create_paste(
-    request: Request, content: str = Form(..., description="Содержимое nopaste")
+        request: Request, content: str = Form(..., description="Содержимое nopaste")
 ):
     if not content:
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     paste_id = str(uuid4())[:8]
     storage[paste_id] = content
     new_pastes.add(paste_id)  # Отмечаем paste как новый
-    url = f"{request.url.scheme}://{request.url.hostname}:{request.url.port}/paste/{paste_id}"
+
+    # Формируем URL без явного указания порта, если он None
+    base_url = f"{request.url.scheme}://{request.url.hostname}"
+    if request.url.port and request.url.port not in (80, 443):
+        base_url += f":{request.url.port}"
+    url = f"{base_url}/paste/{paste_id}"
+
     return RedirectResponse(url=url, status_code=303)
 
 
