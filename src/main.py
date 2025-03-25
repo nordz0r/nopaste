@@ -38,12 +38,13 @@ async def read_root(request: Request):
     summary="Создать новый nopaste",
     response_description="Перенаправление на страницу нового nopaste",
 )
-async def create_paste(content: str = Form(..., description="Содержимое nopaste")):
+async def create_paste(request: Request, content: str = Form(..., description="Содержимое nopaste")):
     if not content:
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     paste_id = str(uuid4())[:8]
     storage[paste_id] = content
-    return RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
+    url = f"{request.url.scheme}://{request.url.hostname}:{request.url.port}/paste/{paste_id}"
+    return RedirectResponse(url=url, status_code=303)
 
 @app.get(
     "/paste/{paste_id}",
@@ -53,7 +54,6 @@ async def create_paste(content: str = Form(..., description="Содержимо�
 async def get_paste(request: Request, paste_id: str):
     content = storage.get(paste_id)
     if not content:
-        # Перенаправление на главную страницу, если paste не найден
         return RedirectResponse(url="/", status_code=303)
     return templates.TemplateResponse(
         request,
