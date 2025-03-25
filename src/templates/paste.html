@@ -3,7 +3,7 @@
 {% block title %}Nopaste {{ paste_id }}{% endblock %}
 
 {% block content %}
-<div class="paste-container" data-is-new="{{ is_new }}">
+<div class="paste-container" data-is-new="{{ is_new|lower }}">
     <button id="copy-btn" title="Скопировать ссылку">📋</button>
     <pre id="paste-content">{{ content }}</pre>
     <div id="notification" class="notification"></div>
@@ -26,7 +26,7 @@ function showNotification(message) {
 
 // Функция для копирования ссылки
 function copyPasteUrl() {
-    const pasteUrl = window.location.href; // Копируем текущий URL
+    const pasteUrl = window.location.href; // Чистый URL без параметров
     navigator.clipboard.writeText(pasteUrl).then(() => {
         showNotification("Ссылка скопирована!");
     }).catch(err => {
@@ -34,7 +34,7 @@ function copyPasteUrl() {
     });
 }
 
-// Автоматическое копирование при загрузке страницы
+// Автоматическое копирование при загрузке страницы, только если это новый paste
 window.addEventListener("load", function() {
     const pasteContainer = document.querySelector(".paste-container");
     if (pasteContainer.dataset.isNew === "true") {
@@ -44,7 +44,7 @@ window.addEventListener("load", function() {
 
 // Копирование ссылки по нажатию кнопки
 document.getElementById("copy-btn").addEventListener("click", function() {
-    copyPasteUrl(); // Повторно вызываем ту же функцию
+    copyPasteUrl();
 });
 </script>
 {% endblock %}

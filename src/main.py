@@ -20,6 +20,7 @@ class CacheStaticFiles(StaticFiles):
         return response
 
 storage = {}
+new_pastes = set()  # Временное хранилище для новых paste
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -43,6 +44,7 @@ async def create_paste(request: Request, content: str = Form(..., description="�
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     paste_id = str(uuid4())[:8]
     storage[paste_id] = content
+    new_pastes.add(paste_id)  # Отмечаем paste как новый
     url = f"{request.url.scheme}://{request.url.hostname}:{request.url.port}/paste/{paste_id}"
     return RedirectResponse(url=url, status_code=303)
 
@@ -55,10 +57,14 @@ async def get_paste(request: Request, paste_id: str):
     content = storage.get(paste_id)
     if not content:
         return RedirectResponse(url="/", status_code=303)
+    # Проверяем, новый ли paste, и сразу убираем из списка новых
+    is_new = paste_id in new_pastes
+    if is_new:
+        new_pastes.remove(paste_id)
     return templates.TemplateResponse(
         request,
         "paste.html",
-        {"request": request, "paste_id": paste_id, "content": content},
+        {"request": request, "paste_id": paste_id, "content": content, "is_new": is_new},
     )
 
 @app.get(
