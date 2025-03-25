@@ -47,10 +47,10 @@ nav a:hover {
 
 textarea {
     width: 100%;
-    max-width: 600px;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    box-sizing: border-box;
 }
 
 button, input[type="submit"] {
@@ -67,16 +67,17 @@ button:hover, input[type="submit"]:hover {
 }
 
 .paste-container {
+    width: 100%;
+    min-height: 100px;
     margin: 0 auto; /* Центрирование как у header-container */
     position: relative;
-    width: 100%; /* Совпадает с header-container */
     box-sizing: border-box;
 }
 
 #copy-btn {
     position: absolute;
     top: -40px;
-    right: 0;
+    left: 0;
     background: none;
     border: none;
     font-size: 20px;
