@@ -16,7 +16,8 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "pytest>=8.3.5"
+    "pytest>=8.3.5",
+    "pytest-cov>=6.0.0",
 ]
 
 [tool.ruff]
@@ -52,16 +53,19 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "7.0"
+pythonpath = ["./src"]
+testpaths = ["tests"]
 addopts = "-v --strict-markers"
 norecursedirs = ["__pycache__", "dist", "build", ".venv"]
 
 [tool.coverage.run]
+source = ["."]
 branch = true
 omit = [
     "tests/*",
-    "__pycache__/*"
+    "__pycache__/*",
+    "*/.venv/*",
 ]
 
 [tool.coverage.report]
 show_missing = true
-skip_covered = true
