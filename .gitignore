@@ -4,3 +4,4 @@
 .env
 /build/
 /src/nopaste.egg-info/
+*.pyc
