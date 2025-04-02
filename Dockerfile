@@ -5,7 +5,9 @@ ENV APP_HOME=/app \
     USER_NAME=sam \
     PIP_INDEX_URL=https://nexus.bia-tech.ru/repository/pypi.org/simple/ \
     UV_INDEX_URL=https://nexus.bia-tech.ru/repository/pypi.org/simple/ \
-    UV_CACHE_DIR=/app/.cache
+    UV_CACHE_DIR=/app/.cache \
+    UV_NO_CACHE=1 \
+    UV_SYSTEM_PYTHON=1
 
 RUN sed -i 's|^URIs: http://deb.debian.org/debian$|URIs: https://nexus.bia-tech.ru/repository/debian-bookworm|' /etc/apt/sources.list.d/debian.sources && \
     sed -i 's|^URIs: http://deb.debian.org/debian-security$|URIs: https://nexus.bia-tech.ru/repository/debian-bookworm-security|' /etc/apt/sources.list.d/debian.sources && \
@@ -32,7 +34,7 @@ RUN chown -R $USER_NAME:$USER_NAME $APP_HOME
 COPY --chown=$USER_NAME:$USER_NAME pyproject.toml .
 
 # Создаем виртуальную среду в $APP_HOME и устанавливаем зависимости
-RUN uv pip install --no-cache-dir --system .
+RUN uv pip install -r pyproject.toml
 
 # Копируем исходники
 COPY --chown=$USER_NAME:$USER_NAME src .
