@@ -1,5 +1,5 @@
-variables:
-  SEMVER_ENABLED: "FALSE"
+#variables:
+#  SEMVER_ENABLED: "FALSE"
 #  SONAR_SOURCES: src
 #  SONAR_PYTHON_VERSION: 3.11
 #  GIT_AUTHOR_NAME: "Semantic Release"
@@ -12,6 +12,6 @@ variables:
 
 include:
   - project: 'delivery/tools/cicd-steps'
-    ref: 'sam-cicd'
+    ref: 'main'
     file:
       - cicd-python-sam-01.yaml
