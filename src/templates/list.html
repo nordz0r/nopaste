@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Список всех Nopaste{% endblock %}
+{% block title %}My Nopaste list{% endblock %}
 
 {% block content %}
-<h2>Список всех Nopaste</h2>
+<h2>My Nopaste list</h2>
 <ul>
     {% for paste_id in pastes %}
     <li><a href="/paste/{{ paste_id }}">{{ paste_id }}</a></li>
