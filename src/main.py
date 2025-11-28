@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from uuid import uuid4
 from config import settings
 from pathlib import Path
+import json
 
 app = FastAPI(
     title="Nopaste API",
@@ -54,13 +55,34 @@ async def create_paste(
     storage[paste_id] = content
     new_pastes.add(paste_id)  # Отмечаем paste как новый
 
+    # Получаем текущие пасты пользователя из куки
+    user_pastes_cookie = request.cookies.get("user_pastes")
+    if user_pastes_cookie:
+        try:
+            user_pastes = json.loads(user_pastes_cookie)
+        except json.JSONDecodeError:
+            user_pastes = []
+    else:
+        user_pastes = []
+
+    # Добавляем новый paste_id
+    user_pastes.append(paste_id)
+
     # Формируем URL без явного указания порта, если он None
     base_url = f"{request.url.scheme}://{request.url.hostname}"
     if request.url.port and request.url.port not in (80, 443):
         base_url += f":{request.url.port}"
     url = f"{base_url}/paste/{paste_id}"
 
-    return RedirectResponse(url=url, status_code=303)
+    # Создаем ответ с редиректом и устанавливаем куки
+    response = RedirectResponse(url=url, status_code=303)
+    response.set_cookie(
+        key="user_pastes",
+        value=json.dumps(user_pastes),
+        httponly=True,
+        max_age=31536000  # 1 год
+    )
+    return response
 
 
 @app.get(
@@ -90,11 +112,19 @@ async def get_paste(request: Request, paste_id: str):
 
 @app.get(
     "/list",
-    summary="Список всех nopaste",
-    description="Отображает список всех созданных nopaste.",
+    summary="Список моих nopaste",
+    description="Отображает список nopaste пользователя.",
 )
 async def list_pastes(request: Request):
-    pastes = list(storage.keys())
+    user_pastes_cookie = request.cookies.get("user_pastes")
+    if user_pastes_cookie:
+        try:
+            user_pastes = json.loads(user_pastes_cookie)
+        except json.JSONDecodeError:
+            user_pastes = []
+    else:
+        user_pastes = []
+    pastes = [p for p in storage.keys() if p in user_pastes]
     return templates.TemplateResponse(
         request, "list.html", {"request": request, "pastes": pastes}
     )
