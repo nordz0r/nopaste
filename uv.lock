@@ -22,16 +22,15 @@ wheels = [
 
 [[package]]
 name = "anyio"
-version = "4.11.0"
+version = "4.12.0"
 source = { registry = "https://nexus.bia-tech.ru/repository/pypi.org/simple/" }
 dependencies = [
     { name = "idna" },
-    { name = "sniffio" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/anyio/4.11.0/anyio-4.11.0.tar.gz", hash = "sha256:82a8d0b81e318cc5ce71a5f1f8b5c4e63619620b63141ef8c995fa0db95a57c4" }
+sdist = { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/anyio/4.12.0/anyio-4.12.0.tar.gz", hash = "sha256:73c693b567b0c55130c104d0b43a9baf3aa6a31fc6110116509f27bf75e21ec0" }
 wheels = [
-    { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/anyio/4.11.0/anyio-4.11.0-py3-none-any.whl", hash = "sha256:0287e96f4d26d4149305414d4e3bc32f0dcd0862365a4bddea19d7a1ec38c4fc" },
+    { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/anyio/4.12.0/anyio-4.12.0-py3-none-any.whl", hash = "sha256:dad2376a628f98eeca4881fc56cd06affd18f659b17a747d3ff0307ced94b1bb" },
 ]
 
 [[package]]
@@ -88,7 +87,7 @@ wheels = [
 
 [[package]]
 name = "fastapi"
-version = "0.122.0"
+version = "0.123.0"
 source = { registry = "https://nexus.bia-tech.ru/repository/pypi.org/simple/" }
 dependencies = [
     { name = "annotated-doc" },
@@ -96,9 +95,9 @@ dependencies = [
     { name = "starlette" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/fastapi/0.122.0/fastapi-0.122.0.tar.gz", hash = "sha256:cd9b5352031f93773228af8b4c443eedc2ac2aa74b27780387b853c3726fb94b" }
+sdist = { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/fastapi/0.123.0/fastapi-0.123.0.tar.gz", hash = "sha256:1410678b3c44418245eec85088b15140d894074b86e66061017e2b492c09b138" }
 wheels = [
-    { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/fastapi/0.122.0/fastapi-0.122.0-py3-none-any.whl", hash = "sha256:a456e8915dfc6c8914a50d9651133bd47ec96d331c5b44600baa635538a30d67" },
+    { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/fastapi/0.123.0/fastapi-0.123.0-py3-none-any.whl", hash = "sha256:cb56e69e874afa897bd3416c8a3dbfdae1730d0a308d4c63303f3f4b44136ae4" },
 ]
 
 [[package]]
@@ -367,15 +366,6 @@ wheels = [
     { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/pyyaml/6.0.3/pyyaml-6.0.3-cp312-cp312-win32.whl", hash = "sha256:96b533f0e99f6579b3d4d4995707cf36df9100d67e0c8303a0c55b27b5f99bc5" },
     { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/pyyaml/6.0.3/pyyaml-6.0.3-cp312-cp312-win_amd64.whl", hash = "sha256:5fcd34e47f6e0b794d17de1b4ff496c00986e1c83f7ab2fb8fcfe9616ff7477b" },
     { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/pyyaml/6.0.3/pyyaml-6.0.3-cp312-cp312-win_arm64.whl", hash = "sha256:64386e5e707d03a7e172c0701abfb7e10f0fb753ee1d773128192742712a98fd" },
-]
-
-[[package]]
-name = "sniffio"
-version = "1.3.1"
-source = { registry = "https://nexus.bia-tech.ru/repository/pypi.org/simple/" }
-sdist = { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/sniffio/1.3.1/sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc" }
-wheels = [
-    { url = "https://nexus.bia-tech.ru/repository/pypi.org/packages/sniffio/1.3.1/sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2" },
 ]
 
 [[package]]

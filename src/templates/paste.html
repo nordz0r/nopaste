@@ -24,23 +24,41 @@ function showNotification(message) {
     }, 2000); // Время отображения
 }
 
-// Функция для копирования ссылки
+// Функция для копирования ссылки с fallback
 function copyPasteUrl() {
     const pasteUrl = window.location.href; // Чистый URL без параметров
-    navigator.clipboard.writeText(pasteUrl).then(() => {
-        showNotification("Ссылка скопирована!");
-    }).catch(err => {
-        showNotification("Ошибка: " + err);
-    });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(pasteUrl).then(() => {
+            showNotification("Ссылка скопирована!");
+        }).catch(() => {
+            fallbackCopy(pasteUrl);
+        });
+    } else {
+        fallbackCopy(pasteUrl);
+    }
 }
 
-// Автоматическое копирование при загрузке страницы, только если это новый paste
-window.addEventListener("load", function() {
-    const pasteContainer = document.querySelector(".paste-container");
-    if (pasteContainer.dataset.isNew === "true") {
-        copyPasteUrl();
+// Фолбэк копирования через execCommand
+function fallbackCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    // Не отображать элемент
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        const successful = document.execCommand("copy");
+        if (successful) {
+            showNotification("Ссылка скопирована!");
+        } else {
+            showNotification("Не удалось скопировать ссылку");
+        }
+    } catch (err) {
+        showNotification("Ошибка копирования: " + err);
     }
-});
+    document.body.removeChild(textarea);
+}
 
 // Копирование ссылки по нажатию кнопки
 document.getElementById("copy-btn").addEventListener("click", function() {
