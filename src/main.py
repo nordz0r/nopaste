@@ -100,8 +100,7 @@ async def get_paste(request: Request, paste_id: str):
         return RedirectResponse(url="/", status_code=303)
     content = paste["content"]
     created_at = paste["created_at"]
-    is_new = (datetime.utcnow() - created_at) < timedelta(minutes=5)
-    logging.info(f"Retrieved paste: id={paste_id}, is_new={is_new}")
+    logging.info(f"Retrieved paste: id={paste_id}")
     return templates.TemplateResponse(
         request,
         "paste.html",
@@ -109,7 +108,6 @@ async def get_paste(request: Request, paste_id: str):
             "request": request,
             "paste_id": paste_id,
             "content": content,
-            "is_new": is_new,
         },
     )
 

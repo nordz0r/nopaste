@@ -3,7 +3,7 @@
 {% block title %}Nopaste {{ paste_id }}{% endblock %}
 
 {% block content %}
-<div class="paste-container" data-is-new="{{ is_new|lower }}">
+<div class="paste-container">
     <button id="copy-btn" title="Скопировать ссылку">📋</button>
     <pre id="paste-content">{{ content }}</pre>
     <div id="notification" class="notification"></div>
