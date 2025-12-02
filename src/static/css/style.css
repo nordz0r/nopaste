@@ -114,19 +114,25 @@ ul li {
     box-sizing: border-box;
 }
 
+.form-container {
+    position: relative;
+}
+
 /* Стили для всплывающей подсказки */
 .notification {
-    position: absolute;
-    top: -80px; /* Выше кнопки копирования */
+    position: fixed;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     background-color: #333;
     color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-size: 16px;
     opacity: 1;
     transition: opacity 0.5s ease;
     display: none; /* Скрыто по умолчанию */
-    z-index: 10; /* На случай перекрытия */
+    z-index: 1000; /* Высокий z-index для отображения поверх всего */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    text-align: center;
 }

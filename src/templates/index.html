@@ -4,11 +4,13 @@
 
 {% block content %}
 <h2></h2>
-<form action="/paste" method="post" id="nopaste-form">
-    <textarea name="content" rows="10" placeholder="Вставьте ваш текст здесь..."></textarea><br>
-    <input type="submit" value="Сохранить">
-</form>
-<div id="notification" class="notification"></div>
+<div class="form-container">
+    <form action="/paste" method="post" id="nopaste-form">
+        <textarea name="content" rows="10" placeholder="Вставьте ваш текст здесь..."></textarea><br>
+        <input type="submit" value="Сохранить">
+    </form>
+    <div id="notification" class="notification"></div>
+</div>
 
 <script>
 // Функция для показа всплывающей подсказки
