@@ -3,7 +3,8 @@ FROM gitlab.dellin.ru:5005/soclist/sam/python/sam-python/python:3.12-alpine
 
 # Переменные по умолчанию
 ENV APP_HOME=/app \
-    USER_NAME=sam
+    USER_NAME=sam \
+    PATH="/app/.venv/bin:$PATH"
 
 # Копируем файл с зависимостями
 COPY --chown=$USER_NAME:$USER_NAME pyproject.toml uv.lock ./

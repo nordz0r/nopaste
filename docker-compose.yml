@@ -1,20 +1,8 @@
 ---
-version: '3.8'
-
 services:
   nopaste-app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: nopaste-app
-    ports:
-      - '8000:8000'
-#
-#  nopaste-tests:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-##      target: test
-#    container_name: nopaste-tests
-#    command: sh -c "uv pip install --no-cache-dir --system ".[test] && uv run pytest"
-#
+    network_mode: host

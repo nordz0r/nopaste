@@ -70,3 +70,6 @@ omit = [
 
 [tool.coverage.report]
 show_missing = true
+
+[tool.setuptools.packages.find]
+exclude = ["static", "templates"]
