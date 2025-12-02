@@ -6,6 +6,10 @@ from uuid import uuid4
 from config import settings
 from pathlib import Path
 import json
+from database import Database
+import logging
+logging.basicConfig(level=logging.INFO)
+from datetime import datetime, timedelta
 
 app = FastAPI(
     title="Nopaste API",
@@ -22,8 +26,8 @@ class CacheStaticFiles(StaticFiles):
         return response
 
 
-storage = {}
-new_pastes = set()  # Временное хранилище для новых paste
+db = Database(settings.DATABASE_PATH)
+db.init_db()
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -52,8 +56,8 @@ async def create_paste(
     if not content:
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     paste_id = str(uuid4())[:8]
-    storage[paste_id] = content
-    new_pastes.add(paste_id)  # Отмечаем paste как новый
+    db.save_paste(paste_id, content)
+    logging.info(f"Created paste: id={paste_id}, length={len(content)}")
 
     # Получаем текущие пасты пользователя из куки
     user_pastes_cookie = request.cookies.get("user_pastes")
@@ -91,13 +95,13 @@ async def create_paste(
     description="Отображает содержимое указанного nopaste.",
 )
 async def get_paste(request: Request, paste_id: str):
-    content = storage.get(paste_id)
-    if not content:
+    paste = db.get_paste(paste_id)
+    if not paste:
         return RedirectResponse(url="/", status_code=303)
-    # Проверяем, новый ли paste, и сразу убираем из списка новых
-    is_new = paste_id in new_pastes
-    if is_new:
-        new_pastes.remove(paste_id)
+    content = paste["content"]
+    created_at = paste["created_at"]
+    is_new = (datetime.utcnow() - created_at) < timedelta(minutes=5)
+    logging.info(f"Retrieved paste: id={paste_id}, is_new={is_new}")
     return templates.TemplateResponse(
         request,
         "paste.html",
@@ -124,7 +128,8 @@ async def list_pastes(request: Request):
             user_pastes = []
     else:
         user_pastes = []
-    pastes = [p for p in storage.keys() if p in user_pastes]
+    paste_records = db.get_user_pastes(user_pastes)
+    pastes = [p["id"] for p in paste_records]
     return templates.TemplateResponse(
         request, "list.html", {"request": request, "pastes": pastes}
     )
