@@ -4,65 +4,8 @@
 
 {% block content %}
 <div class="paste-container">
-    <button id="copy-btn" title="Скопировать ссылку">📋</button>
     <pre id="paste-content">{{ content }}</pre>
     <div id="notification" class="notification"></div>
 </div>
 
-<script>
-// Функция для показа всплывающей подсказки
-function showNotification(message) {
-    const notification = document.getElementById("notification");
-    notification.textContent = message;
-    notification.style.display = "block";
-    setTimeout(() => {
-        notification.style.opacity = "0";
-        setTimeout(() => {
-            notification.style.display = "none";
-            notification.style.opacity = "1"; // Сбрасываем для следующего раза
-        }, 500); // Время затухания
-    }, 2000); // Время отображения
-}
-
-// Функция для копирования ссылки с fallback
-function copyPasteUrl() {
-    const pasteUrl = window.location.href; // Чистый URL без параметров
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(pasteUrl).then(() => {
-            showNotification("Ссылка скопирована!");
-        }).catch(() => {
-            fallbackCopy(pasteUrl);
-        });
-    } else {
-        fallbackCopy(pasteUrl);
-    }
-}
-
-// Фолбэк копирования через execCommand
-function fallbackCopy(text) {
-    const textarea = document.createElement("textarea");
-    textarea.value = text;
-    // Не отображать элемент
-    textarea.style.position = "fixed";
-    textarea.style.opacity = "0";
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-        const successful = document.execCommand("copy");
-        if (successful) {
-            showNotification("Ссылка скопирована!");
-        } else {
-            showNotification("Не удалось скопировать ссылку");
-        }
-    } catch (err) {
-        showNotification("Ошибка копирования: " + err);
-    }
-    document.body.removeChild(textarea);
-}
-
-// Копирование ссылки по нажатию кнопки
-document.getElementById("copy-btn").addEventListener("click", function() {
-    copyPasteUrl();
-});
-</script>
 {% endblock %}

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <link rel="icon" href="/static/images/logo.png" type="image/png">
+    <link rel="icon" href="/static/images/favicon.png" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Nopaste{% endblock %}</title>
@@ -10,9 +10,16 @@
 <body>
     <header>
         <div class="header-container">
-            <a href="/" class="logo">
-                <img src="/static/images/logo_bia_color_w.svg" alt="NOPASTE Logo">
-            </a>
+            <div class="left">
+                <a href="/" class="logo">
+                    <img src="/static/images/logo_bia_color_w.svg" alt="NOPASTE Logo">
+                </a>
+                {% if paste_id %}
+                <button id="copy-btn" title="Скопировать ссылку">
+                    <img src="/static/images/favicon.png" alt="Копировать" style="width: 20px; height: 20px;">
+                </button>
+                {% endif %}
+            </div>
             <div class="title">
                 <h1>
                     {% if paste_id %}
@@ -30,5 +37,63 @@
     <div class="container">
         {% block content %}{% endblock %}
     </div>
+    {% if paste_id %}
+    <script>
+    // Функция для показа всплывающей подсказки
+    function showNotification(message) {
+        const notification = document.getElementById("notification");
+        notification.textContent = message;
+        notification.style.display = "block";
+        setTimeout(() => {
+            notification.style.opacity = "0";
+            setTimeout(() => {
+                notification.style.display = "none";
+                notification.style.opacity = "1"; // Сбрасываем для следующего раза
+            }, 500); // Время затухания
+        }, 2000); // Время отображения
+    }
+
+    // Функция для копирования ссылки с fallback
+    function copyPasteUrl() {
+        const pasteUrl = window.location.href; // Чистый URL без параметров
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(pasteUrl).then(() => {
+                showNotification("Ссылка скопирована!");
+            }).catch(() => {
+                fallbackCopy(pasteUrl);
+            });
+        } else {
+            fallbackCopy(pasteUrl);
+        }
+    }
+
+    // Фолбэк копирования через execCommand
+    function fallbackCopy(text) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        // Не отображать элемент
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            const successful = document.execCommand("copy");
+            if (successful) {
+                showNotification("Ссылка скопирована!");
+            } else {
+                showNotification("Не удалось скопировать ссылку");
+            }
+        } catch (err) {
+            showNotification("Ошибка копирования: " + err);
+        }
+        document.body.removeChild(textarea);
+    }
+
+    // Копирование ссылки по нажатию кнопки
+    document.getElementById("copy-btn").addEventListener("click", function() {
+        copyPasteUrl();
+    });
+    </script>
+    {% endif %}
 </body>
 </html>
