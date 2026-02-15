@@ -4,5 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nopaste-app
+    container_name: nopaste
     network_mode: host
+    restart: unless-stopped
