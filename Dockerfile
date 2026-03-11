@@ -1,11 +1,18 @@
+# ---- builder ----
+FROM python:3.12-alpine AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:0.7 /uv /bin/uv
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project --compile-bytecode
+
+# ---- runtime ----
 FROM python:3.12-alpine
 
-ENV APP_HOME=/app \
-    USER_NAME=sam \
-    UV_CACHE_DIR=/app/.cache \
-    UV_NO_CACHE=1 \
-    UV_SYSTEM_PYTHON=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     TZ=Europe/Moscow \
     LANG=C.UTF-8 \
@@ -13,26 +20,17 @@ ENV APP_HOME=/app \
     PATH="/app/.venv/bin:$PATH"
 
 RUN apk upgrade --clean-protected --no-cache && \
-    apk add --no-cache \
-      dumb-init \
-      tzdata && \
-    pip install --upgrade pip uv --root-user-action=ignore && \
-    addgroup -g 1001 -S $USER_NAME && \
-    adduser -u 1001 -S -G $USER_NAME $USER_NAME && \
-    mkdir -p $APP_HOME && \
-    chown $USER_NAME:$USER_NAME $APP_HOME && \
-    rm -rf /var/cache/apk/*
+    apk add --no-cache dumb-init tzdata && \
+    addgroup -g 1001 -S sam && \
+    adduser -u 1001 -S -G sam sam && \
+    mkdir -p /app && chown sam:sam /app
 
-WORKDIR $APP_HOME
+WORKDIR /app
 
-COPY --chown=$USER_NAME:$USER_NAME pyproject.toml uv.lock ./
+COPY --from=builder --chown=sam:sam /app/.venv .venv
+COPY --chown=sam:sam ./src ./
 
-RUN uv sync --frozen
-
-COPY --chown=$USER_NAME:$USER_NAME ./src ./
-
-USER $USER_NAME
-
+USER sam
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
