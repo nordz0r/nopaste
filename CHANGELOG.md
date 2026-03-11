@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/nordz0r/nopaste/compare/v0.6.0...v0.7.0) (2026-03-11)
+
+
+### Features
+
+* redesign UI to minimalist utility style ([68db407](https://github.com/nordz0r/nopaste/commit/68db407a169c43851b7f8f55da34ef9bcae74c68))
+* warm minimalist redesign with SVG icons and goldfinch animation ([4b1b71e](https://github.com/nordz0r/nopaste/commit/4b1b71e232096072ffc76b4aeebdbdeccea0543a))
+
 ## [0.6.0](https://github.com/nordz0r/nopaste/compare/v0.5.0...v0.6.0) (2026-03-11)
 
 
