@@ -1,3 +1,7 @@
+import base64
+import binascii
+import hashlib
+import hmac
 import json
 import logging
 from datetime import datetime
@@ -46,8 +50,12 @@ def load_user_pastes(request: Request) -> list[str]:
     if not user_pastes_cookie:
         return []
 
+    payload = verify_signed_cookie_value(user_pastes_cookie)
+    if payload is None:
+        return []
+
     try:
-        loaded_ids = json.loads(user_pastes_cookie)
+        loaded_ids = json.loads(payload)
     except json.JSONDecodeError:
         return []
 
@@ -70,6 +78,54 @@ def order_recent_pastes(paste_ids: list[str]) -> list[str]:
         seen.add(paste_id)
 
     return ordered_ids
+
+
+def encode_cookie_payload(payload: str) -> str:
+    encoded = base64.urlsafe_b64encode(payload.encode("utf-8")).decode("ascii")
+    return encoded.rstrip("=")
+
+
+def decode_cookie_payload(payload: str) -> str | None:
+    padding = "=" * (-len(payload) % 4)
+    try:
+        raw_payload = base64.urlsafe_b64decode(f"{payload}{padding}")
+        return raw_payload.decode("utf-8")
+    except (ValueError, UnicodeDecodeError, binascii.Error):
+        return None
+
+
+def sign_cookie_value(value: str) -> str:
+    return hmac.new(
+        settings.COOKIE_SIGNING_SECRET.encode("utf-8"),
+        value.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def dump_user_pastes_cookie(paste_ids: list[str]) -> str:
+    normalized_ids = normalize_recent_pastes(paste_ids)
+    payload = json.dumps(normalized_ids, separators=(",", ":"))
+    encoded_payload = encode_cookie_payload(payload)
+    signature = sign_cookie_value(encoded_payload)
+    return f"{encoded_payload}.{signature}"
+
+
+def verify_signed_cookie_value(cookie_value: str) -> str | None:
+    encoded_payload, separator, signature = cookie_value.partition(".")
+    if not separator or not signature:
+        return None
+
+    expected_signature = sign_cookie_value(encoded_payload)
+    if not hmac.compare_digest(signature, expected_signature):
+        return None
+
+    return decode_cookie_payload(encoded_payload)
+
+
+def normalize_recent_pastes(paste_ids: list[str]) -> list[str]:
+    recent_ids = order_recent_pastes(paste_ids)
+    capped_recent_ids = recent_ids[: settings.MAX_RECENT_PASTES]
+    return list(reversed(capped_recent_ids))
 
 
 def normalize_newlines(content: str) -> str:
@@ -128,7 +184,13 @@ async def create_paste(
 ):
     if not content.strip():
         raise HTTPException(status_code=400, detail="Content cannot be empty")
-    paste_id = str(uuid4())[:8]
+    if len(content.encode("utf-8")) > settings.MAX_PASTE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=(f"Content exceeds the {settings.MAX_PASTE_SIZE_BYTES} byte limit"),
+        )
+
+    paste_id = uuid4().hex
     db.save_paste(paste_id, content)
     logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
 
@@ -140,10 +202,11 @@ async def create_paste(
     response = RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
     response.set_cookie(
         key="user_pastes",
-        value=json.dumps(user_pastes),
+        value=dump_user_pastes_cookie(user_pastes),
         httponly=True,
         max_age=31536000,  # 1 год
         samesite="lax",
+        secure=request.url.scheme == "https",
     )
     return response
 
