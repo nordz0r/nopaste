@@ -150,6 +150,26 @@ def test_list_pastes_deduplicates_signed_cookie_entries(client):
     assert response.text.count(f"/paste/{paste_id}") == 1
 
 
+def test_list_pastes_accepts_legacy_unsigned_cookie(client):
+    first_response = client.post(
+        "/paste", data={"content": "legacy first"}, follow_redirects=False
+    )
+    second_response = client.post(
+        "/paste", data={"content": "legacy second"}, follow_redirects=False
+    )
+
+    first_id = first_response.headers["location"].split("/")[-1]
+    second_id = second_response.headers["location"].split("/")[-1]
+    client.cookies.set("user_pastes", main_module.json.dumps([first_id, second_id]))
+
+    response = client.get("/list")
+
+    assert response.status_code == 200
+    assert second_id in response.text
+    assert first_id in response.text
+    assert response.text.index(second_id) < response.text.index(first_id)
+
+
 def test_list_pastes_caps_recent_history(client, monkeypatch):
     monkeypatch.setattr(main_module.settings, "MAX_RECENT_PASTES", 2)
 

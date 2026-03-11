@@ -50,10 +50,16 @@ def load_user_pastes(request: Request) -> list[str]:
     if not user_pastes_cookie:
         return []
 
-    payload = verify_signed_cookie_value(user_pastes_cookie)
-    if payload is None:
-        return []
+    if "." in user_pastes_cookie:
+        payload = verify_signed_cookie_value(user_pastes_cookie)
+        if payload is None:
+            return []
+        return parse_user_paste_ids(payload)
 
+    return parse_user_paste_ids(user_pastes_cookie)
+
+
+def parse_user_paste_ids(payload: str) -> list[str]:
     try:
         loaded_ids = json.loads(payload)
     except json.JSONDecodeError:

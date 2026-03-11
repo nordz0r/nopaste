@@ -8,7 +8,7 @@
     <div class="section-header">
         <div>
             <h2>Nopaste {{ paste_id }}</h2>
-            <p class="section-subtitle">Use the line numbers to link directly to a specific line.</p>
+            <p class="section-subtitle">Use line numbers for a single link or manual ranges like #L12-L20.</p>
         </div>
     </div>
 </section>
@@ -40,19 +40,37 @@
 </div>
 
 <script>
+function getSelectedRangeFromHash() {
+    const match = window.location.hash.match(/^#L(\d+)(?:-L?(\d+))?$/);
+    if (!match) {
+        return null;
+    }
+
+    const firstLine = Number(match[1]);
+    const secondLine = Number(match[2] || match[1]);
+
+    return {
+        start: Math.min(firstLine, secondLine),
+        end: Math.max(firstLine, secondLine),
+    };
+}
+
 function updateActiveLine() {
     document.querySelectorAll(".paste-line.is-active").forEach((line) => {
         line.classList.remove("is-active");
     });
 
-    if (!window.location.hash.match(/^#L\d+$/)) {
+    const selectedRange = getSelectedRangeFromHash();
+    if (!selectedRange) {
         return;
     }
 
-    const activeLine = document.querySelector(window.location.hash);
-    if (activeLine) {
-        activeLine.classList.add("is-active");
-    }
+    document.querySelectorAll(".paste-line").forEach((line) => {
+        const lineNumber = Number(line.dataset.lineAnchor.replace("L", ""));
+        if (lineNumber >= selectedRange.start && lineNumber <= selectedRange.end) {
+            line.classList.add("is-active");
+        }
+    });
 }
 
 function copyLineUrl(anchor, lineNumber) {
