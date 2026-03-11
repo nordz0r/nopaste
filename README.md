@@ -1,185 +1,125 @@
-# 🚀 Nopaste
+# Nopaste
 
-[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Простое FastAPI-приложение для хранения и публикации текстовых сниппетов. Данные сохраняются в SQLite, интерфейс собран на Jinja2-шаблонах, а контейнерный деплой ориентирован на Docker Hub и GitHub Actions.
 
-Простое и быстрое веб-приложение для создания и обмена текстовыми сниппетами (пастами). Без рекламы, без регистрации — просто создайте пасту и поделитесь ссылкой.
+## Возможности
 
-## ✨ Особенности
+- создание паст и переход по короткой ссылке
+- список пользовательских паст через cookie
+- health-check endpoints: `/health/live` и `/health/ready`
+- локальный запуск через `uv` или Docker Compose
+- автоматическая публикация образа `nordz0r/nopaste`
 
-- 🎯 **Простота использования**: Создайте пасту за секунды
-- 🔒 **Приватность**: Ваши пасты хранятся анонимно
-- 📱 **Адаптивный дизайн**: Работает на всех устройствах
-- 🗂️ **Управление пастами**: Просматривайте список своих пастов
-- ⚡ **Быстрая производительность**: На базе FastAPI
-- 🐳 **Docker поддержка**: Легкий запуск в контейнерах
+## Структура проекта
 
-## 📋 Содержание
-
-- [Установка](#-установка)
-- [Запуск](#-запуск)
-- [Использование](#-использование)
-- [API](#-api)
-- [Конфигурация](#-конфигурация)
-- [Разработка](#-разработка)
-- [Вклад](#-вклад)
-- [Лицензия](#-лицензия)
-
-## 🛠️ Установка
-
-### Требования
-
-- Python 3.12+
-- uv (рекомендуется для управления зависимостями)
-
-### Локальная установка
-
-1. Клонируйте репозиторий:
-```bash
-git clone https://github.com/your-username/nopaste.git
-cd nopaste
+```text
+src/
+  main.py          FastAPI routes and app setup
+  database.py      SQLite access layer
+  config.py        environment-based settings
+  templates/       Jinja2 templates
+  static/          CSS and images
+tests/             pytest suite
+.github/workflows/ Docker Hub and release workflows
 ```
 
-2. Установите зависимости:
-```bash
-uv sync
-```
+В корне также лежат `docker-compose.yml`, `docker-compose.local.yml`, `release-please-config.json`, `.release-please-manifest.json`, `CHANGELOG.md` и `version.txt`.
 
-3. Запустите приложение:
-```bash
-uv run python src/main.py
-```
+## Локальная разработка
 
-Приложение будет доступно по адресу: http://localhost:8000
+Требования:
 
-### Docker
+- Python 3.12
+- `uv`
+- Docker и Docker Compose, если нужен контейнерный запуск
+
+Установка зависимостей:
 
 ```bash
-docker-compose up --build
+uv sync --extra test
 ```
 
-## 🚀 Запуск
-
-### Режим разработки
+Запуск dev-сервера:
 
 ```bash
 uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### Production
+Приложение будет доступно на `http://localhost:8000`.
 
-```bash
-uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
-```
-
-## 📖 Использование
-
-### Веб-интерфейс
-
-1. Откройте главную страницу
-2. Введите текст в форму
-3. Нажмите "Создать пасту"
-4. Скопируйте и поделитесь ссылкой
-
-### Просмотр пастов
-
-- Перейдите по ссылке вида `/paste/{id}`
-- Просмотрите список своих пастов на `/list`
-
-## 🔌 API
-
-### Endpoints
-
-#### `GET /`
-Главная страница с формой создания пасты.
-
-#### `POST /paste`
-Создает новую пасту.
-
-**Параметры:**
-- `content` (string): Содержимое пасты
-
-**Ответ:** Редирект на страницу созданной пасты
-
-#### `GET /paste/{paste_id}`
-Возвращает содержимое пасты.
-
-**Параметры:**
-- `paste_id` (string): ID пасты
-
-#### `GET /list`
-Показывает список пастов пользователя (из cookies).
-
-#### `GET /health/live`
-Проверка живости приложения.
-
-#### `GET /health/ready`
-Проверка готовности приложения.
-
-### Пример использования API
-
-```bash
-# Создание пасты через curl
-curl -X POST http://localhost:8000/paste \
-  -d "content=Hello, World!"
-```
-
-## ⚙️ Конфигурация
-
-Настройки в `src/config.py`:
-
-- `DEBUG`: Режим отладки
-- `DATABASE_PATH`: Путь к базе данных SQLite
-- `APP_PORT`: Порт приложения
-
-## 🧪 Разработка
-
-### Тестирование
+Проверки:
 
 ```bash
 uv run pytest
+uv run ruff check src tests
+uv run ruff format src tests
 ```
 
-### Линтинг
+## Docker Compose
+
+Основной compose-файл тянет опубликованный образ `main` из Docker Hub:
 
 ```bash
-uv run ruff check src/
+docker compose up -d
 ```
 
-### Форматирование
+Локальная сборка из текущего исходного кода выполняется отдельным файлом:
 
 ```bash
-uv run ruff format src/
+docker compose -f docker-compose.local.yml up --build -d
 ```
 
-## 🤝 Вклад
+Helper-скрипты поддерживают выбор compose-файла через `COMPOSE_FILE`:
 
-Мы приветствуем вклад в проект! Пожалуйста:
+```bash
+COMPOSE_FILE=docker-compose.local.yml ./restart.sh nopaste-app
+COMPOSE_FILE=docker-compose.local.yml ./logs.sh nopaste-app
+COMPOSE_FILE=docker-compose.local.yml ./stop.sh nopaste-app
+```
 
-1. Форкните репозиторий
-2. Создайте ветку для вашей фичи (`git checkout -b feature/AmazingFeature`)
-3. Зафиксируйте изменения (`git commit -m 'Add some AmazingFeature'`)
-4. Отправьте в ветку (`git push origin feature/AmazingFeature`)
-5. Откройте Pull Request
+По умолчанию данные SQLite сохраняются в volume `/data/pastes.db` внутри контейнера.
 
-### Руководство по контрибьюторам
+## Конфигурация
 
-- Следуйте принципам SOLID и DRY
-- Пишите тесты для нового кода
-- Обновляйте документацию
-- Используйте понятные commit messages
+Настройки читаются из переменных окружения и `.env`:
 
-## 📄 Лицензия
+- `APP_PORT` — внешний порт приложения, по умолчанию `8000`
+- `DEBUG` — включает debug-режим FastAPI
+- `DATABASE_PATH` — путь к SQLite-базе
 
-Этот проект лицензирован под MIT License - см. файл [LICENSE](LICENSE) для деталей.
+## CI/CD и релизы
 
-## 🙏 Благодарности
+GitHub Actions выполняют две независимые задачи:
 
-- [FastAPI](https://fastapi.tiangolo.com/) - современный веб-фреймворк
-- [Jinja2](https://jinja.palletsprojects.com/) - шаблонизатор
-- [uv](https://github.com/astral-sh/uv) - быстрый менеджер пакетов
+- `.github/workflows/dockerhub.yml` публикует образ `nordz0r/nopaste` для ветки `main`
+- `.github/workflows/release-please.yml` запускает semver-релизы через `googleapis/release-please-action`
 
----
+`release-please` использует:
 
-⭐ Если проект вам понравился, поставьте звезду!
+- `release-please-config.json`
+- `.release-please-manifest.json`
+- `version.txt`
+- `pyproject.toml`
+- `CHANGELOG.md`
+
+Для корректной работы релизов нужны secrets:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+- `RELEASE_PLEASE_TOKEN` — рекомендуется для создания release PR и GitHub Release
+
+## Коммиты
+
+Репозиторий использует conventional commits. Для релизов это важно:
+
+- `feat:` повышает minor-версию
+- `fix:` повышает patch-версию
+- breaking changes повышают major-версию
+
+Примеры:
+
+```text
+feat: add paste expiration
+fix: validate empty paste content
+ci: update Docker publish workflow
+```
