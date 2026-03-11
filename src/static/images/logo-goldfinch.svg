@@ -1,8 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-    <path class="gf-wing gf-wing-left" d="M12.8 11.2C10.4 12 7.2 14.4 6 16.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path class="gf-wing gf-wing-right" d="M19.2 11.2C21.6 12 24.8 14.4 26 16.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path class="gf-body" d="M16 4C19.2 4 21.6 6.4 22.4 8.8C23.2 11.2 23.2 13.6 22.4 16C21.6 18.4 19.2 20.8 16 22.4C12.8 20.8 10.4 18.4 9.6 16C8.8 13.6 8.8 11.2 9.6 8.8C10.4 6.4 12.8 4 16 4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path class="gf-head" d="M16 4.8C14.8 4.8 13.6 5.6 12.8 6.4M16 4.8C17.2 4.8 18.4 5.6 19.2 6.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <path class="gf-beak" d="M16 8.8L15.2 11.2L16 12.8L16.8 11.2L16 8.8Z" fill="currentColor"/>
-    <path class="gf-tail" d="M16 22.4V28M14.4 22.4L13.6 26.4M17.6 22.4L18.4 26.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <g class="gf-wing gf-wing-left">
+        <path class="gf-feather-dark" d="M14.2 16.1C11.5 14.3 8.8 11.3 6.3 7.4C5.7 10.7 6.4 13.4 8.2 15.8C6 15.9 4.1 16.7 2.4 18.2C5.4 19.1 8.0 19.2 10.3 18.7C8.9 20.3 8.1 22.1 7.8 24.3C10.5 23.4 12.7 21.4 14.5 18.2L14.2 16.1Z" fill="#20190d"/>
+        <path class="gf-feather-gold" d="M12.6 15.2C10.5 13.8 8.7 11.9 7.1 9.4C7.4 11.7 8.3 13.6 9.8 15.3Z" fill="#d7b64d"/>
+        <path class="gf-feather-gold" d="M11.8 17.8C10.0 18.2 8.5 19.1 7.4 20.7C9.2 20.5 10.8 19.5 12.1 17.9Z" fill="#d7b64d"/>
+    </g>
+    <g class="gf-wing gf-wing-right">
+        <path class="gf-feather-dark" d="M17.8 16.1C20.5 14.3 23.2 11.3 25.7 7.4C26.3 10.7 25.6 13.4 23.8 15.8C26 15.9 27.9 16.7 29.6 18.2C26.6 19.1 24 19.2 21.7 18.7C23.1 20.3 23.9 22.1 24.2 24.3C21.5 23.4 19.3 21.4 17.5 18.2L17.8 16.1Z" fill="#20190d"/>
+        <path class="gf-feather-gold" d="M19.4 15.2C21.5 13.8 23.3 11.9 24.9 9.4C24.6 11.7 23.7 13.6 22.2 15.3Z" fill="#d7b64d"/>
+        <path class="gf-feather-gold" d="M20.2 17.8C22.0 18.2 23.5 19.1 24.6 20.7C22.8 20.5 21.2 19.5 19.9 17.9Z" fill="#d7b64d"/>
+    </g>
+    <path class="gf-body" d="M16.1 11.4C18.2 11.4 20 12.6 20.9 14.4C21.9 16.5 21.6 19.1 20 21.2C18.9 22.7 17.4 23.8 15.7 24.7C13.8 23.7 12.4 22.4 11.5 20.6C10.4 18.4 10.6 15.8 12.3 13.7C13.2 12.2 14.6 11.4 16.1 11.4Z" fill="#2c2518"/>
+    <path class="gf-belly" d="M15.6 14.3C17 14.5 18.2 15.2 18.9 16.2C18.5 18.8 17.4 20.9 15.7 22.6C14.1 21.8 13 20.4 12.4 18.5C12.7 16.3 13.8 14.9 15.6 14.3Z" fill="#d7b64d"/>
+    <path class="gf-tail" d="M14.8 24.4L12.7 28.1L15.3 26.8L16.2 29.2L17.3 26.8L19.9 28.1L17.8 24.4Z" fill="#2c2518"/>
+    <path class="gf-head" d="M20.7 9.7C22.4 9.7 23.8 11 24.1 12.5C24.4 14.1 23.4 15.6 21.8 16C20.2 16.4 18.6 15.7 17.9 14.3C17.5 13.4 17.5 12.4 17.9 11.5C18.5 10.4 19.5 9.7 20.7 9.7Z" fill="#2c2518"/>
+    <path class="gf-mask" d="M18.3 10.9C18.9 10.1 19.9 9.7 21.1 9.7C22.6 9.7 23.8 10.8 24.1 12.2C23.1 12.5 22.3 12.9 21.6 13.6C20.7 14.3 19.8 14.6 18.7 14.6C18.2 14 17.9 13.2 17.9 12.5C17.9 11.9 18 11.3 18.3 10.9Z" fill="#c95f47"/>
+    <circle class="gf-eye" cx="21.2" cy="12.3" r="0.85" fill="#fffdf9"/>
+    <path class="gf-beak" d="M24.1 12.6L28.3 11.8L24.8 14.9L23.5 14.1Z" fill="#eadfca"/>
 </svg>

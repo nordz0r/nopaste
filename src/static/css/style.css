@@ -58,7 +58,7 @@ a {
 }
 
 .header-container {
-    max-width: 100%;
+    max-width: 920px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -92,15 +92,46 @@ a {
 /* Inline SVG Logo Animations */
 .brand-logo-svg {
     display: block;
-    width: 24px;
+    width: 30px;
     height: auto;
     filter: none;
     opacity: 0;
     animation: gf-appear 0.4s ease-out 0.2s forwards;
 }
 
-.gf-wing {
-    transform-origin: center top;
+.brand-logo-svg .gf-feather-dark {
+    fill: #20190d;
+}
+
+.brand-logo-svg .gf-feather-gold,
+.brand-logo-svg .gf-belly {
+    fill: #d7b64d;
+}
+
+.brand-logo-svg .gf-body,
+.brand-logo-svg .gf-head,
+.brand-logo-svg .gf-tail {
+    fill: #2c2518;
+}
+
+.brand-logo-svg .gf-mask {
+    fill: #c95f47;
+}
+
+.brand-logo-svg .gf-beak {
+    fill: #eadfca;
+}
+
+.brand-logo-svg .gf-eye {
+    fill: #fffdf9;
+}
+
+.brand-logo-svg .gf-wing-left {
+    transform-origin: 14.8px 16px;
+}
+
+.brand-logo-svg .gf-wing-right {
+    transform-origin: 17.2px 16px;
 }
 
 /* Initial load animation: appear + 2 short flaps */
@@ -111,38 +142,62 @@ a {
 }
 
 .brand-logo-svg .gf-wing-left {
-    animation: gf-flap-left 0.6s ease-in-out 0.6s 2;
+    animation: gf-flap-left 0.72s ease-out 0.45s 1 both;
 }
 
 .brand-logo-svg .gf-wing-right {
-    animation: gf-flap-right 0.6s ease-in-out 0.6s 2;
+    animation: gf-flap-right 0.72s ease-out 0.45s 1 both;
 }
 
 @keyframes gf-flap-left {
-    0%, 100% {
-        transform: rotate(0deg) skew(0deg);
+    0% {
+        transform: rotate(22deg) translateX(1px) translateY(1px);
     }
-    50% {
-        transform: rotate(-10deg) skew(5deg);
+    58% {
+        transform: rotate(-14deg) translateX(-1px) translateY(-1px);
+    }
+    100% {
+        transform: rotate(0deg) skew(0deg);
     }
 }
 
 @keyframes gf-flap-right {
-    0%, 100% {
-        transform: rotate(0deg) skew(0deg);
+    0% {
+        transform: rotate(-22deg) translateX(-1px) translateY(1px);
     }
-    50% {
-        transform: rotate(10deg) skew(-5deg);
+    58% {
+        transform: rotate(14deg) translateX(1px) translateY(-1px);
+    }
+    100% {
+        transform: rotate(0deg) skew(0deg);
     }
 }
 
 /* Active animation: 1 single quick flap */
 .brand-lockup:active .brand-logo-svg .gf-wing-left {
-    animation: gf-flap-left 0.15s ease-in-out 1;
+    animation: gf-tap-left 0.24s ease-out 1;
 }
 
 .brand-lockup:active .brand-logo-svg .gf-wing-right {
-    animation: gf-flap-right 0.15s ease-in-out 1;
+    animation: gf-tap-right 0.24s ease-out 1;
+}
+
+@keyframes gf-tap-left {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    50% {
+        transform: rotate(-12deg);
+    }
+}
+
+@keyframes gf-tap-right {
+    0%, 100% {
+        transform: rotate(0deg);
+    }
+    50% {
+        transform: rotate(12deg);
+    }
 }
 
 .brand-copy {
@@ -499,6 +554,7 @@ input[type="submit"]:focus,
 @media (max-width: 900px) {
     .header-container {
         padding: 8px 16px;
+        max-width: 880px;
     }
     .header-container,
     .section-header,
@@ -516,6 +572,7 @@ input[type="submit"]:focus,
 @media (max-width: 640px) {
     .header-container {
         padding: 8px 12px;
+        max-width: 100%;
     }
 
     .container {
