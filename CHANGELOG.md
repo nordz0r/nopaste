@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/nordz0r/nopaste/compare/v0.7.0...v0.7.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* fix Dockerfile WORKDIR ordering so venv is created in /app ([eb4aaa0](https://github.com/nordz0r/nopaste/commit/eb4aaa060ff95c516a02119ef1cfaba6974c2058))
+
 ## [0.7.0](https://github.com/nordz0r/nopaste/compare/v0.6.0...v0.7.0) (2026-03-11)
 
 
