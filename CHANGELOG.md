@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/nordz0r/nopaste/compare/v0.4.0...v0.5.0) (2026-03-11)
+
+
+### Features
+
+* add copyable line links ([ae59e12](https://github.com/nordz0r/nopaste/commit/ae59e12956d7eb2e58a54fa9b36ebfd651328c5e))
+* refresh nopaste interface ([78f51f0](https://github.com/nordz0r/nopaste/commit/78f51f0e4339f24612d83a07fade858eecc21310))
+
 ## [0.4.0](https://github.com/nordz0r/nopaste/compare/v0.3.1...v0.4.0) (2026-03-11)
 
 
