@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.3](https://github.com/nordz0r/nopaste/compare/v0.7.2...v0.7.3) (2026-03-11)
+
+
+### Bug Fixes
+
+* move copy link icon beside brand ([2ca41d7](https://github.com/nordz0r/nopaste/commit/2ca41d761d33974bc1c39a33d8bc711c38d6d619))
+
 ## [0.7.2](https://github.com/nordz0r/nopaste/compare/v0.7.1...v0.7.2) (2026-03-11)
 
 
