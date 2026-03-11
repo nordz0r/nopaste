@@ -12,7 +12,6 @@ ENV APP_HOME=/app \
     LC_ALL=C.UTF-8 \
     PATH="/app/.venv/bin:$PATH"
 
-# Обновляем репозитории apk на Nexus и устанавливаем системные зависимости
 RUN apk upgrade --clean-protected --no-cache && \
     apk add --no-cache \
       dumb-init \
@@ -24,24 +23,17 @@ RUN apk upgrade --clean-protected --no-cache && \
     chown $USER_NAME:$USER_NAME $APP_HOME && \
     rm -rf /var/cache/apk/*
 
-# Копируем файл с зависимостями
-COPY --chown=$USER_NAME:$USER_NAME pyproject.toml uv.lock ./
-
-# Создаем виртуальную среду в $APP_HOME и устанавливаем зависимости
-RUN uv sync --frozen
-
-# Копируем исходники
-COPY --chown=$USER_NAME:$USER_NAME ./src $APP_HOME
-
-# Устанавливаем рабочую директорию
 WORKDIR $APP_HOME
 
-# Переключаемся на непривилегированного пользователя
+COPY --chown=$USER_NAME:$USER_NAME pyproject.toml uv.lock ./
+
+RUN uv sync --frozen
+
+COPY --chown=$USER_NAME:$USER_NAME ./src ./
+
 USER $USER_NAME
 
-# Открываем порт
 EXPOSE 8000
 
-# Базовая команда
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
