@@ -4,9 +4,31 @@ on:
   push:
     branches:
       - main
+    paths:
+      - ".dockerignore"
+      - ".github/workflows/dockerhub.yml"
+      - ".github/workflows/release-please.yml"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "docker-compose.local.yml"
+      - "pyproject.toml"
+      - "src/**"
+      - "tests/**"
+      - "uv.lock"
   pull_request:
     branches:
       - main
+    paths:
+      - ".dockerignore"
+      - ".github/workflows/dockerhub.yml"
+      - ".github/workflows/release-please.yml"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "docker-compose.local.yml"
+      - "pyproject.toml"
+      - "src/**"
+      - "tests/**"
+      - "uv.lock"
   workflow_dispatch:
 
 concurrency:

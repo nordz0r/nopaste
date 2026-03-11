@@ -4,6 +4,20 @@ on:
   push:
     branches:
       - main
+    paths:
+      - ".github/workflows/dockerhub.yml"
+      - ".github/workflows/release-please.yml"
+      - ".release-please-manifest.json"
+      - "CHANGELOG.md"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "docker-compose.local.yml"
+      - "pyproject.toml"
+      - "release-please-config.json"
+      - "src/**"
+      - "tests/**"
+      - "uv.lock"
+      - "version.txt"
   workflow_dispatch:
 
 permissions:
