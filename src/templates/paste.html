@@ -3,6 +3,15 @@
 {% block title %}Nopaste {{ paste_id }}{% endblock %}
 
 {% block content %}
+<section class="page-section">
+    <span class="eyebrow">Paste view</span>
+    <div class="section-header">
+        <div>
+            <h2>Nopaste {{ paste_id }}</h2>
+            <p class="section-subtitle">Use the line numbers to link directly to a specific line.</p>
+        </div>
+    </div>
+</section>
 <div class="paste-container">
     <div class="paste-toolbar">
         <span class="paste-toolbar-item">{{ lines|length }} lines</span>

@@ -8,54 +8,50 @@
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-    <header>
+    <div class="page-backdrop"></div>
+    <header class="site-header">
         <div class="header-container">
-            <div class="left">
-                <a href="/" class="logo">
-                    <img src="/static/images/goldfinches_logo.png" alt="NOPASTE Logo">
-                </a>
+            <a href="/" class="brand-lockup" aria-label="Nopaste home">
+                <span class="brand-badge">
+                    <img src="/static/images/goldfinches_logo.png" alt="Goldfinch logo" class="brand-logo">
+                </span>
+                <span class="brand-copy">
+                    <span class="brand-kicker">Private-looking text sharing</span>
+                    <span class="brand-wordmark">Nopaste</span>
+                </span>
+            </a>
+            <div class="header-actions">
                 {% if paste_id %}
-                <button id="copy-btn" title="Скопировать ссылку">
-                    <img src="/static/images/favicon.png" alt="Копировать" style="width: 20px; height: 20px;">
-                </button>
+                <button id="copy-btn" class="secondary-button" title="Скопировать ссылку">Copy Link</button>
                 {% endif %}
+                <nav class="nav-links" aria-label="Primary">
+                    <a href="/list" class="nav-link">My List</a>
+                </nav>
             </div>
-            <div class="title">
-                <h1>
-                    {% if paste_id %}
-                        Nopaste {{ paste_id }}
-                    {% else %}
-                        Nopaste
-                    {% endif %}
-                </h1>
-            </div>
-            <nav>
-                <a href="/list">My List</a>
-            </nav>
         </div>
     </header>
-    <div class="container">
+    <main class="container">
         {% block content %}{% endblock %}
-    </div>
-    {% if paste_id %}
+    </main>
     <script>
-    // Функция для показа всплывающей подсказки
     function showNotification(message) {
         const notification = document.getElementById("notification");
+        if (!notification) {
+            return;
+        }
         notification.textContent = message;
         notification.style.display = "block";
         setTimeout(() => {
             notification.style.opacity = "0";
             setTimeout(() => {
                 notification.style.display = "none";
-                notification.style.opacity = "1"; // Сбрасываем для следующего раза
-            }, 500); // Время затухания
-        }, 2000); // Время отображения
+                notification.style.opacity = "1";
+            }, 500);
+        }, 2000);
     }
 
-    // Функция для копирования ссылки с fallback
     function copyPasteUrl() {
-        const pasteUrl = window.location.href; // Чистый URL без параметров
+        const pasteUrl = window.location.href;
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(pasteUrl).then(() => {
                 showNotification("Ссылка скопирована!");
@@ -67,11 +63,9 @@
         }
     }
 
-    // Фолбэк копирования через execCommand
     function fallbackCopy(text) {
         const textarea = document.createElement("textarea");
         textarea.value = text;
-        // Не отображать элемент
         textarea.style.position = "fixed";
         textarea.style.opacity = "0";
         document.body.appendChild(textarea);
@@ -89,11 +83,12 @@
         document.body.removeChild(textarea);
     }
 
-    // Копирование ссылки по нажатию кнопки
-    document.getElementById("copy-btn").addEventListener("click", function() {
-        copyPasteUrl();
-    });
+    const copyButton = document.getElementById("copy-btn");
+    if (copyButton) {
+        copyButton.addEventListener("click", function() {
+            copyPasteUrl();
+        });
+    }
     </script>
-    {% endif %}
 </body>
 </html>

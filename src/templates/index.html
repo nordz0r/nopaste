@@ -3,35 +3,42 @@
 {% block title %}Create Nopaste{% endblock %}
 
 {% block content %}
-<h2></h2>
-<div class="form-container">
-    <form action="/paste" method="post" id="nopaste-form">
-        <textarea name="content" rows="10" placeholder="Вставьте ваш текст здесь..."></textarea><br>
-        <input type="submit" value="Сохранить">
-    </form>
-    <div id="notification" class="notification"></div>
-</div>
+<section class="hero-layout">
+    <div class="hero-copy">
+        <span class="eyebrow">Quiet drop zone for text</span>
+        <h1>Share text fast, then link straight to the exact line.</h1>
+        <p class="hero-text">
+            Nopaste keeps the flow simple: paste, save, send a clean link, and revisit your recent snippets from this browser.
+        </p>
+        <div class="hero-notes">
+            <span class="hero-note">Line anchors for reviews</span>
+            <span class="hero-note">Recent history in this browser</span>
+            <span class="hero-note">Lightweight plain-text sharing</span>
+        </div>
+    </div>
+    <div class="editor-card">
+        <div class="editor-card-header">
+            <h2>Create a new paste</h2>
+            <p>Plain text only. Empty submissions are blocked before sending.</p>
+        </div>
+        <div class="form-container">
+            <form action="/paste" method="post" id="nopaste-form">
+                <label class="sr-only" for="paste-content-input">Paste content</label>
+                <textarea id="paste-content-input" name="content" rows="14" placeholder="Paste your text, logs, notes, or config here..."></textarea>
+                <div class="form-actions">
+                    <input type="submit" value="Save Paste">
+                </div>
+            </form>
+            <div id="notification" class="notification"></div>
+        </div>
+    </div>
+</section>
 
 <script>
-// Функция для показа всплывающей подсказки
-function showNotification(message) {
-    const notification = document.getElementById("notification");
-    notification.textContent = message;
-    notification.style.display = "block";
-    setTimeout(() => {
-        notification.style.opacity = "0";
-        setTimeout(() => {
-            notification.style.display = "none";
-            notification.style.opacity = "1"; // Сбрасываем для следующего раза
-        }, 500); // Время затухания
-    }, 2000); // Время отображения
-}
-
-// Обработчик отправки формы
 document.getElementById("nopaste-form").addEventListener("submit", function(event) {
     const textarea = document.querySelector("textarea[name='content']");
     if (!textarea.value.trim()) {
-        event.preventDefault(); // Предотвращаем отправку формы
+        event.preventDefault();
         showNotification("Нельзя сохранить пустой nopaste!");
     }
 });
