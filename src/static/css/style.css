@@ -46,8 +46,7 @@ a {
 .hero-note,
 .brand-kicker,
 .eyebrow,
-.editor-card-header,
-.brand-logo {
+.editor-card-header {
     display: none !important;
 }
 
@@ -65,6 +64,14 @@ a {
     justify-content: space-between;
     gap: 16px;
     padding: 10px 20px;
+}
+
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 .brand-lockup {
@@ -89,115 +96,11 @@ a {
     color: var(--ink);
 }
 
-/* Inline SVG Logo Animations */
-.brand-logo-svg {
+.brand-logo {
     display: block;
-    width: 30px;
+    width: 34px;
     height: auto;
-    filter: none;
-    opacity: 0;
-    animation: gf-appear 0.4s ease-out 0.2s forwards;
-}
-
-.brand-logo-svg .gf-feather-dark {
-    fill: #20190d;
-}
-
-.brand-logo-svg .gf-feather-gold,
-.brand-logo-svg .gf-belly {
-    fill: #d7b64d;
-}
-
-.brand-logo-svg .gf-body,
-.brand-logo-svg .gf-head,
-.brand-logo-svg .gf-tail {
-    fill: #2c2518;
-}
-
-.brand-logo-svg .gf-mask {
-    fill: #c95f47;
-}
-
-.brand-logo-svg .gf-beak {
-    fill: #eadfca;
-}
-
-.brand-logo-svg .gf-eye {
-    fill: #fffdf9;
-}
-
-.brand-logo-svg .gf-wing-left {
-    transform-origin: 14.8px 16px;
-}
-
-.brand-logo-svg .gf-wing-right {
-    transform-origin: 17.2px 16px;
-}
-
-/* Initial load animation: appear + 2 short flaps */
-@keyframes gf-appear {
-    to {
-        opacity: 1;
-    }
-}
-
-.brand-logo-svg .gf-wing-left {
-    animation: gf-flap-left 0.72s ease-out 0.45s 1 both;
-}
-
-.brand-logo-svg .gf-wing-right {
-    animation: gf-flap-right 0.72s ease-out 0.45s 1 both;
-}
-
-@keyframes gf-flap-left {
-    0% {
-        transform: rotate(22deg) translateX(1px) translateY(1px);
-    }
-    58% {
-        transform: rotate(-14deg) translateX(-1px) translateY(-1px);
-    }
-    100% {
-        transform: rotate(0deg) skew(0deg);
-    }
-}
-
-@keyframes gf-flap-right {
-    0% {
-        transform: rotate(-22deg) translateX(-1px) translateY(1px);
-    }
-    58% {
-        transform: rotate(14deg) translateX(1px) translateY(-1px);
-    }
-    100% {
-        transform: rotate(0deg) skew(0deg);
-    }
-}
-
-/* Active animation: 1 single quick flap */
-.brand-lockup:active .brand-logo-svg .gf-wing-left {
-    animation: gf-tap-left 0.24s ease-out 1;
-}
-
-.brand-lockup:active .brand-logo-svg .gf-wing-right {
-    animation: gf-tap-right 0.24s ease-out 1;
-}
-
-@keyframes gf-tap-left {
-    0%, 100% {
-        transform: rotate(0deg);
-    }
-    50% {
-        transform: rotate(-12deg);
-    }
-}
-
-@keyframes gf-tap-right {
-    0%, 100% {
-        transform: rotate(0deg);
-    }
-    50% {
-        transform: rotate(12deg);
-    }
+    object-fit: contain;
 }
 
 .brand-copy {
@@ -225,6 +128,10 @@ h3 {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.header-actions {
+    flex-shrink: 0;
 }
 
 .nav-link,
@@ -577,6 +484,10 @@ input[type="submit"]:focus,
 
     .container {
         padding: 16px 12px 32px;
+    }
+
+    .header-brand {
+        gap: 8px;
     }
 
     .brand-lockup {
