@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/nordz0r/nopaste/compare/v0.5.0...v0.6.0) (2026-03-11)
+
+
+### Features
+
+* support legacy history cookies and line ranges ([b14a374](https://github.com/nordz0r/nopaste/commit/b14a37445ab0f873226efed41ab1e3be4780014d))
+
 ## [0.5.0](https://github.com/nordz0r/nopaste/compare/v0.4.0...v0.5.0) (2026-03-11)
 
 
