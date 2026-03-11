@@ -1,15 +1,17 @@
 ---
 services:
   nopaste-app:
-    image: nordz0r/nopaste:main
-    pull_policy: always
-    container_name: nopaste
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nopaste:local
+    container_name: nopaste-local
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
       DATABASE_PATH: /data/pastes.db
     volumes:
-      - nopaste_data:/data
+      - nopaste_local_data:/data
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health/ready"]
       interval: 30s
@@ -19,4 +21,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  nopaste_data:
+  nopaste_local_data:
