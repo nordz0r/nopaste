@@ -1,22 +1,22 @@
 :root {
-    --bg: #ffffff;
-    --bg-soft: #fafafa;
+    --bg: #fffdf9;
+    --bg-soft: #fcf6e9;
     --panel: #ffffff;
-    --panel-strong: #fafafa;
-    --panel-muted: #f5f5f5;
-    --line: #e2e2e2;
-    --line-strong: #cccccc;
-    --text: #1a1a1a;
-    --text-muted: #737373;
-    --accent: #333333;
-    --accent-strong: #000000;
-    --accent-soft: #f4f4f4;
-    --ink: #000000;
-    --alert: #fffae6;
+    --panel-strong: #f9f5ed;
+    --panel-muted: #f3ede1;
+    --line: #e3decc;
+    --line-strong: #cac5ac;
+    --text: #332d1e;
+    --text-muted: #8c8166;
+    --accent: #d8c9a3;
+    --accent-strong: #b5a47c;
+    --accent-soft: #f3ede1;
+    --ink: #1a1505;
+    --alert: #fff9e6;
     --shadow: none;
-    --radius-lg: 6px;
-    --radius-md: 4px;
-    --radius-sm: 2px;
+    --radius-lg: 3px;
+    --radius-md: 2px;
+    --radius-sm: 1px;
 }
 
 * {
@@ -46,37 +46,34 @@ a {
 .hero-note,
 .brand-kicker,
 .eyebrow,
-.editor-card-header {
+.editor-card-header,
+.brand-logo {
     display: none !important;
 }
 
 .site-header {
     padding: 0;
-    background: var(--bg);
+    background: var(--panel);
     border-bottom: 1px solid var(--line);
 }
 
 .header-container {
-    max-width: 960px;
+    max-width: 100%;
     margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 24px;
-    padding: 12px 20px;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    backdrop-filter: none;
+    gap: 16px;
+    padding: 10px 20px;
 }
 
 .brand-lockup {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     min-width: 0;
     outline: none;
+    cursor: pointer;
 }
 
 .brand-badge {
@@ -89,33 +86,63 @@ a {
     background: transparent;
     border: none;
     border-radius: 0;
-    box-shadow: none;
+    color: var(--ink);
 }
 
-/* Minimalist Logo Animations */
-.brand-logo {
+/* Inline SVG Logo Animations */
+.brand-logo-svg {
     display: block;
-    width: 28px;
+    width: 24px;
     height: auto;
     filter: none;
-    transform-origin: center;
-    animation: goldfinch-load 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0;
+    animation: gf-appear 0.4s ease-out 0.2s forwards;
 }
 
-.brand-lockup:active .brand-logo {
-    transform: scale(0.85);
-    transition: transform 0.1s ease;
+.gf-wing {
+    transform-origin: center top;
 }
 
-@keyframes goldfinch-load {
-    0% {
-        opacity: 0;
-        transform: translateY(4px) scale(0.95);
-    }
-    100% {
+/* Initial load animation: appear + 2 short flaps */
+@keyframes gf-appear {
+    to {
         opacity: 1;
-        transform: translateY(0) scale(1);
     }
+}
+
+.brand-logo-svg .gf-wing-left {
+    animation: gf-flap-left 0.6s ease-in-out 0.6s 2;
+}
+
+.brand-logo-svg .gf-wing-right {
+    animation: gf-flap-right 0.6s ease-in-out 0.6s 2;
+}
+
+@keyframes gf-flap-left {
+    0%, 100% {
+        transform: rotate(0deg) skew(0deg);
+    }
+    50% {
+        transform: rotate(-10deg) skew(5deg);
+    }
+}
+
+@keyframes gf-flap-right {
+    0%, 100% {
+        transform: rotate(0deg) skew(0deg);
+    }
+    50% {
+        transform: rotate(10deg) skew(-5deg);
+    }
+}
+
+/* Active animation: 1 single quick flap */
+.brand-lockup:active .brand-logo-svg .gf-wing-left {
+    animation: gf-flap-left 0.15s ease-in-out 1;
+}
+
+.brand-lockup:active .brand-logo-svg .gf-wing-right {
+    animation: gf-flap-right 0.15s ease-in-out 1;
 }
 
 .brand-copy {
@@ -132,7 +159,7 @@ h3 {
 
 .brand-wordmark {
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1;
     letter-spacing: -0.01em;
     color: var(--ink);
@@ -142,7 +169,7 @@ h3 {
 .nav-links {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .nav-link,
@@ -151,16 +178,36 @@ input[type="submit"] {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
     min-height: 32px;
-    padding: 0 14px;
     border-radius: var(--radius-md);
     border: 1px solid var(--line);
     background: var(--bg);
     color: var(--text);
     font-size: 0.9rem;
     cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+/* Icon Buttons: Hide text, set size, add background icon */
+.nav-link,
+.secondary-button {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 0;
+    text-indent: -9999px;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20px 20px;
+}
+
+.secondary-button {
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23332d1e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>');
+}
+
+.nav-link {
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23332d1e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>');
 }
 
 input[type="submit"] {
@@ -168,26 +215,23 @@ input[type="submit"] {
     color: var(--bg);
     border-color: var(--ink);
     font-weight: 500;
+    padding: 0 16px;
 }
 
 .nav-link:hover,
 .secondary-button:hover {
-    background: var(--panel-muted);
+    background-color: var(--panel-muted);
     border-color: var(--line-strong);
-    transform: none;
-    box-shadow: none;
 }
 
 input[type="submit"]:hover {
-    background: #333333;
-    transform: none;
-    box-shadow: none;
+    background: var(--accent-strong);
 }
 
 .container {
     max-width: 960px;
     margin: 0 auto;
-    padding: 32px 20px 64px;
+    padding: 24px 20px 48px;
 }
 
 .hero-layout {
@@ -207,14 +251,15 @@ input[type="submit"]:hover {
 
 .section-header h2 {
     margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--ink);
 }
 
 .section-subtitle {
-    margin: 4px 0 0;
+    margin: 2px 0 0;
     color: var(--text-muted);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .form-container {
@@ -224,7 +269,7 @@ input[type="submit"]:hover {
 
 textarea {
     width: 100%;
-    min-height: 50vh;
+    min-height: 70vh;
     resize: vertical;
     padding: 16px;
     border: 1px solid var(--line);
@@ -233,7 +278,7 @@ textarea {
     color: var(--text);
     font: 0.95rem/1.5 "Menlo", "Consolas", "Courier New", monospace;
     box-shadow: none;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.1s ease;
 }
 
 textarea:focus,
@@ -243,7 +288,7 @@ input[type="submit"]:focus,
 .paste-list-item:focus,
 .paste-line-number:focus {
     outline: none;
-    border-color: var(--ink);
+    border-color: var(--accent-strong);
 }
 
 .form-actions {
@@ -257,31 +302,36 @@ input[type="submit"]:focus,
     justify-content: space-between;
     align-items: baseline;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .paste-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--bg);
 }
 
 .paste-list-item {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-    border-radius: var(--radius-lg);
-    background: var(--panel-strong);
-    border: 1px solid var(--line);
-    transition: border-color 0.15s ease, background-color 0.15s ease;
+    gap: 6px;
+    padding: 12px 16px;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--panel-strong);
+    transition: background-color 0.1s ease;
+}
+
+.paste-list-item:last-child {
+    border-bottom: none;
 }
 
 .paste-list-item:hover {
-    transform: none;
-    box-shadow: none;
-    border-color: var(--line-strong);
-    background: var(--bg-soft);
+    background-color: var(--panel-strong);
 }
 
 .paste-list-row,
@@ -301,14 +351,18 @@ input[type="submit"]:focus,
 .paste-list-time,
 .paste-list-meta {
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
 .paste-list-preview {
     margin: 0;
     color: var(--text);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     overflow-wrap: anywhere;
+    max-height: 1.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .empty-state {
@@ -317,21 +371,17 @@ input[type="submit"]:focus,
     background: var(--panel-strong);
     border: 1px dashed var(--line-strong);
     text-align: center;
-}
-
-.empty-state h3,
-.empty-state p {
-    margin: 0;
+    color: var(--text-muted);
 }
 
 .empty-state h3 {
+    margin: 0;
     font-size: 1.1rem;
     font-weight: 500;
 }
 
 .empty-state p {
-    margin-top: 4px;
-    color: var(--text-muted);
+    margin: 4px 0 0;
     font-size: 0.95rem;
 }
 
@@ -342,6 +392,7 @@ input[type="submit"]:focus,
 .paste-toolbar {
     margin-bottom: 16px;
     flex-wrap: wrap;
+    gap: 8px;
 }
 
 .paste-toolbar-item,
@@ -350,11 +401,11 @@ input[type="submit"]:focus,
     align-items: center;
     min-height: 28px;
     padding: 0 10px;
-    border-radius: var(--radius-sm);
-    background: var(--panel-muted);
+    border-radius: var(--radius-md);
+    background: var(--panel-strong);
     color: var(--text-muted);
     border: 1px solid var(--line);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
 .paste-lines {
@@ -364,30 +415,23 @@ input[type="submit"]:focus,
     background: var(--bg);
 }
 
-/* Removed the 3rd column since copy button is hidden */
+/* Redefined grid for two columns, NO split lines */
 .paste-line {
     display: grid;
     grid-template-columns: 48px minmax(0, 1fr);
     align-items: stretch;
     min-width: max-content;
-    border-bottom: 1px solid var(--line);
+    border: none;
 }
 
-.paste-line:last-child {
-    border-bottom: none;
-}
-
-.paste-line + .paste-line {
-    border-top: none;
-}
-
+/* Row highlights ONLY on hover and target/active states */
 .paste-line:hover {
-    background: var(--bg-soft);
+    background-color: var(--panel-strong);
 }
 
 .paste-line.is-active,
 .paste-line:target {
-    background: var(--alert);
+    background-color: var(--accent-soft);
 }
 
 .paste-line-number {
@@ -396,21 +440,23 @@ input[type="submit"]:focus,
     justify-content: flex-end;
     padding: 0 12px;
     background: transparent;
-    border-right: 1px solid var(--line);
-    color: var(--line-strong);
-    font: 0.85rem/1 "Menlo", "Consolas", "Courier New", monospace;
-    transition: color 0.15s ease;
+    border: none;
+    border-right: 1px solid var(--line-strong);
+    color: var(--text-muted);
+    font: 0.8rem/1 "Menlo", "Consolas", "Courier New", monospace;
+    transition: color 0.1s ease;
+    user-select: none;
 }
 
 .paste-line-number:hover {
     color: var(--text);
-    background: var(--panel-muted);
+    background: var(--accent);
 }
 
 .paste-line-text {
     display: block;
-    padding: 2px 16px;
-    font: 0.9rem/1.4 "Menlo", "Consolas", "Courier New", monospace;
+    padding: 1px 16px;
+    font: 0.9rem/1.3 "Menlo", "Consolas", "Courier New", monospace;
     white-space: pre;
     color: var(--text);
 }
@@ -426,16 +472,16 @@ input[type="submit"]:focus,
     left: 50%;
     top: auto;
     transform: translateX(-50%);
-    background: var(--ink);
+    background: var(--text);
     color: var(--bg);
-    padding: 12px 24px;
+    padding: 10px 20px;
     border-radius: var(--radius-md);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     opacity: 1;
     transition: opacity 0.3s ease;
     display: none;
     z-index: 1000;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     text-align: center;
 }
 
@@ -451,33 +497,41 @@ input[type="submit"]:focus,
 }
 
 @media (max-width: 900px) {
+    .header-container {
+        padding: 8px 16px;
+    }
     .header-container,
     .section-header,
     .paste-list-row,
     .paste-list-meta,
     .paste-toolbar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .container {
-        padding: 24px 20px 48px;
-    }
-}
-
-@media (max-width: 640px) {
-    .header-container {
-        padding: 12px 16px;
+        gap: 10px;
     }
 
     .container {
         padding: 20px 16px 40px;
     }
+}
+
+@media (max-width: 640px) {
+    .header-container {
+        padding: 8px 12px;
+    }
+
+    .container {
+        padding: 16px 12px 32px;
+    }
 
     .brand-lockup {
         flex-direction: row;
         align-items: center;
+        gap: 8px;
+    }
+
+    .nav-link,
+    .secondary-button {
+        width: 28px;
+        height: 28px;
     }
 
     .paste-line {
@@ -489,6 +543,6 @@ input[type="submit"]:focus,
     }
 
     .paste-line-text {
-        padding: 2px 12px;
+        padding: 1px 12px;
     }
 }
