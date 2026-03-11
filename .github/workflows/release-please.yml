@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   IMAGE_NAME: ${{ format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) }}
 
 jobs:
@@ -31,9 +32,17 @@ jobs:
       html_url: ${{ steps.release.outputs.html_url }}
 
     steps:
+      - name: Check token source
+        run: |
+          if [ -n "${{ secrets.RELEASE_PLEASE_TOKEN }}" ]; then
+            echo "Using RELEASE_PLEASE_TOKEN for release-please."
+          else
+            echo "::warning::RELEASE_PLEASE_TOKEN is not set. release-please will fall back to GITHUB_TOKEN and can fail to create PRs unless repository settings allow GitHub Actions to create and approve pull requests."
+          fi
+
       - name: Run release-please
         id: release
-        uses: googleapis/release-please-action@v4
+        uses: googleapis/release-please-action@v4.4.0
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           config-file: release-please-config.json
