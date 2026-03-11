@@ -82,6 +82,7 @@ def test_get_paste_renders_line_links(client):
     assert response.status_code == 200
     assert 'id="L1"' in response.text
     assert 'href="#L2"' in response.text
+    assert 'data-copy-anchor="L2"' in response.text
     assert "hashchange" in response.text
 
 

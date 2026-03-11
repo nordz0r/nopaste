@@ -24,6 +24,15 @@
         <div class="paste-line" id="{{ line.anchor }}" data-line-anchor="{{ line.anchor }}">
             <a class="paste-line-number" href="#{{ line.anchor }}" aria-label="Copy link to line {{ line.number }}">{{ line.number }}</a>
             <span class="paste-line-text">{% if line.text %}{{ line.text }}{% else %}&nbsp;{% endif %}</span>
+            <button
+                type="button"
+                class="paste-line-copy"
+                data-copy-anchor="{{ line.anchor }}"
+                data-line-number="{{ line.number }}"
+                aria-label="Copy direct link to line {{ line.number }}"
+            >
+                Copy
+            </button>
         </div>
         {% endfor %}
     </div>
@@ -46,7 +55,30 @@ function updateActiveLine() {
     }
 }
 
+function copyLineUrl(anchor, lineNumber) {
+    const lineUrl = `${window.location.origin}${window.location.pathname}#${anchor}`;
+    window.location.hash = anchor;
+    updateActiveLine();
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(lineUrl).then(() => {
+            showNotification(`Line ${lineNumber} link copied`);
+        }).catch(() => {
+            fallbackCopy(lineUrl);
+        });
+        return;
+    }
+
+    fallbackCopy(lineUrl);
+}
+
 window.addEventListener("DOMContentLoaded", updateActiveLine);
 window.addEventListener("hashchange", updateActiveLine);
+
+document.querySelectorAll(".paste-line-copy").forEach((button) => {
+    button.addEventListener("click", () => {
+        copyLineUrl(button.dataset.copyAnchor, button.dataset.lineNumber);
+    });
+});
 </script>
 {% endblock %}

@@ -5,6 +5,7 @@
 ## Возможности
 
 - создание паст и переход по короткой ссылке
+- ссылки на конкретные строки вида `#L12` и кнопки копирования line-link
 - список пользовательских паст через cookie
 - health-check endpoints: `/health/live` и `/health/ready`
 - локальный запуск через `uv` или Docker Compose
@@ -36,7 +37,7 @@ tests/             pytest suite
 Установка зависимостей:
 
 ```bash
-uv sync --extra test
+uv sync --extra test --group dev
 ```
 
 Запуск dev-сервера:
@@ -86,6 +87,9 @@ COMPOSE_FILE=docker-compose.local.yml ./stop.sh nopaste-app
 - `APP_PORT` — внешний порт приложения, по умолчанию `8000`
 - `DEBUG` — включает debug-режим FastAPI
 - `DATABASE_PATH` — путь к SQLite-базе
+- `COOKIE_SIGNING_SECRET` — секрет подписи cookie со списком recent pastes
+- `MAX_PASTE_SIZE_BYTES` — максимальный размер одного paste в байтах
+- `MAX_RECENT_PASTES` — сколько recent pastes хранить в cookie
 
 ## CI/CD и релизы
 

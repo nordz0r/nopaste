@@ -403,7 +403,7 @@ input[type="submit"]:focus,
 
 .paste-line {
     display: grid;
-    grid-template-columns: 74px minmax(0, 1fr);
+    grid-template-columns: 74px minmax(0, 1fr) 72px;
     align-items: stretch;
     min-width: max-content;
     transition: background-color 0.16s ease;
@@ -445,6 +445,35 @@ input[type="submit"]:focus,
     font: 0.96rem/1.6 "Consolas", "Courier New", monospace;
     white-space: pre;
     color: #281e16;
+}
+
+.paste-line-copy {
+    border: 0;
+    border-left: 1px solid rgba(48, 37, 23, 0.08);
+    background: #fbf2df;
+    color: var(--accent-strong);
+    font: 0.82rem/1 "Trebuchet MS", "Gill Sans", sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+        opacity 0.16s ease,
+        background-color 0.16s ease,
+        color 0.16s ease;
+}
+
+.paste-line:hover .paste-line-copy,
+.paste-line.is-active .paste-line-copy,
+.paste-line:target .paste-line-copy,
+.paste-line-copy:focus {
+    opacity: 1;
+}
+
+.paste-line-copy:hover,
+.paste-line-copy:focus {
+    background: #f0debb;
+    color: #704400;
 }
 
 .notification {
@@ -534,7 +563,7 @@ input[type="submit"]:focus,
     }
 
     .paste-line {
-        grid-template-columns: 58px minmax(0, 1fr);
+        grid-template-columns: 58px minmax(0, 1fr) 62px;
     }
 
     .paste-line-text {
