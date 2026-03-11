@@ -3,10 +3,35 @@
 {% block title %}My Nopaste list{% endblock %}
 
 {% block content %}
-<h2>My Nopaste list</h2>
-<ul>
-    {% for paste_id in pastes %}
-    <li><a href="/paste/{{ paste_id }}">{{ paste_id }}</a></li>
-    {% endfor %}
-</ul>
+<section class="page-section">
+    <div class="section-header">
+        <div>
+            <h2>My Nopaste list</h2>
+            <p class="section-subtitle">Newest first, based on your browser history.</p>
+        </div>
+        <span class="section-badge">{{ pastes|length }} total</span>
+    </div>
+
+    {% if pastes %}
+    <div class="paste-list">
+        {% for paste in pastes %}
+        <a class="paste-list-item" href="/paste/{{ paste.id }}">
+            <div class="paste-list-row">
+                <strong class="paste-list-id">{{ paste.id }}</strong>
+                <span class="paste-list-time">{{ paste.created_at_display or "Unknown date" }}</span>
+            </div>
+            <p class="paste-list-preview">{{ paste.preview or "Empty first line" }}</p>
+            <div class="paste-list-meta">
+                <span>{{ paste.line_count }} lines</span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No saved pastes yet</h3>
+        <p>Create a paste on the main page and it will appear here.</p>
+    </div>
+    {% endif %}
+</section>
 {% endblock %}

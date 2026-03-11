@@ -73,3 +73,8 @@ show_missing = true
 
 [tool.setuptools.packages.find]
 exclude = ["static", "templates"]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.5",
+]

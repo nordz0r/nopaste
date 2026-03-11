@@ -1,15 +1,20 @@
-from fastapi import FastAPI, Request, HTTPException, Form, status
-from fastapi.responses import RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from uuid import uuid4
-from config import settings
-from pathlib import Path
 import json
-from database import Database
 import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+from uuid import uuid4
+
+from fastapi import FastAPI, Form, HTTPException, Request, status
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+from config import settings
+from database import Database
+
 logging.basicConfig(level=logging.INFO)
-from datetime import datetime, timedelta
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Nopaste API",
@@ -36,6 +41,74 @@ app.mount(
 )
 
 
+def load_user_pastes(request: Request) -> list[str]:
+    user_pastes_cookie = request.cookies.get("user_pastes")
+    if not user_pastes_cookie:
+        return []
+
+    try:
+        loaded_ids = json.loads(user_pastes_cookie)
+    except json.JSONDecodeError:
+        return []
+
+    if not isinstance(loaded_ids, list):
+        return []
+
+    return [
+        paste_id for paste_id in loaded_ids if isinstance(paste_id, str) and paste_id
+    ]
+
+
+def order_recent_pastes(paste_ids: list[str]) -> list[str]:
+    ordered_ids: list[str] = []
+    seen: set[str] = set()
+
+    for paste_id in reversed(paste_ids):
+        if paste_id in seen:
+            continue
+        ordered_ids.append(paste_id)
+        seen.add(paste_id)
+
+    return ordered_ids
+
+
+def normalize_newlines(content: str) -> str:
+    return content.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def build_paste_lines(content: str) -> list[dict[str, Any]]:
+    normalized_content = normalize_newlines(content)
+    return [
+        {"number": line_number, "anchor": f"L{line_number}", "text": line_text}
+        for line_number, line_text in enumerate(normalized_content.split("\n"), start=1)
+    ]
+
+
+def build_paste_summary(paste: dict[str, Any]) -> dict[str, Any]:
+    normalized_content = normalize_newlines(str(paste.get("content", "")))
+    preview_source = normalized_content.split("\n", 1)[0].strip()
+    preview = preview_source if preview_source else "(empty first line)"
+    if len(preview) > 120:
+        preview = f"{preview[:117].rstrip()}..."
+    created_at = paste.get("created_at")
+
+    return {
+        "id": str(paste["id"]),
+        "created_at": created_at,
+        "created_at_display": format_created_at(created_at),
+        "preview": preview,
+        "line_count": len(normalized_content.split("\n")) if normalized_content else 0,
+    }
+
+
+def format_created_at(created_at: Any) -> str:
+    if isinstance(created_at, datetime):
+        return created_at.strftime("%Y-%m-%d %H:%M")
+    if created_at is None:
+        return ""
+    return str(created_at)
+
+
 @app.get(
     "/",
     summary="Главная страница",
@@ -51,40 +124,26 @@ async def read_root(request: Request):
     response_description="Перенаправление на страницу нового nopaste",
 )
 async def create_paste(
-        request: Request, content: str = Form(..., description="Содержимое nopaste")
+    request: Request, content: str = Form(..., description="Содержимое nopaste")
 ):
-    if not content:
+    if not content.strip():
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     paste_id = str(uuid4())[:8]
     db.save_paste(paste_id, content)
-    logging.info(f"Created paste: id={paste_id}, length={len(content)}")
+    logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
 
     # Получаем текущие пасты пользователя из куки
-    user_pastes_cookie = request.cookies.get("user_pastes")
-    if user_pastes_cookie:
-        try:
-            user_pastes = json.loads(user_pastes_cookie)
-        except json.JSONDecodeError:
-            user_pastes = []
-    else:
-        user_pastes = []
-
-    # Добавляем новый paste_id
+    user_pastes = load_user_pastes(request)
     user_pastes.append(paste_id)
 
-    # Формируем URL без явного указания порта, если он None
-    base_url = f"{request.url.scheme}://{request.url.hostname}"
-    if request.url.port and request.url.port not in (80, 443):
-        base_url += f":{request.url.port}"
-    url = f"{base_url}/paste/{paste_id}"
-
     # Создаем ответ с редиректом и устанавливаем куки
-    response = RedirectResponse(url=url, status_code=303)
+    response = RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
     response.set_cookie(
         key="user_pastes",
         value=json.dumps(user_pastes),
         httponly=True,
-        max_age=31536000  # 1 год
+        max_age=31536000,  # 1 год
+        samesite="lax",
     )
     return response
 
@@ -99,8 +158,8 @@ async def get_paste(request: Request, paste_id: str):
     if not paste:
         return RedirectResponse(url="/", status_code=303)
     content = paste["content"]
-    created_at = paste["created_at"]
-    logging.info(f"Retrieved paste: id={paste_id}")
+    created_at = format_created_at(paste["created_at"])
+    logger.info("Retrieved paste: id=%s", paste_id)
     return templates.TemplateResponse(
         request,
         "paste.html",
@@ -108,6 +167,8 @@ async def get_paste(request: Request, paste_id: str):
             "request": request,
             "paste_id": paste_id,
             "content": content,
+            "created_at": created_at,
+            "lines": build_paste_lines(content),
         },
     )
 
@@ -118,16 +179,9 @@ async def get_paste(request: Request, paste_id: str):
     description="Отображает список nopaste пользователя.",
 )
 async def list_pastes(request: Request):
-    user_pastes_cookie = request.cookies.get("user_pastes")
-    if user_pastes_cookie:
-        try:
-            user_pastes = json.loads(user_pastes_cookie)
-        except json.JSONDecodeError:
-            user_pastes = []
-    else:
-        user_pastes = []
+    user_pastes = order_recent_pastes(load_user_pastes(request))
     paste_records = db.get_user_pastes(user_pastes)
-    pastes = [p["id"] for p in paste_records]
+    pastes = [build_paste_summary(paste) for paste in paste_records]
     return templates.TemplateResponse(
         request, "list.html", {"request": request, "pastes": pastes}
     )

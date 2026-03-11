@@ -4,8 +4,40 @@
 
 {% block content %}
 <div class="paste-container">
-    <pre id="paste-content">{{ content }}</pre>
+    <div class="paste-toolbar">
+        <span class="paste-toolbar-item">{{ lines|length }} lines</span>
+        {% if created_at %}
+        <span class="paste-toolbar-item">{{ created_at }}</span>
+        {% endif %}
+    </div>
+    <div class="paste-lines" aria-label="Paste content with line numbers">
+        {% for line in lines %}
+        <div class="paste-line" id="{{ line.anchor }}" data-line-anchor="{{ line.anchor }}">
+            <a class="paste-line-number" href="#{{ line.anchor }}" aria-label="Copy link to line {{ line.number }}">{{ line.number }}</a>
+            <span class="paste-line-text">{% if line.text %}{{ line.text }}{% else %}&nbsp;{% endif %}</span>
+        </div>
+        {% endfor %}
+    </div>
     <div id="notification" class="notification"></div>
 </div>
 
+<script>
+function updateActiveLine() {
+    document.querySelectorAll(".paste-line.is-active").forEach((line) => {
+        line.classList.remove("is-active");
+    });
+
+    if (!window.location.hash.match(/^#L\d+$/)) {
+        return;
+    }
+
+    const activeLine = document.querySelector(window.location.hash);
+    if (activeLine) {
+        activeLine.classList.add("is-active");
+    }
+}
+
+window.addEventListener("DOMContentLoaded", updateActiveLine);
+window.addEventListener("hashchange", updateActiveLine);
+</script>
 {% endblock %}

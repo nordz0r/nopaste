@@ -79,6 +79,103 @@ button:hover, input[type="submit"]:hover {
     box-sizing: border-box;
 }
 
+.page-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.section-header h2 {
+    margin: 0;
+}
+
+.section-subtitle {
+    margin: 6px 0 0;
+    color: #555;
+}
+
+.section-badge {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.paste-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.paste-list-item {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    color: inherit;
+    padding: 16px;
+    text-decoration: none;
+}
+
+.paste-list-item:hover {
+    border-color: #999;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.paste-list-row,
+.paste-list-meta,
+.paste-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.paste-list-id {
+    font-family: "Courier New", Courier, monospace;
+}
+
+.paste-list-time,
+.paste-list-meta,
+.paste-toolbar-item {
+    color: #666;
+    font-size: 14px;
+}
+
+.paste-list-preview {
+    margin: 0;
+    color: #222;
+    overflow-wrap: anywhere;
+}
+
+.empty-state {
+    background-color: #fff;
+    border: 1px dashed #bbb;
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.empty-state h3,
+.empty-state p {
+    margin: 0;
+}
+
+.empty-state p {
+    margin-top: 8px;
+    color: #555;
+}
+
 #copy-btn {
     background: none;
     border: none;
@@ -105,6 +202,57 @@ pre#paste-content {
     width: 100%;
     box-sizing: border-box;
     overflow-x: auto;
+}
+
+.paste-toolbar {
+    margin-bottom: 12px;
+}
+
+.paste-lines {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.paste-line {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: stretch;
+    min-width: max-content;
+}
+
+.paste-line + .paste-line {
+    border-top: 1px solid #f0f0f0;
+}
+
+.paste-line.is-active,
+.paste-line:target {
+    background-color: #fff7d6;
+}
+
+.paste-line-number {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 12px;
+    background-color: #fafafa;
+    border-right: 1px solid #eee;
+    color: #777;
+    font-family: "Courier New", Courier, monospace;
+    text-decoration: none;
+}
+
+.paste-line-number:hover {
+    background-color: #f3f3f3;
+    color: #222;
+}
+
+.paste-line-text {
+    display: block;
+    padding: 10px 16px;
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre;
 }
 
 ul {
@@ -143,4 +291,31 @@ ul li {
     z-index: 1000; /* Высокий z-index для отображения поверх всего */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     text-align: center;
+}
+
+@media (max-width: 720px) {
+    body {
+        padding: 12px;
+    }
+
+    .header-container,
+    .section-header,
+    .paste-list-row,
+    .paste-list-meta,
+    .paste-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .paste-line {
+        grid-template-columns: 56px minmax(0, 1fr);
+    }
+
+    .paste-line-number {
+        padding-right: 8px;
+    }
+
+    .paste-line-text {
+        padding: 10px 12px;
+    }
 }

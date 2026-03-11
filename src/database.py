@@ -1,5 +1,5 @@
 import sqlite3
-from typing import List, Optional
+
 
 class Database:
     """Encapsulates SQLite operations for paste storage."""
@@ -7,7 +7,7 @@ class Database:
     def __init__(self, db_path: str = "pastes.db") -> None:
         """Initialize the database connection and ensure schema exists."""
         self.db_path = db_path
-        self.conn = sqlite3.connect(self.db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.init_db()
 
@@ -30,7 +30,7 @@ class Database:
                 (paste_id, content),
             )
 
-    def get_paste(self, paste_id: str) -> Optional[dict]:
+    def get_paste(self, paste_id: str) -> dict | None:
         """Retrieve a paste by its id."""
         cur = self.conn.execute(
             "SELECT id, content, created_at FROM pastes WHERE id = ?",
@@ -39,11 +39,17 @@ class Database:
         row = cur.fetchone()
         return dict(row) if row else None
 
-    def get_user_pastes(self, ids: List[str]) -> List[dict]:
+    def get_user_pastes(self, ids: list[str]) -> list[dict]:
         """Retrieve multiple pastes given a list of ids."""
         if not ids:
             return []
+
         placeholders = ",".join("?" for _ in ids)
-        query = f"SELECT id, content, created_at FROM pastes WHERE id IN ({placeholders})"
+        query = (
+            f"SELECT id, content, created_at FROM pastes WHERE id IN ({placeholders})"
+        )
         cur = self.conn.execute(query, ids)
-        return [dict(row) for row in cur.fetchall()]
+        rows = [dict(row) for row in cur.fetchall()]
+        order_map = {paste_id: index for index, paste_id in enumerate(ids)}
+        rows.sort(key=lambda row: order_map.get(str(row["id"]), len(ids)))
+        return rows
