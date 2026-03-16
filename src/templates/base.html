@@ -52,20 +52,27 @@
         }, 2000);
     }
 
-    function copyPasteUrl() {
-        const pasteUrl = window.location.href;
+    function copyTextToClipboard(text, successMessage, failureMessage) {
         if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(pasteUrl).then(() => {
-                showNotification("Ссылка скопирована!");
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification(successMessage);
             }).catch(() => {
-                fallbackCopy(pasteUrl);
+                fallbackCopy(text, successMessage, failureMessage);
             });
         } else {
-            fallbackCopy(pasteUrl);
+            fallbackCopy(text, successMessage, failureMessage);
         }
     }
 
-    function fallbackCopy(text) {
+    function copyPasteUrl() {
+        copyTextToClipboard(
+            window.location.href,
+            "Ссылка скопирована!",
+            "Не удалось скопировать ссылку"
+        );
+    }
+
+    function fallbackCopy(text, successMessage, failureMessage) {
         const textarea = document.createElement("textarea");
         textarea.value = text;
         textarea.style.position = "fixed";
@@ -75,12 +82,12 @@
         try {
             const successful = document.execCommand("copy");
             if (successful) {
-                showNotification("Ссылка скопирована!");
+                showNotification(successMessage);
             } else {
-                showNotification("Не удалось скопировать ссылку");
+                showNotification(failureMessage);
             }
         } catch (err) {
-            showNotification("Ошибка копирования: " + err);
+            showNotification(`${failureMessage}: ${err}`);
         }
         document.body.removeChild(textarea);
     }

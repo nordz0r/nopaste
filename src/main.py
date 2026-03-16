@@ -4,10 +4,10 @@ import hashlib
 import hmac
 import json
 import logging
+import secrets
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
 
 from fastapi import FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -19,6 +19,10 @@ from database import Database
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+SHORT_PASTE_ID_LENGTH = 6
+SHORT_PASTE_ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz"
+MAX_PASTE_ID_GENERATION_ATTEMPTS = 20
 
 app = FastAPI(
     title="Nopaste API",
@@ -171,6 +175,18 @@ def format_created_at(created_at: Any) -> str:
     return str(created_at)
 
 
+def generate_paste_id(database: Database) -> str:
+    for _ in range(MAX_PASTE_ID_GENERATION_ATTEMPTS):
+        paste_id = "".join(
+            secrets.choice(SHORT_PASTE_ID_ALPHABET)
+            for _ in range(SHORT_PASTE_ID_LENGTH)
+        )
+        if database.get_paste(paste_id) is None:
+            return paste_id
+
+    raise HTTPException(status_code=503, detail="Could not allocate paste id")
+
+
 @app.get(
     "/",
     summary="Главная страница",
@@ -196,7 +212,7 @@ async def create_paste(
             detail=(f"Content exceeds the {settings.MAX_PASTE_SIZE_BYTES} byte limit"),
         )
 
-    paste_id = uuid4().hex
+    paste_id = generate_paste_id(db)
     db.save_paste(paste_id, content)
     logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
 

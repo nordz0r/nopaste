@@ -6,9 +6,9 @@
 <section class="page-section">
     <span class="eyebrow">Paste view</span>
     <div class="section-header">
-        <div>
+        <div class="paste-title-row">
             <h2>Nopaste {{ paste_id }}</h2>
-            <p class="section-subtitle">Use line numbers for a single link or manual ranges like #L12-L20.</p>
+            <button type="button" id="copy-content-btn" class="paste-copy-button">Copy content</button>
         </div>
     </div>
 </section>
@@ -37,6 +37,7 @@
         {% endfor %}
     </div>
     <div id="notification" class="notification"></div>
+    <textarea id="paste-raw-content" class="sr-only" aria-hidden="true" readonly>{{ content }}</textarea>
 </div>
 
 <script>
@@ -78,16 +79,24 @@ function copyLineUrl(anchor, lineNumber) {
     window.location.hash = anchor;
     updateActiveLine();
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(lineUrl).then(() => {
-            showNotification(`Line ${lineNumber} link copied`);
-        }).catch(() => {
-            fallbackCopy(lineUrl);
-        });
+    copyTextToClipboard(
+        lineUrl,
+        `Line ${lineNumber} link copied`,
+        "Could not copy line link"
+    );
+}
+
+function copyPasteContent() {
+    const contentField = document.getElementById("paste-raw-content");
+    if (!contentField) {
         return;
     }
 
-    fallbackCopy(lineUrl);
+    copyTextToClipboard(
+        contentField.value,
+        "Содержимое скопировано!",
+        "Не удалось скопировать содержимое"
+    );
 }
 
 window.addEventListener("DOMContentLoaded", updateActiveLine);
@@ -98,5 +107,10 @@ document.querySelectorAll(".paste-line-copy").forEach((button) => {
         copyLineUrl(button.dataset.copyAnchor, button.dataset.lineNumber);
     });
 });
+
+const copyContentButton = document.getElementById("copy-content-btn");
+if (copyContentButton) {
+    copyContentButton.addEventListener("click", copyPasteContent);
+}
 </script>
 {% endblock %}

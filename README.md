@@ -24,7 +24,7 @@ tests/             pytest suite
 .github/workflows/ Docker Hub and release workflows
 ```
 
-В корне также лежат `docker-compose.yml`, `docker-compose.local.yml`, `release-please-config.json`, `.release-please-manifest.json`, `CHANGELOG.md` и `version.txt`.
+В корне также лежат `docker-compose.yml`, `docker-compose.local.yml`, `CHANGELOG.md` и `version.txt`.
 
 ## Локальная разработка
 
@@ -96,21 +96,25 @@ COMPOSE_FILE=docker-compose.local.yml ./stop.sh nopaste-app
 GitHub Actions выполняют две независимые задачи:
 
 - `.github/workflows/dockerhub.yml` публикует образ `nordz0r/nopaste` для ветки `main`
-- `.github/workflows/release-please.yml` запускает semver-релизы через `googleapis/release-please-action`
+- `.github/workflows/release.yml` выполняет semver-релиз напрямую из `main` через `python-semantic-release`
 
-`release-please` использует:
+Release workflow:
 
-- `release-please-config.json`
-- `.release-please-manifest.json`
+- вычисляет следующую версию по conventional commits
+- обновляет `pyproject.toml`, `version.txt` и `CHANGELOG.md`
+- создаёт release commit, tag и GitHub Release без промежуточного release PR
+- публикует semver-теги образа в Docker Hub и GHCR
+
+Релиз использует:
+
 - `version.txt`
-- `pyproject.toml`
 - `CHANGELOG.md`
+- `pyproject.toml`
 
 Для корректной работы релизов нужны secrets:
 
 - `DOCKERHUB_USERNAME`
 - `DOCKERHUB_TOKEN`
-- `RELEASE_PLEASE_TOKEN` — рекомендуется для создания release PR и GitHub Release
 
 ## Коммиты
 

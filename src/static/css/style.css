@@ -247,6 +247,7 @@ textarea:focus,
 .nav-link:focus,
 .secondary-button:focus,
 input[type="submit"]:focus,
+.paste-copy-button:focus,
 .paste-list-item:focus,
 .paste-line-number:focus {
     outline: none;
@@ -265,6 +266,33 @@ input[type="submit"]:focus,
     align-items: baseline;
     gap: 16px;
     margin-bottom: 20px;
+}
+
+.paste-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.paste-copy-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.paste-copy-button:hover {
+    background-color: var(--panel-muted);
+    border-color: var(--line-strong);
 }
 
 .paste-list {

@@ -25,16 +25,20 @@ def test_read_root(client):
     assert "Nopaste" in response.text
 
 
-def test_create_paste_uses_long_hex_id_and_signed_cookie(client):
+def test_create_paste_uses_short_id_and_signed_cookie(client):
     response = client.post(
         "/paste", data={"content": "Test content"}, follow_redirects=False
     )
     paste_id = response.headers["location"].split("/")[-1]
     cookie_value = client.cookies.get("user_pastes")
+    pattern = (
+        f"[{re.escape(main_module.SHORT_PASTE_ID_ALPHABET)}]"
+        f"{{{main_module.SHORT_PASTE_ID_LENGTH}}}"
+    )
 
     assert response.status_code == 303
     assert response.headers["location"].startswith("/paste/")
-    assert re.fullmatch(r"[0-9a-f]{32}", paste_id)
+    assert re.fullmatch(pattern, paste_id)
     assert cookie_value is not None
     assert "." in cookie_value
     assert paste_id not in cookie_value
@@ -71,7 +75,20 @@ def test_create_paste_rejects_oversized_content(client, monkeypatch):
     assert "byte limit" in response.json()["detail"]
 
 
-def test_get_paste_renders_line_links(client):
+def test_create_paste_retries_short_id_collision(client, monkeypatch):
+    main_module.db.save_paste("abc123", "existing")
+    generated_chars = iter("abc123xyz789")
+    monkeypatch.setattr(
+        main_module.secrets, "choice", lambda alphabet: next(generated_chars)
+    )
+
+    response = client.post("/paste", data={"content": "fresh"}, follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/paste/xyz789"
+
+
+def test_get_paste_renders_line_links_and_copy_content_button(client):
     create_response = client.post(
         "/paste", data={"content": "alpha\nbeta"}, follow_redirects=False
     )
@@ -83,7 +100,10 @@ def test_get_paste_renders_line_links(client):
     assert 'id="L1"' in response.text
     assert 'href="#L2"' in response.text
     assert 'data-copy-anchor="L2"' in response.text
+    assert 'id="copy-content-btn"' in response.text
+    assert 'id="paste-raw-content"' in response.text
     assert "hashchange" in response.text
+    assert "Use line numbers" not in response.text
 
 
 def test_list_pastes_shows_newest_first_with_preview_and_line_count(client):

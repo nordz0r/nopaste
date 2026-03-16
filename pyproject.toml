@@ -21,6 +21,23 @@ test = [
     "pytest-cov>=6.0.0",
 ]
 
+[tool.semantic_release]
+tag_format = "v{version}"
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["version.txt:*"]
+commit_message = "chore(release): {version}"
+
+[tool.semantic_release.changelog]
+mode = "update"
+insertion_flag = "<!-- version list -->"
+exclude_commit_patterns = [
+    "^chore\\(release\\): .*",
+    "^chore\\(main\\): release .*",
+]
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
+
 [tool.ruff]
 target-version = "py312"
 exclude = ["alembic"]
