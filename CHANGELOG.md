@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.0.0 (2026-03-16)
+
+### Bug Fixes
+
+- Move copy link icon beside brand
+  ([`2ca41d7`](https://github.com/nordz0r/nopaste/commit/2ca41d761d33974bc1c39a33d8bc711c38d6d619))
+
+### Build System
+
+- **docker**: Use multi-stage image with uv builder
+  ([`a277bc3`](https://github.com/nordz0r/nopaste/commit/a277bc31466b3f570511c6ca2a446841eaf3c0fd))
+
+### Chores
+
+- Enforce lf line endings
+  ([`d0087b4`](https://github.com/nordz0r/nopaste/commit/d0087b499ffdffb4c0515a411793f4c6b124ef7d))
+
+### Continuous Integration
+
+- Add lint and test workflow
+  ([`1b3d1ce`](https://github.com/nordz0r/nopaste/commit/1b3d1ced2d5c078a0c6e5db7585de2d8f09edf9f))
+
+### Features
+
+- Shorten paste ids and simplify releases
+  ([`e468269`](https://github.com/nordz0r/nopaste/commit/e468269d4d1f0980cacbcc67152b943b1ca99cc4))
+
+
 ## [0.7.2](https://github.com/nordz0r/nopaste/compare/v0.7.1...v0.7.2) (2026-03-11)
 
 
