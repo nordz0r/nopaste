@@ -5,15 +5,21 @@
 {% block content %}
 <div class="editor-card">
     <div class="editor-card-header">
-        <h2>Новая паста</h2>
+        <h2>Create a new paste</h2>
+        <p>Your paste will be saved and linked to this browser's history.</p>
     </div>
-    <form action="/paste" method="post" id="nopaste-form">
-        <label class="sr-only" for="paste-content-input">Paste content</label>
-        <textarea id="paste-content-input" name="content" rows="18" placeholder="Введите ваш текст здесь..."></textarea>
-        <div class="form-actions">
-            <input type="submit" value="Создать">
-        </div>
-    </form>
+    <div class="form-container">
+        <form action="/paste" method="post" id="nopaste-form">
+            <label class="sr-only" for="paste-content-input">Paste content</label>
+            <textarea id="paste-content-input" name="content" rows="14" placeholder="Paste your text, logs, notes, or config here..." autofocus></textarea>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                    <span>Save Paste</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -21,7 +27,7 @@ document.getElementById("nopaste-form").addEventListener("submit", function(even
     const textarea = document.getElementById("paste-content-input");
     if (!textarea.value.trim()) {
         event.preventDefault();
-        showNotification("Контент не может быть пустым!");
+        showNotification("Нельзя сохранить пустой nopaste!");
     }
 });
 </script>

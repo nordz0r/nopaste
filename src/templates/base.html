@@ -8,97 +8,88 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
     <header class="site-header">
         <div class="header-container">
             <div class="header-brand">
                 <a href="/" class="brand-lockup" aria-label="Nopaste home">
-                    <img src="/static/images/logo-goldfinch.svg" alt="Goldfinch Logo" class="brand-logo">
+                    <svg class="brand-logo-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Stylized European Goldfinch -->
+                        <path d="M28 14C28 14 32 16 33 18C34 20 32 23 30 24L26 25L28 14Z" fill="var(--bird-black)"/> <!-- Tail -->
+                        <path d="M14 10C10 10 6 14 6 18C6 24 10 28 18 28C26 28 30 24 30 18C30 14 26 10 22 10H14Z" fill="var(--bird-brown)"/> <!-- Body -->
+                        <path d="M18 28C14 28 10 26 8 23C10 25 14 26 18 26C22 26 26 25 28 23C26 26 22 28 18 28Z" fill="var(--bird-white)" fill-opacity="0.4"/> <!-- Belly highlight -->
+                        <path d="M22 14C22 14 28 15 28 20C28 25 22 26 18 26C14 26 10 25 10 20C10 15 16 14 16 14" fill="var(--bird-black)"/> <!-- Wing base -->
+                        <path d="M14 18C14 18 18 17 24 18C24 19 22 21 18 21C14 21 12 19 12 18" fill="var(--bird-yellow)"/> <!-- Wing bar -->
+                        
+                        <!-- Head markings -->
+                        <circle cx="10" cy="14" r="6" fill="var(--bird-white)"/> <!-- White head base -->
+                        <path d="M10 8C7 8 4 10 4 14C4 18 7 20 10 20V8Z" fill="var(--bird-red)"/> <!-- Red face mask -->
+                        <path d="M10 8C13 8 16 10 16 12C16 10 13 8 10 8Z" fill="var(--bird-black)"/> <!-- Black crown top -->
+                        <path d="M16 12C16 16 13 20 10 20V12H16Z" fill="var(--bird-white)"/> <!-- White cheek -->
+                        <circle cx="7" cy="13" r="0.8" fill="var(--bird-black)"/> <!-- Eye -->
+                        <path d="M4 14L1 15L4 16V14Z" fill="#EADFCA"/> <!-- Beak -->
+                    </svg>
                     <span class="brand-wordmark">Nopaste</span>
                 </a>
+                {% if paste_id %}
+                <button id="copy-btn" class="btn btn-secondary" title="Скопировать ссылку">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    <span>Copy Link</span>
+                </button>
+                {% endif %}
             </div>
             <div class="header-actions">
-                <div class="btn-group">
-                    {% if paste_id %}
-                    <button id="copy-btn" class="secondary-button" title="Скопировать ссылку">
-                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                        <span>Copy Link</span>
-                    </button>
-                    {% endif %}
-                    <a href="/list" class="nav-link" title="My List">
+                <nav aria-label="Primary">
+                    <a href="/list" class="btn btn-secondary" title="My Pastes">
                         <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
                         <span>My List</span>
                     </a>
-                </div>
+                </nav>
             </div>
         </div>
     </header>
     <main class="container">
         {% block content %}{% endblock %}
     </main>
-
-    <div id="notification" class="notification" style="display: none;"></div>
-
+    <div id="notification" class="notification"></div>
     <script>
     function showNotification(message) {
         const notification = document.getElementById("notification");
         if (!notification) return;
-        
         notification.textContent = message;
         notification.style.display = "block";
-        notification.style.opacity = "1";
-        
         setTimeout(() => {
             notification.style.opacity = "0";
             setTimeout(() => {
                 notification.style.display = "none";
+                notification.style.opacity = "1";
             }, 300);
-        }, 2500);
+        }, 2000);
     }
 
-    function copyTextToClipboard(text, successMessage, failureMessage) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification(successMessage);
-            }).catch(() => {
-                fallbackCopy(text, successMessage, failureMessage);
-            });
-        } else {
-            fallbackCopy(text, successMessage, failureMessage);
-        }
-    }
-
-    function fallbackCopy(text, successMessage, failureMessage) {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
+    async function copyToClipboard(text, successMsg) {
         try {
-            const successful = document.execCommand("copy");
-            if (successful) {
-                showNotification(successMessage);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
             } else {
-                showNotification(failureMessage);
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
             }
+            showNotification(successMsg || "Скопировано!");
         } catch (err) {
-            showNotification(`${failureMessage}: ${err}`);
+            showNotification("Ошибка копирования");
         }
-        document.body.removeChild(textarea);
     }
 
-    const copyButton = document.getElementById("copy-btn");
-    if (copyButton) {
-        copyButton.addEventListener("click", function() {
-            copyTextToClipboard(
-                window.location.href,
-                "Ссылка скопирована!",
-                "Не удалось скопировать ссылку"
-            );
-        });
+    const copyBtn = document.getElementById("copy-btn");
+    if (copyBtn) {
+        copyBtn.addEventListener("click", () => copyToClipboard(window.location.href, "Ссылка скопирована!"));
     }
     </script>
 </body>

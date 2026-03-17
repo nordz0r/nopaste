@@ -1,37 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}My List{% endblock %}
+{% block title %}My Nopaste list{% endblock %}
 
 {% block content %}
-<div class="section-header">
-    <h2>Ваши сохраненные пасты</h2>
-    <a href="/" class="secondary-button">
-        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-        <span>Новая паста</span>
-    </a>
+<div class="paste-header">
+    <div class="paste-meta">
+        <div class="paste-meta-item">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <h2>My Pastes</h2>
+        </div>
+        <span class="paste-meta-item" style="color: var(--text-muted);">{{ pastes|length }} total items</span>
+    </div>
 </div>
 
 {% if pastes %}
 <div class="paste-list">
     {% for paste in pastes %}
-    <a href="/paste/{{ paste.id }}" class="paste-list-item">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-weight: 700; color: var(--accent);">{{ paste.id }}</span>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">{{ paste.created_at_display }}</span>
+    <a class="paste-card" href="/paste/{{ paste.id }}">
+        <div class="paste-card-header">
+            <span class="paste-card-title">{{ paste.id }}</span>
+            <span class="paste-card-time">{{ paste.created_at_display or "Unknown date" }}</span>
         </div>
-        <div class="paste-list-preview">{{ paste.preview }}</div>
-        <div style="margin-top: 12px; font-size: 0.8rem; color: var(--text-muted);">
-            {{ paste.line_count }} lines
+        <pre class="paste-card-preview">{{ paste.preview or "Empty first line" }}</pre>
+        <div class="paste-meta" style="margin-top: var(--space-2); font-size: 0.75rem;">
+            <span>{{ paste.line_count }} lines</span>
         </div>
     </a>
     {% endfor %}
 </div>
 {% else %}
-<div class="empty-state" style="text-align: center; padding: 60px 20px; background: var(--panel); border-radius: var(--radius); border: 1px dashed var(--border);">
-    <div style="font-size: 3rem; margin-bottom: 20px;">🌘</div>
-    <h3 style="color: var(--accent);">Список пуст</h3>
-    <p style="color: var(--text-muted);">Здесь будут отображаться ваши недавние пасты.</p>
-    <a href="/" class="secondary-button" style="margin-top: 24px;">Создать первую пасту</a>
+<div class="editor-card" style="text-align: center; padding: var(--space-12);">
+    <div style="color: var(--text-muted); margin-bottom: var(--space-4);">
+        <svg class="icon-svg" style="width: 48px; height: 48px; opacity: 0.5;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    </div>
+    <h3>No saved pastes yet</h3>
+    <p style="color: var(--text-muted);">Create a paste on the main page and it will appear here.</p>
+    <a href="/" class="btn btn-primary" style="margin-top: var(--space-4);">Create First Paste</a>
 </div>
 {% endif %}
 {% endblock %}
