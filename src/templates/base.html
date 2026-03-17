@@ -6,28 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Nopaste{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="page-backdrop"></div>
     <header class="site-header">
         <div class="header-container">
             <div class="header-brand">
                 <a href="/" class="brand-lockup" aria-label="Nopaste home">
-                    <span class="brand-badge">
-                        <img src="/static/images/goldfinches_logo.png" alt="Goldfinch logo" class="brand-logo">
-                    </span>
-                    <span class="brand-copy">
-                        <span class="brand-kicker">Private-looking text sharing</span>
-                        <span class="brand-wordmark">Nopaste</span>
-                    </span>
+                    <img src="/static/images/goldfinches_logo.png" alt="Goldfinch logo" class="brand-logo">
+                    <span class="brand-wordmark">Nopaste</span>
                 </a>
                 {% if paste_id %}
-                <button id="copy-btn" class="secondary-button" title="Скопировать ссылку">Copy Link</button>
+                <button id="copy-btn" class="btn btn-secondary" title="Скопировать ссылку">
+                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    <span>Copy Link</span>
+                </button>
                 {% endif %}
             </div>
             <div class="header-actions">
-                <nav class="nav-links" aria-label="Primary">
-                    <a href="/list" class="nav-link">My List</a>
+                <nav aria-label="Primary">
+                    <a href="/list" class="btn btn-secondary" title="My Pastes">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                        <span>My List</span>
+                    </a>
                 </nav>
             </div>
         </div>
@@ -35,12 +38,11 @@
     <main class="container">
         {% block content %}{% endblock %}
     </main>
+    <div id="notification" class="notification"></div>
     <script>
     function showNotification(message) {
         const notification = document.getElementById("notification");
-        if (!notification) {
-            return;
-        }
+        if (!notification) return;
         notification.textContent = message;
         notification.style.display = "block";
         setTimeout(() => {
@@ -48,55 +50,31 @@
             setTimeout(() => {
                 notification.style.display = "none";
                 notification.style.opacity = "1";
-            }, 500);
+            }, 300);
         }, 2000);
     }
 
-    function copyTextToClipboard(text, successMessage, failureMessage) {
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification(successMessage);
-            }).catch(() => {
-                fallbackCopy(text, successMessage, failureMessage);
-            });
-        } else {
-            fallbackCopy(text, successMessage, failureMessage);
-        }
-    }
-
-    function copyPasteUrl() {
-        copyTextToClipboard(
-            window.location.href,
-            "Ссылка скопирована!",
-            "Не удалось скопировать ссылку"
-        );
-    }
-
-    function fallbackCopy(text, successMessage, failureMessage) {
-        const textarea = document.createElement("textarea");
-        textarea.value = text;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
+    async function copyToClipboard(text, successMsg) {
         try {
-            const successful = document.execCommand("copy");
-            if (successful) {
-                showNotification(successMessage);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
             } else {
-                showNotification(failureMessage);
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
             }
+            showNotification(successMsg || "Скопировано!");
         } catch (err) {
-            showNotification(`${failureMessage}: ${err}`);
+            showNotification("Ошибка копирования");
         }
-        document.body.removeChild(textarea);
     }
 
-    const copyButton = document.getElementById("copy-btn");
-    if (copyButton) {
-        copyButton.addEventListener("click", function() {
-            copyPasteUrl();
-        });
+    const copyBtn = document.getElementById("copy-btn");
+    if (copyBtn) {
+        copyBtn.addEventListener("click", () => copyToClipboard(window.location.href, "Ссылка скопирована!"));
     }
     </script>
 </body>

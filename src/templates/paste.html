@@ -3,53 +3,50 @@
 {% block title %}Nopaste {{ paste_id }}{% endblock %}
 
 {% block content %}
-<section class="page-section">
-    <span class="eyebrow">Paste view</span>
-    <div class="section-header">
-        <div class="paste-title-row">
-            <h2>Nopaste {{ paste_id }}</h2>
-            <button type="button" id="copy-content-btn" class="paste-copy-button">Copy content</button>
+<div class="paste-header">
+    <div class="paste-meta">
+        <div class="paste-meta-item">
+            <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <strong>Paste {{ paste_id }}</strong>
         </div>
-    </div>
-</section>
-<div class="paste-container">
-    <div class="paste-toolbar">
-        <span class="paste-toolbar-item">{{ lines|length }} lines</span>
+        <div class="paste-meta-item">
+            <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 18h17v-6H4v6zM4 5v6h17V5H4z"/></svg>
+            <span>{{ lines|length }} lines</span>
+        </div>
         {% if created_at %}
-        <span class="paste-toolbar-item">{{ created_at }}</span>
+        <div class="paste-meta-item">
+            <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2C11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            <span>{{ created_at }}</span>
+        </div>
         {% endif %}
     </div>
+    <div class="header-actions">
+        <button type="button" id="copy-content-btn" class="btn btn-secondary">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            <span>Copy Content</span>
+        </button>
+    </div>
+</div>
+
+<div class="paste-container">
     <div class="paste-lines" aria-label="Paste content with line numbers">
         {% for line in lines %}
         <div class="paste-line" id="{{ line.anchor }}" data-line-anchor="{{ line.anchor }}">
             <a class="paste-line-number" href="#{{ line.anchor }}" aria-label="Copy link to line {{ line.number }}">{{ line.number }}</a>
             <span class="paste-line-text">{% if line.text %}{{ line.text }}{% else %}&nbsp;{% endif %}</span>
-            <button
-                type="button"
-                class="paste-line-copy"
-                data-copy-anchor="{{ line.anchor }}"
-                data-line-number="{{ line.number }}"
-                aria-label="Copy direct link to line {{ line.number }}"
-            >
-                Copy
-            </button>
         </div>
         {% endfor %}
     </div>
-    <div id="notification" class="notification"></div>
-    <textarea id="paste-raw-content" class="sr-only" aria-hidden="true" readonly>{{ content }}</textarea>
 </div>
+
+<textarea id="paste-raw-content" class="sr-only" aria-hidden="true" readonly>{{ content }}</textarea>
 
 <script>
 function getSelectedRangeFromHash() {
     const match = window.location.hash.match(/^#L(\d+)(?:-L?(\d+))?$/);
-    if (!match) {
-        return null;
-    }
-
+    if (!match) return null;
     const firstLine = Number(match[1]);
     const secondLine = Number(match[2] || match[1]);
-
     return {
         start: Math.min(firstLine, secondLine),
         end: Math.max(firstLine, secondLine),
@@ -57,16 +54,10 @@ function getSelectedRangeFromHash() {
 }
 
 function updateActiveLine() {
-    document.querySelectorAll(".paste-line.is-active").forEach((line) => {
-        line.classList.remove("is-active");
-    });
-
+    document.querySelectorAll(".paste-line.is-active").forEach(line => line.classList.remove("is-active"));
     const selectedRange = getSelectedRangeFromHash();
-    if (!selectedRange) {
-        return;
-    }
-
-    document.querySelectorAll(".paste-line").forEach((line) => {
+    if (!selectedRange) return;
+    document.querySelectorAll(".paste-line").forEach(line => {
         const lineNumber = Number(line.dataset.lineAnchor.replace("L", ""));
         if (lineNumber >= selectedRange.start && lineNumber <= selectedRange.end) {
             line.classList.add("is-active");
@@ -78,39 +69,27 @@ function copyLineUrl(anchor, lineNumber) {
     const lineUrl = `${window.location.origin}${window.location.pathname}#${anchor}`;
     window.location.hash = anchor;
     updateActiveLine();
-
-    copyTextToClipboard(
-        lineUrl,
-        `Line ${lineNumber} link copied`,
-        "Could not copy line link"
-    );
+    copyToClipboard(lineUrl, `Line ${lineNumber} link copied`);
 }
 
-function copyPasteContent() {
-    const contentField = document.getElementById("paste-raw-content");
-    if (!contentField) {
-        return;
-    }
+document.querySelectorAll(".paste-line-number").forEach(link => {
+    link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const anchor = link.getAttribute("href").substring(1);
+        const lineNumber = link.textContent.trim();
+        copyLineUrl(anchor, lineNumber);
+    });
+});
 
-    copyTextToClipboard(
-        contentField.value,
-        "Содержимое скопировано!",
-        "Не удалось скопировать содержимое"
-    );
+const copyContentBtn = document.getElementById("copy-content-btn");
+if (copyContentBtn) {
+    copyContentBtn.addEventListener("click", () => {
+        const contentField = document.getElementById("paste-raw-content");
+        if (contentField) copyToClipboard(contentField.value, "Содержимое скопировано!");
+    });
 }
 
 window.addEventListener("DOMContentLoaded", updateActiveLine);
 window.addEventListener("hashchange", updateActiveLine);
-
-document.querySelectorAll(".paste-line-copy").forEach((button) => {
-    button.addEventListener("click", () => {
-        copyLineUrl(button.dataset.copyAnchor, button.dataset.lineNumber);
-    });
-});
-
-const copyContentButton = document.getElementById("copy-content-btn");
-if (copyContentButton) {
-    copyContentButton.addEventListener("click", copyPasteContent);
-}
 </script>
 {% endblock %}

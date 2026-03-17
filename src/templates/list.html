@@ -3,36 +3,39 @@
 {% block title %}My Nopaste list{% endblock %}
 
 {% block content %}
-<section class="page-section">
-    <span class="eyebrow">Recent activity</span>
-    <div class="section-header">
-        <div>
-            <h2>My Nopaste list</h2>
-            <p class="section-subtitle">Newest first, based on your browser history.</p>
+<div class="paste-header">
+    <div class="paste-meta">
+        <div class="paste-meta-item">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <h2>My Pastes</h2>
         </div>
-        <span class="section-badge">{{ pastes|length }} total</span>
+        <span class="paste-meta-item" style="color: var(--text-muted);">{{ pastes|length }} total items</span>
     </div>
+</div>
 
-    {% if pastes %}
-    <div class="paste-list">
-        {% for paste in pastes %}
-        <a class="paste-list-item" href="/paste/{{ paste.id }}">
-            <div class="paste-list-row">
-                <strong class="paste-list-id">{{ paste.id }}</strong>
-                <span class="paste-list-time">{{ paste.created_at_display or "Unknown date" }}</span>
-            </div>
-            <p class="paste-list-preview">{{ paste.preview or "Empty first line" }}</p>
-            <div class="paste-list-meta">
-                <span>{{ paste.line_count }} lines</span>
-            </div>
-        </a>
-        {% endfor %}
+{% if pastes %}
+<div class="paste-list">
+    {% for paste in pastes %}
+    <a class="paste-card" href="/paste/{{ paste.id }}">
+        <div class="paste-card-header">
+            <span class="paste-card-title">{{ paste.id }}</span>
+            <span class="paste-card-time">{{ paste.created_at_display or "Unknown date" }}</span>
+        </div>
+        <pre class="paste-card-preview">{{ paste.preview or "Empty first line" }}</pre>
+        <div class="paste-meta" style="margin-top: var(--space-2); font-size: 0.75rem;">
+            <span>{{ paste.line_count }} lines</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="editor-card" style="text-align: center; padding: var(--space-12);">
+    <div style="color: var(--text-muted); margin-bottom: var(--space-4);">
+        <svg class="icon-svg" style="width: 48px; height: 48px; opacity: 0.5;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
     </div>
-    {% else %}
-    <div class="empty-state">
-        <h3>No saved pastes yet</h3>
-        <p>Create a paste on the main page and it will appear here.</p>
-    </div>
-    {% endif %}
-</section>
+    <h3>No saved pastes yet</h3>
+    <p style="color: var(--text-muted);">Create a paste on the main page and it will appear here.</p>
+    <a href="/" class="btn btn-primary" style="margin-top: var(--space-4);">Create First Paste</a>
+</div>
+{% endif %}
 {% endblock %}
