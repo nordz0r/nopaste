@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.1.1 (2026-03-17)
+
+### Bug Fixes
+
+- Restore docker publish pipeline
+  ([`43e1daf`](https://github.com/nordz0r/nopaste/commit/43e1daf9033eadc5cc98829877bb4ff369afad25))
+
+
 ## v1.1.0 (2026-03-17)
 
 ### Features
