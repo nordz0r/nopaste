@@ -12,7 +12,6 @@ __pycache__
 *.pyo
 *.pyd
 .env
-tests
 AGENTS.md
 README.md
 logs.sh

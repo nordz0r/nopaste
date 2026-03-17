@@ -60,6 +60,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          target: runtime
           push: false
           tags: nopaste:pr
           cache-from: type=gha
@@ -109,6 +110,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          target: runtime
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
