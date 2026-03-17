@@ -3,43 +3,25 @@
 {% block title %}Create Nopaste{% endblock %}
 
 {% block content %}
-<section class="hero-layout">
-    <div class="hero-copy">
-        <span class="eyebrow">Quiet drop zone for text</span>
-        <h1>Share text fast, then link straight to the exact line.</h1>
-        <p class="hero-text">
-            Nopaste keeps the flow simple: paste, save, send a clean link, and revisit your recent snippets from this browser.
-        </p>
-        <div class="hero-notes">
-            <span class="hero-note">Line anchors for reviews</span>
-            <span class="hero-note">Recent history in this browser</span>
-            <span class="hero-note">Lightweight plain-text sharing</span>
-        </div>
+<div class="editor-card">
+    <div class="editor-card-header">
+        <h2>Новая паста</h2>
     </div>
-    <div class="editor-card">
-        <div class="editor-card-header">
-            <h2>Create a new paste</h2>
-            <p>Plain text only. Empty submissions are blocked before sending.</p>
+    <form action="/paste" method="post" id="nopaste-form">
+        <label class="sr-only" for="paste-content-input">Paste content</label>
+        <textarea id="paste-content-input" name="content" rows="18" placeholder="Введите ваш текст здесь..."></textarea>
+        <div class="form-actions">
+            <input type="submit" value="Создать">
         </div>
-        <div class="form-container">
-            <form action="/paste" method="post" id="nopaste-form">
-                <label class="sr-only" for="paste-content-input">Paste content</label>
-                <textarea id="paste-content-input" name="content" rows="14" placeholder="Paste your text, logs, notes, or config here..."></textarea>
-                <div class="form-actions">
-                    <input type="submit" value="Save Paste">
-                </div>
-            </form>
-            <div id="notification" class="notification"></div>
-        </div>
-    </div>
-</section>
+    </form>
+</div>
 
 <script>
 document.getElementById("nopaste-form").addEventListener("submit", function(event) {
-    const textarea = document.querySelector("textarea[name='content']");
+    const textarea = document.getElementById("paste-content-input");
     if (!textarea.value.trim()) {
         event.preventDefault();
-        showNotification("Нельзя сохранить пустой nopaste!");
+        showNotification("Контент не может быть пустым!");
     }
 });
 </script>

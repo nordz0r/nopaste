@@ -6,50 +6,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Nopaste{% endblock %}</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="page-backdrop"></div>
     <header class="site-header">
         <div class="header-container">
             <div class="header-brand">
                 <a href="/" class="brand-lockup" aria-label="Nopaste home">
-                    <span class="brand-badge">
-                        <img src="/static/images/goldfinches_logo.png" alt="Goldfinch logo" class="brand-logo">
-                    </span>
-                    <span class="brand-copy">
-                        <span class="brand-kicker">Private-looking text sharing</span>
-                        <span class="brand-wordmark">Nopaste</span>
-                    </span>
+                    <img src="/static/images/logo-goldfinch.svg" alt="Goldfinch Logo" class="brand-logo">
+                    <span class="brand-wordmark">Nopaste</span>
                 </a>
-                {% if paste_id %}
-                <button id="copy-btn" class="secondary-button" title="Скопировать ссылку">Copy Link</button>
-                {% endif %}
             </div>
             <div class="header-actions">
-                <nav class="nav-links" aria-label="Primary">
-                    <a href="/list" class="nav-link">My List</a>
-                </nav>
+                <div class="btn-group">
+                    {% if paste_id %}
+                    <button id="copy-btn" class="secondary-button" title="Скопировать ссылку">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        <span>Copy Link</span>
+                    </button>
+                    {% endif %}
+                    <a href="/list" class="nav-link" title="My List">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                        <span>My List</span>
+                    </a>
+                </div>
             </div>
         </div>
     </header>
     <main class="container">
         {% block content %}{% endblock %}
     </main>
+
+    <div id="notification" class="notification" style="display: none;"></div>
+
     <script>
     function showNotification(message) {
         const notification = document.getElementById("notification");
-        if (!notification) {
-            return;
-        }
+        if (!notification) return;
+        
         notification.textContent = message;
         notification.style.display = "block";
+        notification.style.opacity = "1";
+        
         setTimeout(() => {
             notification.style.opacity = "0";
             setTimeout(() => {
                 notification.style.display = "none";
-                notification.style.opacity = "1";
-            }, 500);
-        }, 2000);
+            }, 300);
+        }, 2500);
     }
 
     function copyTextToClipboard(text, successMessage, failureMessage) {
@@ -62,14 +68,6 @@
         } else {
             fallbackCopy(text, successMessage, failureMessage);
         }
-    }
-
-    function copyPasteUrl() {
-        copyTextToClipboard(
-            window.location.href,
-            "Ссылка скопирована!",
-            "Не удалось скопировать ссылку"
-        );
     }
 
     function fallbackCopy(text, successMessage, failureMessage) {
@@ -95,7 +93,11 @@
     const copyButton = document.getElementById("copy-btn");
     if (copyButton) {
         copyButton.addEventListener("click", function() {
-            copyPasteUrl();
+            copyTextToClipboard(
+                window.location.href,
+                "Ссылка скопирована!",
+                "Не удалось скопировать ссылку"
+            );
         });
     }
     </script>

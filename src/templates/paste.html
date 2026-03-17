@@ -3,49 +3,38 @@
 {% block title %}Nopaste {{ paste_id }}{% endblock %}
 
 {% block content %}
-<section class="page-section">
-    <span class="eyebrow">Paste view</span>
-    <div class="section-header">
-        <div class="paste-title-row">
-            <h2>Nopaste {{ paste_id }}</h2>
-            <button type="button" id="copy-content-btn" class="paste-copy-button">Copy content</button>
-        </div>
+<div class="section-header">
+    <h2>Просмотр пасты {{ paste_id }}</h2>
+    <div class="btn-group">
+        <button type="button" id="copy-content-btn" class="secondary-button">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            <span>Copy Content</span>
+        </button>
     </div>
-</section>
-<div class="paste-container">
-    <div class="paste-toolbar">
-        <span class="paste-toolbar-item">{{ lines|length }} lines</span>
-        {% if created_at %}
-        <span class="paste-toolbar-item">{{ created_at }}</span>
-        {% endif %}
-    </div>
-    <div class="paste-lines" aria-label="Paste content with line numbers">
-        {% for line in lines %}
-        <div class="paste-line" id="{{ line.anchor }}" data-line-anchor="{{ line.anchor }}">
-            <a class="paste-line-number" href="#{{ line.anchor }}" aria-label="Copy link to line {{ line.number }}">{{ line.number }}</a>
-            <span class="paste-line-text">{% if line.text %}{{ line.text }}{% else %}&nbsp;{% endif %}</span>
-            <button
-                type="button"
-                class="paste-line-copy"
-                data-copy-anchor="{{ line.anchor }}"
-                data-line-number="{{ line.number }}"
-                aria-label="Copy direct link to line {{ line.number }}"
-            >
-                Copy
-            </button>
-        </div>
-        {% endfor %}
-    </div>
-    <div id="notification" class="notification"></div>
-    <textarea id="paste-raw-content" class="sr-only" aria-hidden="true" readonly>{{ content }}</textarea>
 </div>
+
+<div class="paste-toolbar">
+    <span class="paste-toolbar-item">{{ lines|length }} lines</span>
+    {% if created_at %}
+    <span class="paste-toolbar-item">{{ created_at }}</span>
+    {% endif %}
+</div>
+
+<div class="paste-lines" aria-label="Paste content with line numbers">
+    {% for line in lines %}
+    <div class="paste-line" id="{{ line.anchor }}" data-line-anchor="{{ line.anchor }}">
+        <a class="paste-line-number" href="#{{ line.anchor }}" aria-label="Copy link to line {{ line.number }}">{{ line.number }}</a>
+        <span class="paste-line-text">{% if line.text %}{{ line.text }}{% else %}&nbsp;{% endif %}</span>
+    </div>
+    {% endfor %}
+</div>
+
+<textarea id="paste-raw-content" class="sr-only" aria-hidden="true" readonly>{{ content }}</textarea>
 
 <script>
 function getSelectedRangeFromHash() {
     const match = window.location.hash.match(/^#L(\d+)(?:-L?(\d+))?$/);
-    if (!match) {
-        return null;
-    }
+    if (!match) return null;
 
     const firstLine = Number(match[1]);
     const secondLine = Number(match[2] || match[1]);
@@ -62,9 +51,7 @@ function updateActiveLine() {
     });
 
     const selectedRange = getSelectedRangeFromHash();
-    if (!selectedRange) {
-        return;
-    }
+    if (!selectedRange) return;
 
     document.querySelectorAll(".paste-line").forEach((line) => {
         const lineNumber = Number(line.dataset.lineAnchor.replace("L", ""));
@@ -74,23 +61,9 @@ function updateActiveLine() {
     });
 }
 
-function copyLineUrl(anchor, lineNumber) {
-    const lineUrl = `${window.location.origin}${window.location.pathname}#${anchor}`;
-    window.location.hash = anchor;
-    updateActiveLine();
-
-    copyTextToClipboard(
-        lineUrl,
-        `Line ${lineNumber} link copied`,
-        "Could not copy line link"
-    );
-}
-
 function copyPasteContent() {
     const contentField = document.getElementById("paste-raw-content");
-    if (!contentField) {
-        return;
-    }
+    if (!contentField) return;
 
     copyTextToClipboard(
         contentField.value,
@@ -101,12 +74,6 @@ function copyPasteContent() {
 
 window.addEventListener("DOMContentLoaded", updateActiveLine);
 window.addEventListener("hashchange", updateActiveLine);
-
-document.querySelectorAll(".paste-line-copy").forEach((button) => {
-    button.addEventListener("click", () => {
-        copyLineUrl(button.dataset.copyAnchor, button.dataset.lineNumber);
-    });
-});
 
 const copyContentButton = document.getElementById("copy-content-btn");
 if (copyContentButton) {

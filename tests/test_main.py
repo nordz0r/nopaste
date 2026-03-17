@@ -99,7 +99,6 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert response.status_code == 200
     assert 'id="L1"' in response.text
     assert 'href="#L2"' in response.text
-    assert 'data-copy-anchor="L2"' in response.text
     assert 'id="copy-content-btn"' in response.text
     assert 'id="paste-raw-content"' in response.text
     assert "hashchange" in response.text
@@ -119,7 +118,7 @@ def test_list_pastes_shows_newest_first_with_preview_and_line_count(client):
     response = client.get("/list")
 
     assert response.status_code == 200
-    assert "Newest first" in response.text
+    assert "My Saved Pastes" in response.text
     assert response.text.index(second_id) < response.text.index(first_id)
     assert "first line" in response.text
     assert "2 lines" in response.text

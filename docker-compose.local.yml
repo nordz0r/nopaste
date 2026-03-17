@@ -4,14 +4,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runtime
     image: nopaste:local
     container_name: nopaste-local
     ports:
       - "${APP_PORT:-8000}:8000"
     environment:
-      DATABASE_PATH: /data/pastes.db
-    volumes:
-      - nopaste_local_data:/data
+      DATABASE_PATH: /tmp/pastes.db
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health/ready"]
       interval: 30s
@@ -20,5 +19,13 @@ services:
       start_period: 10s
     restart: unless-stopped
 
-volumes:
-  nopaste_local_data:
+  tests:
+    profiles: ["test"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test-runtime
+    image: nopaste:test
+    container_name: nopaste-test
+    environment:
+      DATABASE_PATH: ":memory:"
