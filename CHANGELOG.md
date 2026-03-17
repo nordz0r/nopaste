@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.1.0 (2026-03-17)
+
+### Features
+
+- Refined studio design with accurate goldfinch logo and SVG icons
+  ([`8fd0fd1`](https://github.com/nordz0r/nopaste/commit/8fd0fd1671ba81db70341a27ea06179f534f6cb1))
+
+- Switch to studio dark theme and restore original logo
+  ([`d3b8a7b`](https://github.com/nordz0r/nopaste/commit/d3b8a7b629bfc32a8b95e348671b6911a2df1e60))
+
+- Современный редизайн и поддержка тестирования в Docker
+  ([`9b96b06`](https://github.com/nordz0r/nopaste/commit/9b96b0673399669276003182e20e29ca181bd456))
+
+
 ## v1.0.0 (2026-03-16)
 
 ### Bug Fixes
