@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.1.2 (2026-03-25)
+
+### Bug Fixes
+
+- Bundle fonts for offline deployments
+  ([`a6723d4`](https://github.com/nordz0r/nopaste/commit/a6723d4b9d70e129f3c77829f95ef2d20a9433cc))
+
+
 ## v1.1.1 (2026-03-17)
 
 ### Bug Fixes
