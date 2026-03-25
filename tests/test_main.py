@@ -1,4 +1,5 @@
 from http.cookies import SimpleCookie
+from pathlib import Path
 import re
 
 import pytest
@@ -23,6 +24,28 @@ def test_read_root(client):
     response = client.get("/")
     assert response.status_code == 200
     assert "Nopaste" in response.text
+
+
+def test_app_assets_do_not_reference_external_urls():
+    asset_files = [
+        *Path("src/templates").glob("*.html"),
+        *Path("src/static/css").glob("*.css"),
+    ]
+
+    for asset_file in asset_files:
+        content = asset_file.read_text(encoding="utf-8")
+        assert "http://" not in content
+        assert "https://" not in content
+
+
+def test_stylesheet_references_local_fonts(client):
+    response = client.get("/static/css/style.css")
+
+    assert response.status_code == 200
+    assert "/static/fonts/inter-400.ttf" in response.text
+    assert "/static/fonts/inter-500.ttf" in response.text
+    assert "/static/fonts/inter-600.ttf" in response.text
+    assert "/static/fonts/jetbrains-mono-400.ttf" in response.text
 
 
 def test_create_paste_uses_short_id_and_signed_cookie(client):
