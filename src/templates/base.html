@@ -71,7 +71,8 @@
 
     const copyBtn = document.getElementById("copy-btn");
     if (copyBtn) {
-        copyBtn.addEventListener("click", () => copyToClipboard(window.location.href, "Ссылка скопирована!"));
+        const copyTarget = {% if short_url %}"{{ short_url }}"{% else %}window.location.href{% endif %};
+        copyBtn.addEventListener("click", () => copyToClipboard(copyTarget, "Ссылка скопирована!"));
     }
     </script>
 </body>

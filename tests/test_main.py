@@ -283,6 +283,33 @@ def test_create_paste_without_shrink_omits_short_url(client):
     assert 'id="short-url-link"' not in view_response.text
 
 
+def test_copy_link_uses_short_url_when_shrink_configured(client, monkeypatch):
+    async def mock_shorten(_url: str) -> str:
+        return "https://gldf.ru/xy99z"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    create_response = client.post(
+        "/paste", data={"content": "copy link test"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    view_response = client.get(f"/paste/{paste_id}")
+
+    assert view_response.status_code == 200
+    assert '"https://gldf.ru/xy99z"' in view_response.text
+
+
+def test_copy_link_uses_page_url_without_shrink(client):
+    create_response = client.post(
+        "/paste", data={"content": "no shrink"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    view_response = client.get(f"/paste/{paste_id}")
+
+    assert view_response.status_code == 200
+    assert "window.location.href" in view_response.text
+
+
 def test_create_paste_succeeds_when_shrink_fails(client, monkeypatch):
     async def mock_shorten_fail(_url: str) -> None:
         return None
