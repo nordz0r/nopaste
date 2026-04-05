@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.2.0 (2026-04-05)
+
+### Features
+
+- Add Shlink URL shortener integration
+  ([`304f85b`](https://github.com/nordz0r/nopaste/commit/304f85b6f0ca345a16d17cdbbbc9c2deb4fa6680))
+
+
 ## v1.1.2 (2026-03-25)
 
 ### Bug Fixes
