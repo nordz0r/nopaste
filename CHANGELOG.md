@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.2.2 (2026-04-05)
+
+### Bug Fixes
+
+- Enable proxy headers for correct HTTPS URL generation
+  ([`04b3317`](https://github.com/nordz0r/nopaste/commit/04b3317dd88845560e013992cd9b001d603eedcf))
+
+### Documentation
+
+- Document Shlink URL shortener integration
+  ([`8829043`](https://github.com/nordz0r/nopaste/commit/882904362fbf65ca0708416085d85ef4a5707f9d))
+
+
 ## v1.2.1 (2026-04-05)
 
 ### Bug Fixes
