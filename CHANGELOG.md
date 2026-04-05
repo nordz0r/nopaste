@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.2.1 (2026-04-05)
+
+### Bug Fixes
+
+- Copy link button uses Shlink short URL when available
+  ([`ca5eaa6`](https://github.com/nordz0r/nopaste/commit/ca5eaa6b0ac524b9f8b7698b24153b135cb2e53b))
+
+
 ## v1.2.0 (2026-04-05)
 
 ### Features
