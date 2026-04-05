@@ -1,3 +1,4 @@
+import asyncio
 from http.cookies import SimpleCookie
 from pathlib import Path
 import re
@@ -234,3 +235,63 @@ def test_list_pastes_caps_recent_history(client, monkeypatch):
     assert third_id in response.text
     assert second_id in response.text
     assert first_id not in response.text
+
+
+def test_shorten_url_returns_none_without_config(monkeypatch):
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", None)
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", None)
+
+    result = asyncio.run(main_module.shorten_url("https://example.com/paste/abc123"))
+
+    assert result is None
+
+
+def test_shorten_url_returns_none_when_only_url_configured(monkeypatch):
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", None)
+
+    result = asyncio.run(main_module.shorten_url("https://example.com/paste/abc123"))
+
+    assert result is None
+
+
+def test_create_paste_with_shrink_shows_short_url_in_view(client, monkeypatch):
+    async def mock_shorten(_url: str) -> str:
+        return "https://gldf.ru/ab12c"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    create_response = client.post(
+        "/paste", data={"content": "short link test"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    view_response = client.get(f"/paste/{paste_id}")
+
+    assert view_response.status_code == 200
+    assert "https://gldf.ru/ab12c" in view_response.text
+    assert 'id="short-url-link"' in view_response.text
+
+
+def test_create_paste_without_shrink_omits_short_url(client):
+    create_response = client.post(
+        "/paste", data={"content": "no short link"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    view_response = client.get(f"/paste/{paste_id}")
+
+    assert view_response.status_code == 200
+    assert 'id="short-url-link"' not in view_response.text
+
+
+def test_create_paste_succeeds_when_shrink_fails(client, monkeypatch):
+    async def mock_shorten_fail(_url: str) -> None:
+        return None
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten_fail)
+
+    response = client.post(
+        "/paste", data={"content": "shrink failed"}, follow_redirects=False
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"].startswith("/paste/")

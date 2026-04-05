@@ -9,6 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -40,7 +41,6 @@ class CacheStaticFiles(StaticFiles):
 
 
 db = Database(settings.DATABASE_PATH)
-db.init_db()
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -175,6 +175,28 @@ def format_created_at(created_at: Any) -> str:
     return str(created_at)
 
 
+async def shorten_url(long_url: str) -> str | None:
+    if not settings.SHRINK_URL or not settings.SHRINK_TOKEN:
+        return None
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.SHRINK_URL.rstrip('/')}/rest/v3/short-urls",
+                json={"longUrl": long_url},
+                headers={"X-Api-Key": settings.SHRINK_TOKEN},
+                timeout=5.0,
+            )
+            response.raise_for_status()
+            short_url = response.json().get("shortUrl", "")
+            if not isinstance(short_url, str) or not short_url.startswith(("https://", "http://")):
+                logger.warning("Shlink returned unexpected shortUrl value: %r", short_url)
+                return None
+            return short_url
+    except (httpx.HTTPError, KeyError):
+        logger.warning("Failed to shorten URL: %s", long_url, exc_info=True)
+        return None
+
+
 def generate_paste_id(database: Database) -> str:
     for _ in range(MAX_PASTE_ID_GENERATION_ATTEMPTS):
         paste_id = "".join(
@@ -213,7 +235,9 @@ async def create_paste(
         )
 
     paste_id = generate_paste_id(db)
-    db.save_paste(paste_id, content)
+    paste_url = str(request.url_for("get_paste", paste_id=paste_id))
+    short_url = await shorten_url(paste_url)
+    db.save_paste(paste_id, content, short_url)
     logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
 
     # Получаем текущие пасты пользователя из куки
@@ -244,6 +268,7 @@ async def get_paste(request: Request, paste_id: str):
         return RedirectResponse(url="/", status_code=303)
     content = paste["content"]
     created_at = format_created_at(paste["created_at"])
+    short_url = paste.get("short_url")
     logger.info("Retrieved paste: id=%s", paste_id)
     return templates.TemplateResponse(
         request,
@@ -254,6 +279,7 @@ async def get_paste(request: Request, paste_id: str):
             "content": content,
             "created_at": created_at,
             "lines": build_paste_lines(content),
+            "short_url": short_url,
         },
     )
 

@@ -21,19 +21,24 @@ class Database:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )"""
             )
+        try:
+            self.conn.execute("ALTER TABLE pastes ADD COLUMN short_url TEXT")
+            self.conn.commit()
+        except sqlite3.OperationalError:
+            pass  # column already exists
 
-    def save_paste(self, paste_id: str, content: str) -> None:
+    def save_paste(self, paste_id: str, content: str, short_url: str | None = None) -> None:
         """Insert a new paste or replace an existing one with the same id."""
         with self.conn:
             self.conn.execute(
-                "INSERT OR REPLACE INTO pastes (id, content) VALUES (?, ?)",
-                (paste_id, content),
+                "INSERT OR REPLACE INTO pastes (id, content, short_url) VALUES (?, ?, ?)",
+                (paste_id, content, short_url),
             )
 
     def get_paste(self, paste_id: str) -> dict | None:
         """Retrieve a paste by its id."""
         cur = self.conn.execute(
-            "SELECT id, content, created_at FROM pastes WHERE id = ?",
+            "SELECT id, content, created_at, short_url FROM pastes WHERE id = ?",
             (paste_id,),
         )
         row = cur.fetchone()
