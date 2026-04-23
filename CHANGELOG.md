@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.3.1 (2026-04-23)
+
+### Bug Fixes
+
+- Improve save button legibility without enlarging it
+  ([`720e3bf`](https://github.com/nordz0r/nopaste/commit/720e3bf4df9151e0a56d206e0e981a1f82cd6717))
+
+
 ## v1.3.0 (2026-04-23)
 
 ### Features
