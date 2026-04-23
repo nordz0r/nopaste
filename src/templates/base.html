@@ -1,10 +1,25 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <link rel="icon" href="/static/images/favicon.png" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Nopaste{% endblock %}</title>
+    <title>{{ meta.title if meta else "Nopaste" }}</title>
+    <meta name="description" content="{{ meta.description if meta else 'Share text, logs, notes, and configs with Nopaste.' }}">
+    <meta name="theme-color" content="#0e1012">
+    <link rel="canonical" href="{{ meta.url if meta else request.url }}">
+    <link rel="icon" href="/static/images/favicon.png" type="image/png">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="{{ meta.site_name if meta else 'Nopaste' }}">
+    <meta property="og:type" content="{{ meta.type if meta else 'website' }}">
+    <meta property="og:title" content="{{ meta.title if meta else 'Nopaste' }}">
+    <meta property="og:description" content="{{ meta.description if meta else 'Share text, logs, notes, and configs with Nopaste.' }}">
+    <meta property="og:url" content="{{ meta.url if meta else request.url }}">
+    <meta property="og:image" content="{{ meta.image_url if meta else request.url_for('static', path='images/goldfinches_logo.png') }}">
+    <meta property="og:image:alt" content="{{ meta.image_alt if meta else 'Nopaste brand preview' }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ meta.title if meta else 'Nopaste' }}">
+    <meta name="twitter:description" content="{{ meta.description if meta else 'Share text, logs, notes, and configs with Nopaste.' }}">
+    <meta name="twitter:image" content="{{ meta.image_url if meta else request.url_for('static', path='images/goldfinches_logo.png') }}">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -12,20 +27,16 @@
         <div class="header-container">
             <div class="header-brand">
                 <a href="/" class="brand-lockup" aria-label="Nopaste home">
-                    <img src="/static/images/goldfinches_logo.png" alt="Goldfinch logo" class="brand-logo">
+                    <span class="brand-mark" aria-hidden="true">
+                        <img src="/static/images/goldfinches_logo.png" alt="Nopaste logo" class="brand-logo">
+                    </span>
                     <span class="brand-wordmark">Nopaste</span>
                 </a>
-                {% if paste_id %}
-                <button id="copy-btn" class="btn btn-secondary" title="Скопировать ссылку">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-                    <span>Copy Link</span>
-                </button>
-                {% endif %}
             </div>
             <div class="header-actions">
                 <nav aria-label="Primary">
                     <a href="/list" class="btn btn-secondary" title="My Pastes">
-                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                        <img src="/static/images/list.png" alt="" class="btn-icon-image btn-icon-image-list">
                         <span>My List</span>
                     </a>
                 </nav>

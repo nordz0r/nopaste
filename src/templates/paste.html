@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 
-{% block title %}Nopaste {{ paste_id }}{% endblock %}
-
 {% block content %}
 <div class="paste-header">
     <div class="paste-meta">
@@ -19,6 +17,28 @@
             <span>{{ created_at }}</span>
         </div>
         {% endif %}
+        <div class="paste-meta-actions" aria-label="Paste actions">
+            <button
+                id="copy-btn"
+                class="btn btn-secondary btn-icon-only"
+                type="button"
+                title="Скопировать ссылку"
+                aria-label="Скопировать ссылку"
+            >
+                <img src="/static/images/favicon.png" alt="" class="btn-icon-image">
+                <span class="sr-only">Copy Link</span>
+            </button>
+            <button
+                type="button"
+                id="copy-content-btn"
+                class="btn btn-secondary btn-icon-only"
+                title="Скопировать содержимое"
+                aria-label="Скопировать содержимое"
+            >
+                <img src="/static/images/copy.png" alt="" class="btn-icon-image btn-icon-image-copy">
+                <span class="sr-only">Copy Content</span>
+            </button>
+        </div>
     </div>
     {% if short_url %}
     <div class="paste-meta-item">
@@ -26,12 +46,6 @@
         <a href="{{ short_url }}" id="short-url-link">{{ short_url }}</a>
     </div>
     {% endif %}
-    <div class="header-actions">
-        <button type="button" id="copy-content-btn" class="btn btn-secondary">
-            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-            <span>Copy Content</span>
-        </button>
-    </div>
 </div>
 
 <div class="paste-container">

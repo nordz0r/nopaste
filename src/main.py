@@ -24,9 +24,12 @@ logger = logging.getLogger(__name__)
 SHORT_PASTE_ID_LENGTH = 6
 SHORT_PASTE_ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz"
 MAX_PASTE_ID_GENERATION_ATTEMPTS = 20
+APP_NAME = "Nopaste"
+DEFAULT_META_DESCRIPTION = "Share text, logs, notes, and configs with Nopaste."
+BRAND_PREVIEW_IMAGE_PATH = "images/goldfinches_logo.png"
 
 app = FastAPI(
-    title="Nopaste API",
+    title=APP_NAME,
     description="API для простого nopaste приложения",
     debug=settings.DEBUG,
 )
@@ -175,6 +178,39 @@ def format_created_at(created_at: Any) -> str:
     return str(created_at)
 
 
+def resolve_public_base_url(request: Request) -> str:
+    if settings.PUBLIC_BASE_URL:
+        return settings.PUBLIC_BASE_URL.rstrip("/")
+    return str(request.base_url).rstrip("/")
+
+
+def build_absolute_app_url(request: Request, path: str, query: str = "") -> str:
+    normalized_path = path if path.startswith("/") else f"/{path}"
+    query_suffix = f"?{query}" if query else ""
+    return f"{resolve_public_base_url(request)}{normalized_path}{query_suffix}"
+
+
+def build_page_meta(
+    request: Request,
+    *,
+    title: str,
+    description: str = DEFAULT_META_DESCRIPTION,
+    page_type: str = "website",
+) -> dict[str, str]:
+    preview_image_path = request.url_for("static", path=BRAND_PREVIEW_IMAGE_PATH).path
+    return {
+        "title": title,
+        "description": description,
+        "url": build_absolute_app_url(
+            request, request.url.path, request.url.query or ""
+        ),
+        "image_url": build_absolute_app_url(request, preview_image_path),
+        "image_alt": f"{APP_NAME} brand preview",
+        "site_name": APP_NAME,
+        "type": page_type,
+    }
+
+
 async def shorten_url(long_url: str) -> str | None:
     if not settings.SHRINK_URL or not settings.SHRINK_TOKEN:
         return None
@@ -188,8 +224,12 @@ async def shorten_url(long_url: str) -> str | None:
             )
             response.raise_for_status()
             short_url = response.json().get("shortUrl", "")
-            if not isinstance(short_url, str) or not short_url.startswith(("https://", "http://")):
-                logger.warning("Shlink returned unexpected shortUrl value: %r", short_url)
+            if not isinstance(short_url, str) or not short_url.startswith(
+                ("https://", "http://")
+            ):
+                logger.warning(
+                    "Shlink returned unexpected shortUrl value: %r", short_url
+                )
                 return None
             return short_url
     except (httpx.HTTPError, KeyError):
@@ -215,7 +255,17 @@ def generate_paste_id(database: Database) -> str:
     description="Отображает форму для создания нового nopaste.",
 )
 async def read_root(request: Request):
-    return templates.TemplateResponse(request, "index.html", {"request": request})
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "request": request,
+            "meta": build_page_meta(
+                request,
+                title="Nopaste — create and share text instantly",
+            ),
+        },
+    )
 
 
 @app.post(
@@ -280,6 +330,14 @@ async def get_paste(request: Request, paste_id: str):
             "created_at": created_at,
             "lines": build_paste_lines(content),
             "short_url": short_url,
+            "meta": build_page_meta(
+                request,
+                title=f"Nopaste — paste {paste_id}",
+                description=(
+                    f"Open paste {paste_id} in Nopaste — a clean way to share text, "
+                    "logs, notes, and configs."
+                ),
+            ),
         },
     )
 
@@ -294,7 +352,17 @@ async def list_pastes(request: Request):
     paste_records = db.get_user_pastes(user_pastes)
     pastes = [build_paste_summary(paste) for paste in paste_records]
     return templates.TemplateResponse(
-        request, "list.html", {"request": request, "pastes": pastes}
+        request,
+        "list.html",
+        {
+            "request": request,
+            "pastes": pastes,
+            "meta": build_page_meta(
+                request,
+                title="Nopaste — your recent pastes",
+                description="Browse the pastes saved in your recent Nopaste history.",
+            ),
+        },
     )
 
 

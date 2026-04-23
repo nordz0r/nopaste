@@ -90,6 +90,9 @@ COMPOSE_FILE=docker-compose.local.yml ./stop.sh nopaste-app
 - `COOKIE_SIGNING_SECRET` — секрет подписи cookie со списком recent pastes
 - `MAX_PASTE_SIZE_BYTES` — максимальный размер одного paste в байтах
 - `MAX_RECENT_PASTES` — сколько recent pastes хранить в cookie
+- `SHRINK_URL` — базовый URL Shlink, если нужен короткий URL для paste
+- `SHRINK_TOKEN` — API-ключ Shlink
+- `PUBLIC_BASE_URL` — внешний базовый URL приложения для canonical/Open Graph/Twitter preview-метаданных (например, `https://paste.goldfinches.ru`)
 
 ## CI/CD и релизы
 

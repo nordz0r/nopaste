@@ -25,6 +25,15 @@ def test_read_root(client):
     response = client.get("/")
     assert response.status_code == 200
     assert "Nopaste" in response.text
+    assert "<title>Nopaste — create and share text instantly</title>" in response.text
+    assert 'src="/static/images/goldfinches_logo.png"' in response.text
+    assert 'class="brand-mark"' in response.text
+    assert 'src="/static/images/list.png"' in response.text
+    assert 'src="/static/images/save.png"' in response.text
+    assert 'rel="icon" href="/static/images/favicon.png"' in response.text
+    assert "Ctrl + Enter to save" in response.text
+    assert "event.ctrlKey || event.metaKey" in response.text
+    assert "nopasteForm.requestSubmit()" in response.text
 
 
 def test_app_assets_do_not_reference_external_urls():
@@ -125,8 +134,72 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert 'href="#L2"' in response.text
     assert 'id="copy-content-btn"' in response.text
     assert 'id="paste-raw-content"' in response.text
+    assert 'id="copy-btn"' in response.text
+    assert 'class="btn-icon-image"' in response.text
+    assert 'src="/static/images/favicon.png"' in response.text
+    assert 'src="/static/images/copy.png"' in response.text
+    assert 'class="paste-meta-actions"' in response.text
+    assert response.text.index('id="copy-btn"') < response.text.index(
+        'id="copy-content-btn"'
+    )
     assert "hashchange" in response.text
     assert "Use line numbers" not in response.text
+
+
+def test_get_paste_includes_branded_link_preview_metadata(client):
+    create_response = client.post(
+        "/paste", data={"content": "secret preview content"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}")
+
+    assert response.status_code == 200
+    assert '<meta property="og:site_name" content="Nopaste">' in response.text
+    assert (
+        f'<meta property="og:title" content="Nopaste — paste {paste_id}">'
+        in response.text
+    )
+    assert '<meta property="og:description" content="Open paste ' in response.text
+    assert (
+        f'<meta property="og:url" content="http://testserver/paste/{paste_id}">'
+        in response.text
+    )
+    assert (
+        '<meta property="og:image" '
+        'content="http://testserver/static/images/goldfinches_logo.png">'
+        in response.text
+    )
+    assert '<meta name="twitter:card" content="summary_large_image">' in response.text
+    description_match = re.search(
+        r'<meta property="og:description" content="([^"]+)">',
+        response.text,
+    )
+    assert description_match is not None
+    assert "secret preview content" not in description_match.group(1)
+
+
+def test_public_base_url_overrides_share_metadata_urls(client, monkeypatch):
+    monkeypatch.setattr(
+        main_module.settings, "PUBLIC_BASE_URL", "https://paste.goldfinches.ru"
+    )
+    create_response = client.post(
+        "/paste", data={"content": "metadata base url"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}")
+
+    assert response.status_code == 200
+    assert (
+        f'<meta property="og:url" content="https://paste.goldfinches.ru/paste/{paste_id}">'
+        in response.text
+    )
+    assert (
+        '<meta property="og:image" '
+        'content="https://paste.goldfinches.ru/static/images/goldfinches_logo.png">'
+        in response.text
+    )
 
 
 def test_list_pastes_shows_newest_first_with_preview_and_line_count(client):

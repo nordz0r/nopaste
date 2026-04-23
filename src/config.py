@@ -31,6 +31,10 @@ class Settings(BaseSettings):
         default=None,
         description="Shlink API key used to authenticate URL shortening requests.",
     )
+    PUBLIC_BASE_URL: str | None = Field(
+        default=None,
+        description="Public base URL used for canonical/share metadata when the app is served behind a proxy.",
+    )
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_file=".env",

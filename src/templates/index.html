@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 
-{% block title %}Create Nopaste{% endblock %}
-
 {% block content %}
 <div class="editor-card">
     <div class="editor-card-header">
@@ -13,8 +11,11 @@
             <label class="sr-only" for="paste-content-input">Paste content</label>
             <textarea id="paste-content-input" name="content" rows="14" placeholder="Paste your text, logs, notes, or config here..." autofocus></textarea>
             <div class="form-actions">
+                <span class="form-hint">Ctrl + Enter to save</span>
                 <button type="submit" class="btn btn-primary">
-                    <svg class="icon-svg" viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+                    <span class="icon-badge icon-badge-warm" aria-hidden="true">
+                        <img src="/static/images/save.png" alt="" class="btn-icon-image btn-icon-image-save">
+                    </span>
                     <span>Save Paste</span>
                 </button>
             </div>
@@ -23,11 +24,20 @@
 </div>
 
 <script>
-document.getElementById("nopaste-form").addEventListener("submit", function(event) {
-    const textarea = document.getElementById("paste-content-input");
+const nopasteForm = document.getElementById("nopaste-form");
+const textarea = document.getElementById("paste-content-input");
+
+nopasteForm.addEventListener("submit", function(event) {
     if (!textarea.value.trim()) {
         event.preventDefault();
         showNotification("Нельзя сохранить пустой nopaste!");
+    }
+});
+
+textarea.addEventListener("keydown", function(event) {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        nopasteForm.requestSubmit();
     }
 });
 </script>
