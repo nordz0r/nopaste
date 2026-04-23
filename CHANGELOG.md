@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.3.2 (2026-04-23)
+
+### Bug Fixes
+
+- Prevent stale cached CSS after deploys
+  ([`b3b26a6`](https://github.com/nordz0r/nopaste/commit/b3b26a6ef586e49c59743a062ffe97133d74c676))
+
+
 ## v1.3.1 (2026-04-23)
 
 ### Bug Fixes
