@@ -2,6 +2,7 @@ import asyncio
 from http.cookies import SimpleCookie
 from pathlib import Path
 import re
+import tomllib
 
 import pytest
 import src.main as main_module
@@ -23,6 +24,10 @@ def client(tmp_path, monkeypatch):
 
 def test_read_root(client):
     response = client.get("/")
+    asset_version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))[
+        "project"
+    ]["version"]
+
     assert response.status_code == 200
     assert "Nopaste" in response.text
     assert "<title>Nopaste — create and share text instantly</title>" in response.text
@@ -31,6 +36,7 @@ def test_read_root(client):
     assert 'src="/static/images/list.png"' in response.text
     assert 'src="/static/images/save.png"' in response.text
     assert 'rel="icon" href="/static/images/favicon.png"' in response.text
+    assert f'/static/css/style.css?v={asset_version}' in response.text
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
     assert "nopasteForm.requestSubmit()" in response.text

@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 import secrets
+import tomllib
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -46,10 +47,28 @@ class CacheStaticFiles(StaticFiles):
 db = Database(settings.DATABASE_PATH)
 
 BASE_DIR = Path(__file__).parent
+PROJECT_ROOT = BASE_DIR.parent
+PYPROJECT_PATH = PROJECT_ROOT / "pyproject.toml"
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount(
     "/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static"
 )
+
+
+def load_asset_version() -> str:
+    try:
+        pyproject_data = tomllib.loads(PYPROJECT_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, tomllib.TOMLDecodeError):
+        logger.warning("Could not load asset version from %s", PYPROJECT_PATH)
+        return "dev"
+
+    version = pyproject_data.get("project", {}).get("version")
+    if not isinstance(version, str) or not version.strip():
+        return "dev"
+    return version.strip()
+
+
+templates.env.globals["asset_version"] = load_asset_version()
 
 
 def load_user_pastes(request: Request) -> list[str]:

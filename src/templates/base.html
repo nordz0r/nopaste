@@ -20,7 +20,7 @@
     <meta name="twitter:title" content="{{ meta.title if meta else 'Nopaste' }}">
     <meta name="twitter:description" content="{{ meta.description if meta else 'Share text, logs, notes, and configs with Nopaste.' }}">
     <meta name="twitter:image" content="{{ meta.image_url if meta else request.url_for('static', path='images/goldfinches_logo.png') }}">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v={{ asset_version }}">
 </head>
 <body>
     <header class="site-header">
