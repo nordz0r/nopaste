@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.3.0 (2026-04-23)
+
+### Features
+
+- Make nopaste links and branding easier to recognize
+  ([`c7d90f0`](https://github.com/nordz0r/nopaste/commit/c7d90f09ba6bfe44d5f3c47ca70c90b771bea67a))
+
+
 ## v1.2.2 (2026-04-05)
 
 ### Bug Fixes
