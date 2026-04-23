@@ -257,6 +257,13 @@ a { color: inherit; text-decoration: none; }
     color: #ffbf47;
 }
 
+.icon-badge-plain {
+    background: transparent;
+    color: inherit;
+    border-radius: 0;
+    box-shadow: none;
+}
+
 .icon-badge-cool {
     background: linear-gradient(135deg, rgba(214, 236, 255, 0.28), rgba(156, 210, 255, 0.16));
     color: #d3ebff;
@@ -281,8 +288,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .btn-icon-image-save {
-    width: 14px;
-    height: 14px;
+    width: 18px;
+    height: 18px;
+    filter: none;
 }
 
 .btn-icon-image-list {
