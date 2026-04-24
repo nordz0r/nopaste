@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.3.3 (2026-04-24)
+
+### Bug Fixes
+
+- Keep displayed app version aligned with releases
+  ([`6f8c3a8`](https://github.com/nordz0r/nopaste/commit/6f8c3a80fb5ff355411fd717b66e3ec80ca0ce3f))
+
+- Update uv.lock
+  ([`eb898bb`](https://github.com/nordz0r/nopaste/commit/eb898bbf36ae0b78fa8412f95ca7f6b33d343933))
+
+
 ## v1.3.2 (2026-04-23)
 
 ### Bug Fixes
