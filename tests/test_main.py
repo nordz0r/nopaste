@@ -25,7 +25,10 @@ def client(tmp_path, monkeypatch):
 def test_read_root(client):
     response = client.get("/")
     asset_version = main_module.APP_VERSION
-    expected_footer = f"© {datetime.now().year} NorD · Nopaste v{asset_version}"
+    expected_footer = (
+        f'© {datetime.now().year} <a href="https://cv.goldfinches.ru">NorD</a> · '
+        f"Nopaste v{asset_version}"
+    )
 
     assert response.status_code == 200
     assert "Nopaste" in response.text
@@ -71,14 +74,18 @@ def test_load_asset_version_returns_dev_without_pyproject(tmp_path, monkeypatch)
     assert main_module.load_asset_version() == "dev"
 
 
-def test_app_assets_do_not_reference_external_urls():
+def test_app_assets_only_reference_approved_external_urls():
     asset_files = [
         *Path("src/templates").glob("*.html"),
         *Path("src/static/css").glob("*.css"),
     ]
+    approved_external_urls = ("https://cv.goldfinches.ru",)
 
     for asset_file in asset_files:
         content = asset_file.read_text(encoding="utf-8")
+        for approved_external_url in approved_external_urls:
+            content = content.replace(approved_external_url, "")
+
         assert "http://" not in content
         assert "https://" not in content
 
