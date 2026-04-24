@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.3.5 (2026-04-24)
+
+### Bug Fixes
+
+- Improve editor layout responsiveness
+  ([`ba960f3`](https://github.com/nordz0r/nopaste/commit/ba960f3c63a865079c5a98b7d65b8a5cb067fced))
+
+
 ## v1.3.4 (2026-04-24)
 
 ### Bug Fixes
