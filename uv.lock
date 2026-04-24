@@ -213,6 +213,7 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "pydantic-settings" },
+    { name = "pygments" },
     { name = "python-multipart" },
     { name = "uvicorn", extra = ["standard"] },
 ]
@@ -234,6 +235,7 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.27.2" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "pygments", specifier = ">=2.20.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.5" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=6.0.0" },
     { name = "python-multipart", specifier = ">=0.0.17" },

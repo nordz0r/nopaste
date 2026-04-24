@@ -11,6 +11,10 @@
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 18h17v-6H4v6zM4 5v6h17V5H4z"/></svg>
             <span>{{ lines|length }} lines</span>
         </div>
+        <div class="paste-meta-item paste-language-badge" title="Automatically detected syntax">
+            <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M8.59 16.59L4 12l4.59-4.59L10 8.83 6.83 12 10 15.17l-1.41 1.42zM15.41 16.59L14 15.17 17.17 12 14 8.83l1.41-1.42L20 12l-4.59 4.59z"/></svg>
+            <span>{{ highlighted_language }}</span>
+        </div>
         {% if created_at %}
         <div class="paste-meta-item">
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2C11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
@@ -53,7 +57,7 @@
         {% for line in lines %}
         <div class="paste-line" id="{{ line.anchor }}" data-line-anchor="{{ line.anchor }}">
             <a class="paste-line-number" href="#{{ line.anchor }}" aria-label="Copy link to line {{ line.number }}">{{ line.number }}</a>
-            <span class="paste-line-text">{% if line.text %}{{ line.text }}{% else %}&nbsp;{% endif %}</span>
+            <span class="paste-line-text">{% if line.html %}{{ line.html|safe }}{% else %}&nbsp;{% endif %}</span>
         </div>
         {% endfor %}
     </div>

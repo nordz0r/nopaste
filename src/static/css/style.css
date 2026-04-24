@@ -443,8 +443,13 @@ textarea:focus {
     gap: var(--space-2);
 }
 
+.paste-language-badge {
+    color: var(--accent);
+}
+
 .paste-container {
-    background: #000; /* Dark background for code */
+    background: #242933; /* Pygments nord-darker background */
+    color: #D8DEE9;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     overflow: auto;
@@ -469,12 +474,12 @@ textarea:focus {
 .paste-line-number {
     padding: var(--space-1) var(--space-2);
     text-align: right;
-    color: #5f6368;
+    color: #6b7280;
     font-family: var(--font-mono);
     font-size: 0.85rem;
-    border-right: 1px solid var(--border);
+    border-right: 1px solid #3b4252;
     user-select: none;
-    background: #111;
+    background: #20242d;
 }
 
 .paste-line-text {
@@ -483,6 +488,117 @@ textarea:focus {
     font-size: 1rem;
     white-space: pre;
     color: #e8eaed;
+}
+
+.paste-line-text .c,
+.paste-line-text .ch,
+.paste-line-text .cm,
+.paste-line-text .cpf,
+.paste-line-text .c1,
+.paste-line-text .cs {
+    color: #616E87;
+    font-style: italic;
+}
+
+.paste-line-text .cp {
+    color: #5E81AC;
+    font-style: italic;
+}
+
+.paste-line-text .k,
+.paste-line-text .kc,
+.paste-line-text .kd,
+.paste-line-text .kn,
+.paste-line-text .kr,
+.paste-line-text .o,
+.paste-line-text .ow {
+    color: #81A1C1;
+    font-weight: 700;
+}
+
+.paste-line-text .kp,
+.paste-line-text .kt,
+.paste-line-text .nb,
+.paste-line-text .bp,
+.paste-line-text .nt {
+    color: #81A1C1;
+}
+
+.paste-line-text .s,
+.paste-line-text .sa,
+.paste-line-text .sb,
+.paste-line-text .sc,
+.paste-line-text .dl,
+.paste-line-text .sh,
+.paste-line-text .si,
+.paste-line-text .sx,
+.paste-line-text .s1,
+.paste-line-text .s2,
+.paste-line-text .ss {
+    color: #A3BE8C;
+}
+
+.paste-line-text .sd {
+    color: #616E87;
+}
+
+.paste-line-text .se,
+.paste-line-text .sr {
+    color: #EBCB8B;
+}
+
+.paste-line-text .m,
+.paste-line-text .mb,
+.paste-line-text .mf,
+.paste-line-text .mh,
+.paste-line-text .mi,
+.paste-line-text .mo,
+.paste-line-text .il {
+    color: #B48EAD;
+}
+
+.paste-line-text .na,
+.paste-line-text .nc,
+.paste-line-text .no,
+.paste-line-text .nn {
+    color: #8FBCBB;
+}
+
+.paste-line-text .nd,
+.paste-line-text .ni {
+    color: #D08770;
+}
+
+.paste-line-text .err,
+.paste-line-text .gd,
+.paste-line-text .gr,
+.paste-line-text .gt,
+.paste-line-text .ne {
+    color: #BF616A;
+}
+
+.paste-line-text .nf,
+.paste-line-text .fm,
+.paste-line-text .gh,
+.paste-line-text .gu {
+    color: #88C0D0;
+}
+
+.paste-line-text .gh,
+.paste-line-text .gu {
+    font-weight: 700;
+}
+
+.paste-line-text .gi {
+    color: #A3BE8C;
+}
+
+.paste-line-text .ge {
+    font-style: italic;
+}
+
+.paste-line-text .gs {
+    font-weight: 700;
 }
 
 /* Paste List */

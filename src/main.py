@@ -19,6 +19,7 @@ from fastapi.templating import Jinja2Templates
 
 from config import settings
 from database import Database
+from highlighting import build_highlighted_paste
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -451,6 +452,7 @@ async def get_paste(request: Request, paste_id: str):
     content = paste["content"]
     created_at = format_created_at(paste["created_at"])
     short_url = paste.get("short_url")
+    highlighted_paste = build_highlighted_paste(content)
     logger.info("Retrieved paste: id=%s", paste_id)
     return templates.TemplateResponse(
         request,
@@ -462,7 +464,8 @@ async def get_paste(request: Request, paste_id: str):
             "paste_id": paste_id,
             "content": content,
             "created_at": created_at,
-            "lines": build_paste_lines(content),
+            "lines": highlighted_paste.lines,
+            "highlighted_language": highlighted_paste.language,
             "short_url": short_url,
             "meta": build_page_meta(
                 request,

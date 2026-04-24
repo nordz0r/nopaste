@@ -9,6 +9,7 @@ import src.main as main_module
 from fastapi.testclient import TestClient
 
 from src.database import Database
+from highlighting import build_highlighted_paste
 
 
 @pytest.fixture()
@@ -206,10 +207,69 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert "Use line numbers" not in response.text
 
 
+def test_get_paste_auto_highlights_python_content(client):
+    python_content = (
+        'import os\n\ndef greet(name: str) -> str:\n    return f"hi {name}"'
+    )
+    create_response = client.post(
+        "/paste", data={"content": python_content}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}")
+
+    assert response.status_code == 200
+    assert "Automatically detected syntax" in response.text
+    assert ">Python<" in response.text
+    assert '<span class="kn">import</span>' in response.text
+    assert '<span class="k">def</span>' in response.text
+    assert 'id="L4"' in response.text
+
+
+def test_get_paste_escapes_highlighted_html_content(client):
+    create_response = client.post(
+        "/paste",
+        data={"content": '<script>alert("x")</script>\nplain'},
+        follow_redirects=False,
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}")
+
+    assert response.status_code == 200
+    assert '<script>alert("x")</script>' not in response.text
+    assert "&lt;script&gt;" in response.text
+    assert "alert(&quot;x&quot;)" in response.text
+    assert "plain" in response.text
+
+
+def test_get_paste_falls_back_to_plain_text_highlighting(client):
+    create_response = client.post(
+        "/paste", data={"content": "alpha\nbeta"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}")
+
+    assert response.status_code == 200
+    assert ">Plain text<" in response.text
+    assert "alpha" in response.text
+    assert "beta" in response.text
+
+
+def test_highlighted_paste_preserves_trailing_blank_lines():
+    highlighted_paste = build_highlighted_paste("alpha\n")
+
+    assert highlighted_paste.language == "Plain text"
+    assert [line["number"] for line in highlighted_paste.lines] == [1, 2]
+    assert [line["anchor"] for line in highlighted_paste.lines] == ["L1", "L2"]
+    assert highlighted_paste.lines[0]["html"] == "alpha"
+    assert highlighted_paste.lines[1]["html"] == ""
+
+
 def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
     # Ensure we test the fallback behavior (no PUBLIC_BASE_URL), independent of .env
     monkeypatch.setattr(main_module.settings, "PUBLIC_BASE_URL", None)
-
     create_response = client.post(
         "/paste", data={"content": "secret preview content"}, follow_redirects=False
     )
