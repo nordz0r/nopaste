@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.3.4 (2026-04-24)
+
+### Bug Fixes
+
+- Surface the author profile from the footer
+  ([`5f9c0ca`](https://github.com/nordz0r/nopaste/commit/5f9c0ca8508bfded709206216d9ca810793a62fb))
+
+
 ## v1.3.3 (2026-04-24)
 
 ### Bug Fixes
