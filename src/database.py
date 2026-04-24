@@ -27,7 +27,9 @@ class Database:
         except sqlite3.OperationalError:
             pass  # column already exists
 
-    def save_paste(self, paste_id: str, content: str, short_url: str | None = None) -> None:
+    def save_paste(
+        self, paste_id: str, content: str, short_url: str | None = None
+    ) -> None:
         """Insert a new paste or replace an existing one with the same id."""
         with self.conn:
             self.conn.execute(

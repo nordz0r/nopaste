@@ -5,6 +5,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
+      args:
+        APP_VERSION: ${APP_VERSION:-}
     image: nopaste:local
     container_name: nopaste-local
     ports:
@@ -25,6 +27,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: test-runtime
+      args:
+        APP_VERSION: ${APP_VERSION:-}
     image: nopaste:test
     container_name: nopaste-test
     environment:

@@ -16,14 +16,17 @@ RUN uv sync --frozen --extra test --no-install-project --compile-bytecode
 # ---- test-runtime ----
 FROM python:3.12-alpine AS test-runtime
 
+ARG APP_VERSION=""
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    APP_VERSION="${APP_VERSION}" \
     PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH="/app/src"
 
 WORKDIR /app
 
 COPY --from=test-builder /app/.venv .venv
+COPY pyproject.toml ./
 COPY ./src ./src
 COPY ./tests ./tests
 
@@ -32,8 +35,10 @@ CMD ["pytest"]
 # ---- prod-runtime ----
 FROM python:3.12-alpine AS runtime
 
+ARG APP_VERSION=""
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    APP_VERSION="${APP_VERSION}" \
     TZ=Europe/Moscow \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
@@ -48,6 +53,7 @@ RUN apk upgrade --clean-protected --no-cache && \
 WORKDIR /app
 
 COPY --from=prod-builder --chown=sam:sam /app/.venv .venv
+COPY --chown=sam:sam pyproject.toml ./
 COPY --chown=sam:sam ./src ./
 
 USER sam

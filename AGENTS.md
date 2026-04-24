@@ -1,10 +1,10 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-`src/` contains the FastAPI application. `src/main.py` defines routes and mounts templates/static assets, `src/database.py` wraps SQLite access, and `src/config.py` loads environment-based settings. Jinja templates live in `src/templates/`; CSS and images live in `src/static/`. Tests are under `tests/`. Delivery files stay at the repo root: `Dockerfile`, `docker-compose.yml`, `docker-compose.local.yml`, shell helpers, `pyproject.toml`, `uv.lock`, `version.txt`, and `CHANGELOG.md`.
+`src/` contains the FastAPI application. `src/main.py` defines routes and mounts templates/static assets, `src/database.py` wraps SQLite access, and `src/config.py` loads environment-based settings. Jinja templates live in `src/templates/`; CSS and images live in `src/static/`. Tests are under `tests/`. Delivery files stay at the repo root: `Dockerfile`, `docker-compose.yml`, `docker-compose.local.yml`, shell helpers, `pyproject.toml`, `uv.lock`, and `CHANGELOG.md`.
 
 ## Build, Test, and Development Commands
-`uv sync --extra test --group dev` installs the pinned app, test dependencies, and dev tools such as Ruff.
+`uv sync --frozen --extra test --group dev` installs the pinned app, test dependencies, and dev tools such as Ruff from `uv.lock`.
 `uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000` starts the local dev server with reload.
 `uv run python src/main.py` runs the app through its entry point.
 `uv run pytest` executes the test suite.

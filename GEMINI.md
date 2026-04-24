@@ -31,7 +31,7 @@ Ensure you have `uv` installed.
 
 1.  **Install dependencies:**
     ```bash
-    uv sync --extra test --group dev
+    uv sync --frozen --extra test --group dev
     ```
 2.  **Run the development server:**
     ```bash
@@ -68,7 +68,7 @@ Ensure you have `uv` installed.
 
 ### Commits & Releases
 - **Conventional Commits:** The project uses `python-semantic-release`. Commits must follow the conventional commit format (e.g., `feat:`, `fix:`, `chore:`, `ci:`) to automate versioning and changelog generation.
-- **Versioning:** Version is tracked in `version.txt` and `pyproject.toml`.
+- **Versioning:** `python-semantic-release` updates `pyproject.toml` and `CHANGELOG.md`; release Docker builds inject the computed SemVer through `APP_VERSION`.
 
 ### Database
 - SQLite is used for simplicity. The database is initialized automatically on startup (`src/database.py`).
@@ -82,4 +82,4 @@ Ensure you have `uv` installed.
 
 ## CI/CD Pipeline
 - **Docker Hub:** Automatically publishes the `nordz0r/nopaste` image on pushes to `main`.
-- **Release:** Handles semantic versioning, updates `CHANGELOG.md`, tags the repo, and creates GitHub releases.
+- **Release:** Handles semantic versioning, updates `pyproject.toml` and `CHANGELOG.md`, tags the repo, injects `APP_VERSION` into release images, and creates GitHub releases.

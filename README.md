@@ -24,7 +24,7 @@ tests/             pytest suite
 .github/workflows/ Docker Hub and release workflows
 ```
 
-В корне также лежат `docker-compose.yml`, `docker-compose.local.yml`, `CHANGELOG.md` и `version.txt`.
+В корне также лежат `docker-compose.yml`, `docker-compose.local.yml`, `CHANGELOG.md`, `pyproject.toml` и `uv.lock`.
 
 ## Локальная разработка
 
@@ -37,7 +37,7 @@ tests/             pytest suite
 Установка зависимостей:
 
 ```bash
-uv sync --extra test --group dev
+uv sync --frozen --extra test --group dev
 ```
 
 Запуск dev-сервера:
@@ -93,6 +93,7 @@ COMPOSE_FILE=docker-compose.local.yml ./stop.sh nopaste-app
 - `SHRINK_URL` — базовый URL Shlink, если нужен короткий URL для paste
 - `SHRINK_TOKEN` — API-ключ Shlink
 - `PUBLIC_BASE_URL` — внешний базовый URL приложения для canonical/Open Graph/Twitter preview-метаданных (например, `https://paste.goldfinches.ru`)
+- `APP_VERSION` — отображаемая версия приложения; release-образ получает её автоматически из `python-semantic-release`, локально используется fallback из `pyproject.toml`
 
 ## CI/CD и релизы
 
@@ -104,15 +105,16 @@ GitHub Actions выполняют две независимые задачи:
 Release workflow:
 
 - вычисляет следующую версию по conventional commits
-- обновляет `pyproject.toml`, `version.txt` и `CHANGELOG.md`
+- обновляет `pyproject.toml` и `CHANGELOG.md`
 - создаёт release commit, tag и GitHub Release без промежуточного release PR
-- публикует semver-теги образа в Docker Hub и GHCR
+- передаёт вычисленную версию в Docker build через `APP_VERSION`
+- публикует semver-теги и `latest` образа в Docker Hub и GHCR
 
 Релиз использует:
 
-- `version.txt`
 - `CHANGELOG.md`
 - `pyproject.toml`
+- `uv.lock`
 
 Для корректной работы релизов нужны secrets:
 

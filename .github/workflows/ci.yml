@@ -39,7 +39,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --extra test --group dev
+        run: uv sync --frozen --extra test --group dev
 
       - name: Ruff check
         run: uv run ruff check src tests
@@ -57,7 +57,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --extra test
+        run: uv sync --frozen --extra test
 
       - name: Run tests
         run: uv run pytest --cov=src --cov-report=term-missing

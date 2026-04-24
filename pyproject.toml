@@ -24,7 +24,6 @@ test = [
 [tool.semantic_release]
 tag_format = "v{version}"
 version_toml = ["pyproject.toml:project.version"]
-version_variables = ["version.txt:*"]
 commit_message = "chore(release): {version}"
 
 [tool.semantic_release.changelog]

@@ -14,7 +14,6 @@ on:
       - "src/**"
       - "tests/**"
       - "uv.lock"
-      - "version.txt"
   workflow_dispatch:
 
 permissions:
@@ -100,6 +99,8 @@ jobs:
           file: ./Dockerfile
           target: runtime
           push: true
+          build-args: |
+            APP_VERSION=${{ needs.release.outputs.version }}
           tags: |
             ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
             ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.tag }}

@@ -10,7 +10,7 @@ Nopaste is a lightweight paste-sharing web app built with FastAPI, SQLite, and J
 
 ```bash
 # Install all deps (app + test + dev tools)
-uv sync --extra test --group dev
+uv sync --frozen --extra test --group dev
 
 # Dev server with auto-reload
 uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
@@ -60,6 +60,7 @@ Tests use FastAPI's `TestClient` via a `client` fixture that monkeypatches the d
 ## Conventions
 
 - **Conventional commits required** - `feat:` (minor), `fix:` (patch), `ci:`/`docs:`/`chore:` (no release). Releases are automated via `python-semantic-release`.
+- **Versioning:** `python-semantic-release` owns `pyproject.toml` and `CHANGELOG.md`; release Docker builds inject the computed SemVer through `APP_VERSION`.
 - Python 3.12, type hints on new code, Ruff for lint+format (config in `pyproject.toml`).
 - Keep route handlers thin; persistence logic belongs in `database.py`.
 - `pythonpath` in pytest config is set to `["./src"]`, so imports use bare module names (e.g., `from config import settings`).

@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import secrets
 import tomllib
 from datetime import datetime
@@ -28,6 +29,7 @@ MAX_PASTE_ID_GENERATION_ATTEMPTS = 20
 APP_NAME = "Nopaste"
 DEFAULT_META_DESCRIPTION = "Share text, logs, notes, and configs with Nopaste."
 BRAND_PREVIEW_IMAGE_PATH = "images/goldfinches_logo.png"
+APP_VERSION_ENV_VAR = "APP_VERSION"
 
 app = FastAPI(
     title=APP_NAME,
@@ -48,27 +50,67 @@ db = Database(settings.DATABASE_PATH)
 
 BASE_DIR = Path(__file__).parent
 PROJECT_ROOT = BASE_DIR.parent
-PYPROJECT_PATH = PROJECT_ROOT / "pyproject.toml"
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount(
     "/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static"
 )
 
 
-def load_asset_version() -> str:
+def load_version_from_pyproject(pyproject_path: Path) -> str | None:
     try:
-        pyproject_data = tomllib.loads(PYPROJECT_PATH.read_text(encoding="utf-8"))
-    except (FileNotFoundError, OSError, tomllib.TOMLDecodeError):
-        logger.warning("Could not load asset version from %s", PYPROJECT_PATH)
-        return "dev"
+        pyproject_data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, OSError, UnicodeDecodeError, tomllib.TOMLDecodeError):
+        return None
 
     version = pyproject_data.get("project", {}).get("version")
     if not isinstance(version, str) or not version.strip():
-        return "dev"
+        return None
     return version.strip()
 
 
-templates.env.globals["asset_version"] = load_asset_version()
+def load_version_from_environment() -> str | None:
+    version = os.getenv(APP_VERSION_ENV_VAR, "").strip()
+    return version or None
+
+
+def iter_version_candidate_paths() -> list[Path]:
+    return [
+        PROJECT_ROOT / "pyproject.toml",
+        BASE_DIR / "pyproject.toml",
+    ]
+
+
+def load_asset_version() -> str:
+    env_version = load_version_from_environment()
+    if env_version:
+        return env_version
+
+    seen_paths: set[Path] = set()
+
+    for version_path in iter_version_candidate_paths():
+        if version_path in seen_paths:
+            continue
+        seen_paths.add(version_path)
+        version = load_version_from_pyproject(version_path)
+
+        if version:
+            return version
+
+    logger.warning(
+        "Could not load app version from known paths: %s",
+        ", ".join(str(path) for path in seen_paths),
+    )
+    return "dev"
+
+
+def current_year() -> int:
+    return datetime.now().year
+
+
+APP_VERSION = load_asset_version()
+templates.env.globals["asset_version"] = APP_VERSION
+templates.env.globals["app_version"] = APP_VERSION
+templates.env.globals["current_year"] = current_year
 
 
 def load_user_pastes(request: Request) -> list[str]:

@@ -2,7 +2,7 @@ import asyncio
 from http.cookies import SimpleCookie
 from pathlib import Path
 import re
-import tomllib
+from datetime import datetime
 
 import pytest
 import src.main as main_module
@@ -24,9 +24,8 @@ def client(tmp_path, monkeypatch):
 
 def test_read_root(client):
     response = client.get("/")
-    asset_version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))[
-        "project"
-    ]["version"]
+    asset_version = main_module.APP_VERSION
+    expected_footer = f"© {datetime.now().year} NorD · Nopaste v{asset_version}"
 
     assert response.status_code == 200
     assert "Nopaste" in response.text
@@ -36,10 +35,40 @@ def test_read_root(client):
     assert 'src="/static/images/list.png"' in response.text
     assert 'src="/static/images/save.png"' in response.text
     assert 'rel="icon" href="/static/images/favicon.png"' in response.text
-    assert f'/static/css/style.css?v={asset_version}' in response.text
+    assert f"/static/css/style.css?v={asset_version}" in response.text
+    assert expected_footer in response.text
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
     assert "nopasteForm.requestSubmit()" in response.text
+
+
+def test_load_asset_version_prefers_environment(monkeypatch):
+    monkeypatch.setenv("APP_VERSION", " 2.0.0-build ")
+
+    assert main_module.load_asset_version() == "2.0.0-build"
+
+
+def test_load_asset_version_falls_back_to_base_dir_pyproject(tmp_path, monkeypatch):
+    container_app_dir = tmp_path / "app"
+    container_app_dir.mkdir()
+    (container_app_dir / "pyproject.toml").write_text(
+        '[project]\nversion = "9.9.9"\n',
+        encoding="utf-8",
+    )
+
+    monkeypatch.delenv("APP_VERSION", raising=False)
+    monkeypatch.setattr(main_module, "PROJECT_ROOT", tmp_path / "repo-root")
+    monkeypatch.setattr(main_module, "BASE_DIR", container_app_dir)
+
+    assert main_module.load_asset_version() == "9.9.9"
+
+
+def test_load_asset_version_returns_dev_without_pyproject(tmp_path, monkeypatch):
+    monkeypatch.delenv("APP_VERSION", raising=False)
+    monkeypatch.setattr(main_module, "PROJECT_ROOT", tmp_path / "repo-root")
+    monkeypatch.setattr(main_module, "BASE_DIR", tmp_path / "app")
+
+    assert main_module.load_asset_version() == "dev"
 
 
 def test_app_assets_do_not_reference_external_urls():
