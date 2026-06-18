@@ -5,8 +5,8 @@
 
 ## Build, Test, and Development Commands
 `uv sync --frozen --extra test --group dev` installs the pinned app, test dependencies, and dev tools such as Ruff from `uv.lock`.
-`uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000` starts the local dev server with reload.
-`uv run python src/main.py` runs the app through its entry point.
+`PYTHONPATH=src uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000` starts the local dev server with reload (uses bare module names because `src/` is treated as the import root, matching the pytest config).
+`uv run python src/main.py` runs the app through its entry point (works without PYTHONPATH because Python adds the script directory to sys.path).
 `uv run pytest` executes the test suite.
 `uv run pytest --cov=src --cov-report=term-missing` checks coverage for changed code.
 `uv run ruff check src tests` lints Python sources and tests.

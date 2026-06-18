@@ -11,6 +11,9 @@ services:
     container_name: nopaste-local
     ports:
       - "${APP_PORT:-8000}:8000"
+    # network_mode: host   # Disabled for better cross-platform support (Windows + WSL2).
+    # With ports mapping, http://localhost:8000 works from Windows, WSL and native Linux.
+    # If you specifically need host networking on Linux, uncomment it and remove the ports section.
     environment:
       DATABASE_PATH: /tmp/pastes.db
     healthcheck:

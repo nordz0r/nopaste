@@ -43,10 +43,18 @@ uv sync --frozen --extra test --group dev
 Запуск dev-сервера:
 
 ```bash
-uv run uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+# PYTHONPATH=src нужен, потому что проект использует bare-импорты
+# (from config import ..., from database import ...) и src/ выступает корнем.
+# Это согласуется с настройкой pytest (pythonpath = ["./src"]).
+PYTHONPATH=src uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Приложение будет доступно на `http://localhost:8000`.
+
+Альтернатива (работает без PYTHONPATH, т.к. Python сам добавляет директорию скрипта в sys.path):
+```bash
+uv run python src/main.py
+```
 
 Проверки:
 
