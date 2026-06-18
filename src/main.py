@@ -107,14 +107,19 @@ def current_year() -> int:
     return datetime.now().year
 
 
+def get_active_design_name() -> str:
+    """Return the active UI design name (sanitized, never empty)."""
+    design = (settings.UI_DESIGN or "default").strip() or "default"
+    return design
+
+
 def get_design_base_template() -> str:
     """Resolve the active pluggable design base template path.
 
     Designs are stored under templates/designs/<name>/base.html .
     Controlled by settings.UI_DESIGN (defaults to "default").
     """
-    design = (settings.UI_DESIGN or "default").strip() or "default"
-    return f"designs/{design}/base.html"
+    return f"designs/{get_active_design_name()}/base.html"
 
 
 APP_VERSION = load_asset_version()
@@ -332,6 +337,7 @@ async def read_root(request: Request):
         {
             "request": request,
             "base_template": get_design_base_template(),
+            "design_name": get_active_design_name(),
             "meta": build_page_meta(
                 request,
                 title="Nopaste — create and share text instantly",
@@ -398,6 +404,7 @@ async def get_paste(request: Request, paste_id: str):
         {
             "request": request,
             "base_template": get_design_base_template(),
+            "design_name": get_active_design_name(),
             "paste_id": paste_id,
             "content": content,
             "created_at": created_at,
@@ -430,6 +437,7 @@ async def list_pastes(request: Request):
         {
             "request": request,
             "base_template": get_design_base_template(),
+            "design_name": get_active_design_name(),
             "pastes": pastes,
             "meta": build_page_meta(
                 request,
