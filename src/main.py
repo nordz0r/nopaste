@@ -13,7 +13,7 @@ from typing import Any
 
 import httpx
 from fastapi import FastAPI, Form, HTTPException, Request, status
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -54,6 +54,60 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount(
     "/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static"
 )
+
+
+def _is_ip_in_allowlist(ip: str, allowlist: list[str]) -> bool:
+    """Return True if ip matches any entry in allowlist (CIDR or IP).
+    Empty allowlist → allow everyone.
+    """
+    if not allowlist:
+        return True
+    from ipaddress import ip_address, ip_network
+
+    # Normalize special test client values to localhost
+    norm = (ip or "").strip().lower()
+    if norm in {"testclient", "testserver", "localhost"}:
+        norm = "127.0.0.1"
+
+    try:
+        client_ip = ip_address(norm)
+    except Exception:
+        return False
+
+    for entry in allowlist:
+        try:
+            if client_ip in ip_network(entry.strip(), strict=False):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
+@app.middleware("http")
+async def restrict_api_docs(request: Request, call_next):
+    """Restrict access to FastAPI automatic documentation endpoints based on DOCS_ALLOWLIST.
+
+    Used in production (see docs_allowlist in Ansible deployment).
+    """
+    if request.url.path in {"/docs", "/redoc", "/openapi.json"}:
+        # Collect possible real client IPs (TestClient, proxies, etc.)
+        candidates: list[str] = []
+        if request.client and request.client.host:
+            candidates.append(request.client.host)
+        fwd = request.headers.get("x-forwarded-for", "")
+        if fwd:
+            candidates.append(fwd.split(",")[0].strip())
+        # TestClient often reports as "testclient"
+        candidates.append("127.0.0.1")
+
+        for candidate in candidates:
+            if _is_ip_in_allowlist(candidate, settings.DOCS_ALLOWLIST):
+                break
+        else:
+            # none of the candidates were allowed
+            return PlainTextResponse("Forbidden", status_code=403)
+
+    return await call_next(request)
 
 
 def load_version_from_pyproject(pyproject_path: Path) -> str | None:

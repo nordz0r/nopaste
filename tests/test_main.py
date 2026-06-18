@@ -206,7 +206,10 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert "Use line numbers" not in response.text
 
 
-def test_get_paste_includes_branded_link_preview_metadata(client):
+def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
+    # Ensure we test the fallback behavior (no PUBLIC_BASE_URL), independent of .env
+    monkeypatch.setattr(main_module.settings, "PUBLIC_BASE_URL", None)
+
     create_response = client.post(
         "/paste", data={"content": "secret preview content"}, follow_redirects=False
     )

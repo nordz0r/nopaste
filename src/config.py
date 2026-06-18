@@ -1,4 +1,4 @@
-from pydantic import Field
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,6 +39,25 @@ class Settings(BaseSettings):
         default="default",
         description="Active UI design name. Designs provide a base.html under src/templates/designs/<name>/ .",
     )
+
+    # Stored as raw string so that pydantic-settings never attempts to json-decode
+    # the value from .env (empty strings and "1.2.3.4,10.0.0.0/8" would otherwise break).
+    DOCS_ALLOWLIST_RAW: str = Field(
+        default="",
+        description="Raw DOCS_ALLOWLIST value (comma-separated). See DOCS_ALLOWLIST computed property.",
+        alias="DOCS_ALLOWLIST",
+        validation_alias="DOCS_ALLOWLIST",
+    )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def DOCS_ALLOWLIST(self) -> list[str]:
+        """Final parsed allowlist for docs access control."""
+        raw = (self.DOCS_ALLOWLIST_RAW or "").strip()
+        if not raw:
+            return []
+        return [item.strip() for item in raw.split(",") if item.strip()]
+
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_file=".env",
