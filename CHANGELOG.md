@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.4.0 (2026-06-18)
+
+### Bug Fixes
+
+- Delete old agents
+  ([`4638e55`](https://github.com/nordz0r/nopaste/commit/4638e5524a6c15a6d73c14b74c66992673584e56))
+
+### Features
+
+- Add templates
+  ([`435a832`](https://github.com/nordz0r/nopaste/commit/435a8324805255de4b2976c6505601c7cfd860fa))
+
+- Expose design_name in template context alongside base_template
+  ([`62d92e4`](https://github.com/nordz0r/nopaste/commit/62d92e4891b81b1166ccbf3c479587d763ab4eae))
+
+- Extract UI design into pluggable design templates
+  ([`4a6474d`](https://github.com/nordz0r/nopaste/commit/4a6474d28f0e0774c8912b5fa2c2249a01d7d97a))
+
+- Support DOCS_ALLOWLIST + provide .env and .env.example
+  ([`1466e91`](https://github.com/nordz0r/nopaste/commit/1466e918b7fb4553af68c90b280ef397875a5c6e))
+
+
 ## v1.3.5 (2026-04-24)
 
 ### Bug Fixes
