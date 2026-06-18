@@ -74,9 +74,24 @@ def test_load_asset_version_returns_dev_without_pyproject(tmp_path, monkeypatch)
     assert main_module.load_asset_version() == "dev"
 
 
+def test_get_design_base_template_defaults_to_default(monkeypatch):
+    monkeypatch.setattr(main_module.settings, "UI_DESIGN", "default")
+    assert main_module.get_design_base_template() == "designs/default/base.html"
+
+
+def test_get_design_base_template_respects_custom_design(monkeypatch):
+    monkeypatch.setattr(main_module.settings, "UI_DESIGN", "minimal")
+    assert main_module.get_design_base_template() == "designs/minimal/base.html"
+
+
+def test_get_design_base_template_falls_back_on_empty(monkeypatch):
+    monkeypatch.setattr(main_module.settings, "UI_DESIGN", "")
+    assert main_module.get_design_base_template() == "designs/default/base.html"
+
+
 def test_app_assets_only_reference_approved_external_urls():
     asset_files = [
-        *Path("src/templates").glob("*.html"),
+        *Path("src/templates").rglob("*.html"),
         *Path("src/static/css").glob("*.css"),
     ]
     approved_external_urls = ("https://cv.goldfinches.ru",)

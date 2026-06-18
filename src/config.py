@@ -35,6 +35,10 @@ class Settings(BaseSettings):
         default=None,
         description="Public base URL used for canonical/share metadata when the app is served behind a proxy.",
     )
+    UI_DESIGN: str = Field(
+        default="default",
+        description="Active UI design name. Designs provide a base.html under src/templates/designs/<name>/ .",
+    )
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_file=".env",

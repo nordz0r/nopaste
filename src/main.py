@@ -107,6 +107,16 @@ def current_year() -> int:
     return datetime.now().year
 
 
+def get_design_base_template() -> str:
+    """Resolve the active pluggable design base template path.
+
+    Designs are stored under templates/designs/<name>/base.html .
+    Controlled by settings.UI_DESIGN (defaults to "default").
+    """
+    design = (settings.UI_DESIGN or "default").strip() or "default"
+    return f"designs/{design}/base.html"
+
+
 APP_VERSION = load_asset_version()
 templates.env.globals["asset_version"] = APP_VERSION
 templates.env.globals["app_version"] = APP_VERSION
@@ -321,6 +331,7 @@ async def read_root(request: Request):
         "index.html",
         {
             "request": request,
+            "base_template": get_design_base_template(),
             "meta": build_page_meta(
                 request,
                 title="Nopaste — create and share text instantly",
@@ -386,6 +397,7 @@ async def get_paste(request: Request, paste_id: str):
         "paste.html",
         {
             "request": request,
+            "base_template": get_design_base_template(),
             "paste_id": paste_id,
             "content": content,
             "created_at": created_at,
@@ -417,6 +429,7 @@ async def list_pastes(request: Request):
         "list.html",
         {
             "request": request,
+            "base_template": get_design_base_template(),
             "pastes": pastes,
             "meta": build_page_meta(
                 request,
