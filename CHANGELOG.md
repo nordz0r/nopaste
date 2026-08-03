@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.7.3 (2026-08-03)
+
+### Bug Fixes
+
+- Refine light theme and markdown detection
+  ([`2bc7353`](https://github.com/nordz0r/nopaste/commit/2bc735350b5d8edaeda2ae5432efd75358eebc81))
+
+
 ## v1.7.2 (2026-08-03)
 
 ### Bug Fixes
