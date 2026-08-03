@@ -26,24 +26,39 @@ def normalize_newlines(content: str) -> str:
     return content.replace("\r\n", "\n").replace("\r", "\n")
 
 
+MAIN_CODE_LANGUAGES = {
+    "bash", "sh", "shell", "zsh", "python", "py", "javascript", "js", "typescript", "ts",
+    "html", "css", "json", "yaml", "yml", "toml", "ini", "sql", "c", "cpp", "c++", "c#",
+    "csharp", "java", "go", "rust", "php", "ruby", "perl", "docker", "dockerfile", "make",
+    "makefile", "nginx", "apache", "xml", "diff", "patch", "properties"
+}
+
+
 def is_markdown_content(content: str, language: str) -> bool:
-    lang_lower = language.lower()
+    lang_lower = (language or "").strip().lower()
     if "markdown" in lang_lower or lang_lower == "md":
         return True
+
+    if lang_lower in MAIN_CODE_LANGUAGES:
+        return False
 
     trimmed = content.strip()
     if not trimmed:
         return False
 
     lines = trimmed.splitlines()
-    has_headers = any(line.startswith(("# ", "## ", "### ", "#### ")) for line in lines)
     has_code_fences = "```" in trimmed
     has_mermaid = "mermaid" in trimmed
-    has_links = "[" in trimmed and "](" in trimmed
-    has_lists = any(line.startswith(("- ", "* ", "1. ")) for line in lines)
+    has_headers = any(line.startswith(("# ", "## ", "### ", "#### ")) for line in lines)
+    has_links = any("[" in line and "](" in line for line in lines)
 
-    score = (has_headers * 2) + (has_code_fences * 2) + (has_mermaid * 3) + (has_links * 1) + (has_lists * 1)
-    return score >= 2
+    if has_mermaid:
+        return True
+
+    if has_code_fences and (has_headers or has_links):
+        return True
+
+    return False
 
 
 def guess_paste_lexer(content: str) -> Lexer:

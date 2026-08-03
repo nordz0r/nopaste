@@ -49,3 +49,16 @@ def test_highlighted_paste_ignores_regular_code_for_markdown():
     highlighted_paste = highlighting_module.build_highlighted_paste(python_code)
 
     assert highlighted_paste.is_markdown is False
+
+
+def test_highlighted_paste_ignores_bash_script_with_comments_for_markdown():
+    bash_code = (
+        "# vpn-router: inet {REGION} → HTTP(S) proxy\n"
+        "inet() {\n"
+        "  local account='nord'\n"
+        "  echo 'proxy'\n"
+        "}\n"
+    )
+    highlighted_paste = highlighting_module.build_highlighted_paste(bash_code)
+
+    assert highlighted_paste.is_markdown is False
