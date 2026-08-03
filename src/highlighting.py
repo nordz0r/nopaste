@@ -26,12 +26,30 @@ def normalize_newlines(content: str) -> str:
     return content.replace("\r\n", "\n").replace("\r", "\n")
 
 
-MAIN_CODE_LANGUAGES = {
-    "bash", "sh", "shell", "zsh", "python", "py", "javascript", "js", "typescript", "ts",
-    "html", "css", "json", "yaml", "yml", "toml", "ini", "sql", "c", "cpp", "c++", "c#",
-    "csharp", "java", "go", "rust", "php", "ruby", "perl", "docker", "dockerfile", "make",
-    "makefile", "nginx", "apache", "xml", "diff", "patch", "properties"
-}
+DISQUALIFYING_CODE_KEYWORDS = (
+    "() {",
+    "def ",
+    "class ",
+    "function ",
+    "return ",
+    "case ",
+    "esac",
+    "local ",
+    "unset ",
+    "export ",
+    "systemctl ",
+    "docker ",
+    "chmod ",
+    "chown ",
+    "sudo ",
+    "npm ",
+    "git ",
+    "pip ",
+    "curl ",
+    "wget ",
+    "apt ",
+    "yum ",
+)
 
 
 def is_markdown_content(content: str, language: str) -> bool:
@@ -39,11 +57,11 @@ def is_markdown_content(content: str, language: str) -> bool:
     if "markdown" in lang_lower or lang_lower == "md":
         return True
 
-    if lang_lower in MAIN_CODE_LANGUAGES:
-        return False
-
     trimmed = content.strip()
     if not trimmed:
+        return False
+
+    if any(kw in trimmed for kw in DISQUALIFYING_CODE_KEYWORDS):
         return False
 
     lines = trimmed.splitlines()
@@ -57,6 +75,9 @@ def is_markdown_content(content: str, language: str) -> bool:
 
     if has_code_fences and (has_headers or has_links):
         return True
+
+    if lang_lower not in (PLAIN_TEXT_LANGUAGE.lower(), "text only", "text"):
+        return False
 
     return False
 
