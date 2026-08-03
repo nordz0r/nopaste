@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.5.1 (2026-08-03)
+
+### Bug Fixes
+
+- Improve light theme typography and code block colors
+  ([`213d5a8`](https://github.com/nordz0r/nopaste/commit/213d5a8493462e9e2fe8162754d8cfc34fb123a0))
+
+
 ## v1.5.0 (2026-08-03)
 
 ### Features
