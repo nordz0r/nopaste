@@ -74,6 +74,32 @@
     --radius-lg: 12px;
 }
 
+[data-theme="light"],
+html[data-design="light"] {
+    /* Color Palette - Studio Light */
+    --bg-app: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-surface-alt: #f1f5f9;
+    
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-on-accent: #ffffff;
+    
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: rgba(79, 70, 229, 0.08);
+    
+    --border: #e2e8f0;
+    --border-hover: #cbd5e1;
+    --border-focus: var(--accent);
+    
+    --error: #dc2626;
+    --success: #16a34a;
+
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+}
+
 /* Reset & Base */
 * { box-sizing: border-box; }
 
@@ -719,3 +745,93 @@ textarea:focus {
         padding: var(--space-4) var(--space-3);
     }
 }
+
+/* Light Mode Pygments Syntax Highlighting & Theme Extras */
+[data-theme="light"] .paste-line-text .k,
+[data-theme="light"] .paste-line-text .kc,
+[data-theme="light"] .paste-line-text .kd,
+[data-theme="light"] .paste-line-text .kn,
+[data-theme="light"] .paste-line-text .kp,
+[data-theme="light"] .paste-line-text .kr,
+[data-theme="light"] .paste-line-text .kt,
+[data-theme="light"] .paste-line-text .ow {
+    color: #d73a49;
+    font-weight: 600;
+}
+
+[data-theme="light"] .paste-line-text .s,
+[data-theme="light"] .paste-line-text .sa,
+[data-theme="light"] .paste-line-text .sb,
+[data-theme="light"] .paste-line-text .sc,
+[data-theme="light"] .paste-line-text .dl,
+[data-theme="light"] .paste-line-text .sd,
+[data-theme="light"] .paste-line-text .s2,
+[data-theme="light"] .paste-line-text .se,
+[data-theme="light"] .paste-line-text .sh,
+[data-theme="light"] .paste-line-text .si,
+[data-theme="light"] .paste-line-text .sx,
+[data-theme="light"] .paste-line-text .s1,
+[data-theme="light"] .paste-line-text .ss {
+    color: #032f62;
+}
+
+[data-theme="light"] .paste-line-text .c,
+[data-theme="light"] .paste-line-text .ch,
+[data-theme="light"] .paste-line-text .cm,
+[data-theme="light"] .paste-line-text .c1,
+[data-theme="light"] .paste-line-text .cs {
+    color: #6e7781;
+    font-style: italic;
+}
+
+[data-theme="light"] .paste-line-text .m,
+[data-theme="light"] .paste-line-text .mb,
+[data-theme="light"] .paste-line-text .mf,
+[data-theme="light"] .paste-line-text .mh,
+[data-theme="light"] .paste-line-text .mi,
+[data-theme="light"] .paste-line-text .mo,
+[data-theme="light"] .paste-line-text .il {
+    color: #005cc5;
+}
+
+[data-theme="light"] .paste-line-text .na,
+[data-theme="light"] .paste-line-text .nc,
+[data-theme="light"] .paste-line-text .no,
+[data-theme="light"] .paste-line-text .nn {
+    color: #005cc5;
+    font-weight: 500;
+}
+
+[data-theme="light"] .paste-line-text .nf,
+[data-theme="light"] .paste-line-text .fm {
+    color: #6f42c1;
+    font-weight: 600;
+}
+
+[data-theme="light"] .paste-line-text .nd,
+[data-theme="light"] .paste-line-text .ni {
+    color: #e36209;
+}
+
+[data-theme="light"] .paste-line-text .err {
+    color: #b31d28;
+    background-color: #ffeef0;
+}
+
+[data-theme="light"] .paste-card-preview {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+}
+
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+

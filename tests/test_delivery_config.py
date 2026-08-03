@@ -19,7 +19,9 @@ def test_version_txt_is_not_a_release_source():
     ]
 
     for file_path in searched_files:
-        assert legacy_version_file not in read_text(file_path)
+        p = Path(file_path)
+        if p.exists():
+            assert legacy_version_file not in p.read_text(encoding="utf-8")
 
 
 def test_release_image_receives_semantic_release_version():

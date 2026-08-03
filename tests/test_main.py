@@ -81,6 +81,12 @@ def test_get_design_base_template_defaults_to_default(monkeypatch):
     assert main_module.get_active_design_name() == "default"
 
 
+def test_get_design_base_template_supports_light_design(monkeypatch):
+    monkeypatch.setattr(main_module.settings, "UI_DESIGN", "light")
+    assert main_module.get_design_base_template() == "designs/light/base.html"
+    assert main_module.get_active_design_name() == "light"
+
+
 def test_get_design_base_template_respects_custom_design(monkeypatch):
     monkeypatch.setattr(main_module.settings, "UI_DESIGN", "minimal")
     assert main_module.get_design_base_template() == "designs/minimal/base.html"
