@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.6.0 (2026-08-03)
+
+### Features
+
+- Add markdown rendering and mermaid diagram support
+  ([`a8cfb34`](https://github.com/nordz0r/nopaste/commit/a8cfb3474a3934190d41e6e72a50c9c115d20bfb))
+
+
 ## v1.5.1 (2026-08-03)
 
 ### Bug Fixes
