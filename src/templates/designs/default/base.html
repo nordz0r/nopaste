@@ -68,29 +68,13 @@
     const footer = document.querySelector('.site-footer');
     if (footer) {
         let scrollTimeout;
-        let isHoveringFooter = false;
-        
-        footer.addEventListener('mouseenter', () => isHoveringFooter = true);
-        footer.addEventListener('mouseleave', () => {
-            isHoveringFooter = false;
-            // hide immediately on leave if we haven't scrolled recently
-            setTimeout(() => { if(!isHoveringFooter) footer.classList.remove('is-visible'); }, 500);
-        });
-        
-        const showFooter = () => {
-            footer.classList.add('is-visible');
+        window.addEventListener('scroll', () => {
+            footer.classList.add('is-hidden');
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
-                if (!isHoveringFooter) {
-                    footer.classList.remove('is-visible');
-                }
-            }, 2000);
-        };
-        
-        window.addEventListener('scroll', showFooter, { passive: true });
-        
-        // Show initially
-        showFooter();
+                footer.classList.remove('is-hidden');
+            }, 1200);
+        }, { passive: true });
     }
 
     function showNotification(message) {
