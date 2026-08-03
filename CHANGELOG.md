@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.5.0 (2026-08-03)
+
+### Features
+
+- Add automatic syntax highlighting
+  ([`729bc7e`](https://github.com/nordz0r/nopaste/commit/729bc7e22340bf7c42bfa869ed90e067b9d36050))
+
+- Add light design template and interactive theme switcher
+  ([`9c3415e`](https://github.com/nordz0r/nopaste/commit/9c3415e6690dbe9ec584db43e394d00f222c32b4))
+
+
 ## v1.4.0 (2026-06-18)
 
 ### Bug Fixes
