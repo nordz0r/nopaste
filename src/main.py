@@ -466,6 +466,7 @@ async def get_paste(request: Request, paste_id: str):
             "created_at": created_at,
             "lines": highlighted_paste.lines,
             "highlighted_language": highlighted_paste.language,
+            "is_markdown": highlighted_paste.is_markdown,
             "short_url": short_url,
             "meta": build_page_meta(
                 request,

@@ -19,10 +19,31 @@ class HighlightedPaste:
 
     language: str
     lines: list[dict[str, int | str]]
+    is_markdown: bool = False
 
 
 def normalize_newlines(content: str) -> str:
     return content.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def is_markdown_content(content: str, language: str) -> bool:
+    lang_lower = language.lower()
+    if "markdown" in lang_lower or lang_lower == "md":
+        return True
+
+    trimmed = content.strip()
+    if not trimmed:
+        return False
+
+    lines = trimmed.splitlines()
+    has_headers = any(line.startswith(("# ", "## ", "### ", "#### ")) for line in lines)
+    has_code_fences = "```" in trimmed
+    has_mermaid = "mermaid" in trimmed
+    has_links = "[" in trimmed and "](" in trimmed
+    has_lists = any(line.startswith(("- ", "* ", "1. ")) for line in lines)
+
+    score = (has_headers * 2) + (has_code_fences * 2) + (has_mermaid * 3) + (has_links * 1) + (has_lists * 1)
+    return score >= 2
 
 
 def guess_paste_lexer(content: str) -> Lexer:
@@ -81,7 +102,10 @@ def build_highlighted_paste(content: str) -> HighlightedPaste:
         highlighted_lines = build_plain_text_lines(normalized_content)
         language = PLAIN_TEXT_LANGUAGE
 
+    is_md = is_markdown_content(normalized_content, language)
+
     return HighlightedPaste(
         language=language,
         lines=build_line_records(highlighted_lines),
+        is_markdown=is_md,
     )

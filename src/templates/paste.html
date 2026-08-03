@@ -52,7 +52,18 @@
     {% endif %}
 </div>
 
-<div class="paste-container">
+<div class="view-mode-tabs" id="view-mode-tabs">
+    <button type="button" class="tab-btn {% if not is_markdown %}active{% endif %}" id="tab-code-btn" title="Просмотр исходного кода и строк">
+        <svg class="icon-svg" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+        <span>Code View</span>
+    </button>
+    <button type="button" class="tab-btn {% if is_markdown %}active{% endif %}" id="tab-markdown-btn" title="Отформатированный Markdown и Mermaid диаграммы">
+        <svg class="icon-svg" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4l-2 2-2-2v4H6V7h2l2 2.5L12 7h2v10z"/></svg>
+        <span>Markdown & Mermaid</span>
+    </button>
+</div>
+
+<div id="paste-code-view" class="paste-container {% if is_markdown %}is-hidden-view{% endif %}">
     <div class="paste-lines" aria-label="Paste content with line numbers">
         {% for line in lines %}
         <div class="paste-line" id="{{ line.anchor }}" data-line-anchor="{{ line.anchor }}">
@@ -63,7 +74,14 @@
     </div>
 </div>
 
+<div id="paste-markdown-view" class="paste-container markdown-view-card {% if not is_markdown %}is-hidden-view{% endif %}">
+    <div id="markdown-rendered-content" class="markdown-body"></div>
+</div>
+
 <textarea id="paste-raw-content" class="sr-only" aria-hidden="true" readonly>{{ content }}</textarea>
+
+<script src="/static/js/marked.min.js?v={{ asset_version }}"></script>
+<script src="/static/js/mermaid.min.js?v={{ asset_version }}"></script>
 
 <script>
 function getSelectedRangeFromHash() {
@@ -113,7 +131,93 @@ if (copyContentBtn) {
     });
 }
 
-window.addEventListener("DOMContentLoaded", updateActiveLine);
+// Markdown & Mermaid rendering engine
+let markdownRendered = false;
+
+function renderMarkdownAndMermaid() {
+    const rawContentField = document.getElementById("paste-raw-content");
+    const markdownContainer = document.getElementById("markdown-rendered-content");
+    if (!rawContentField || !markdownContainer || !window.marked) return;
+
+    const rawContent = rawContentField.value;
+
+    const renderer = new marked.Renderer();
+    const defaultCodeRenderer = renderer.code.bind(renderer);
+
+    renderer.code = function(code, language, isEscaped) {
+        if (typeof code === 'object') {
+            language = code.lang;
+            code = code.text;
+        }
+        const lang = (language || '').trim().toLowerCase();
+        if (lang === 'mermaid') {
+            return `<div class="mermaid-wrap"><pre class="mermaid">${code}</pre></div>`;
+        }
+        return defaultCodeRenderer(code, language, isEscaped);
+    };
+
+    marked.setOptions({
+        renderer: renderer,
+        gfm: true,
+        breaks: true,
+    });
+
+    markdownContainer.innerHTML = marked.parse(rawContent);
+
+    if (window.mermaid) {
+        const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+        try {
+            window.mermaid.initialize({
+                startOnLoad: false,
+                theme: currentTheme === 'light' ? 'default' : 'dark',
+                securityLevel: 'loose',
+                fontFamily: 'var(--font-sans)',
+            });
+
+            const mermaidNodes = markdownContainer.querySelectorAll('.mermaid');
+            if (mermaidNodes.length > 0) {
+                window.mermaid.run({ nodes: mermaidNodes });
+            }
+        } catch (err) {
+            console.warn("Mermaid rendering warning:", err);
+        }
+    }
+}
+
+const tabCodeBtn = document.getElementById("tab-code-btn");
+const tabMarkdownBtn = document.getElementById("tab-markdown-btn");
+const pasteCodeView = document.getElementById("paste-code-view");
+const pasteMarkdownView = document.getElementById("paste-markdown-view");
+
+function showCodeView() {
+    if (tabCodeBtn) tabCodeBtn.classList.add("active");
+    if (tabMarkdownBtn) tabMarkdownBtn.classList.remove("active");
+    if (pasteCodeView) pasteCodeView.classList.remove("is-hidden-view");
+    if (pasteMarkdownView) pasteMarkdownView.classList.add("is-hidden-view");
+}
+
+function showMarkdownView() {
+    if (tabMarkdownBtn) tabMarkdownBtn.classList.add("active");
+    if (tabCodeBtn) tabCodeBtn.classList.remove("active");
+    if (pasteCodeView) pasteCodeView.classList.add("is-hidden-view");
+    if (pasteMarkdownView) pasteMarkdownView.classList.remove("is-hidden-view");
+
+    if (!markdownRendered) {
+        renderMarkdownAndMermaid();
+        markdownRendered = true;
+    }
+}
+
+if (tabCodeBtn) tabCodeBtn.addEventListener("click", showCodeView);
+if (tabMarkdownBtn) tabMarkdownBtn.addEventListener("click", showMarkdownView);
+
+window.addEventListener("DOMContentLoaded", () => {
+    updateActiveLine();
+    if (pasteMarkdownView && !pasteMarkdownView.classList.contains("is-hidden-view")) {
+        renderMarkdownAndMermaid();
+        markdownRendered = true;
+    }
+});
 window.addEventListener("hashchange", updateActiveLine);
 </script>
 {% endblock %}
