@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.7.2 (2026-08-03)
+
+### Bug Fixes
+
+- Improve markdown detection for text containing inline backticks
+  ([`b6d1423`](https://github.com/nordz0r/nopaste/commit/b6d1423095acac85ddceac0e8540782d51fc5e70))
+
+### Code Style
+
+- Darken light theme to a soft slate aesthetic
+  ([`088abf0`](https://github.com/nordz0r/nopaste/commit/088abf05cab025b8dbdbec6b84c5d400f1033e4b))
+
+- Replace bright white surfaces with muted grey tones
+  ([`280e7f5`](https://github.com/nordz0r/nopaste/commit/280e7f5f685ab0f487d0327d74889bb6dfe4b7c1))
+
+
 ## v1.7.1 (2026-08-03)
 
 ### Bug Fixes
