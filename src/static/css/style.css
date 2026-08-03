@@ -745,10 +745,11 @@ textarea:focus {
     .header-container {
         width: 100%;
         max-width: 100%;
-        padding: 0 var(--space-3);
+        padding: 0 var(--space-2);
     }
     .header-actions .btn {
-        width: 36px;
+        width: 34px;
+        height: 34px;
         padding: 0;
     }
     .header-actions .btn span { display: none; }
@@ -756,22 +757,32 @@ textarea:focus {
         width: 100%;
         max-width: 100%;
         margin: 0;
-        padding: var(--space-4) var(--space-3);
+        padding: var(--space-2);
     }
     .editor-card {
         width: 100%;
         max-width: 100%;
+        border-radius: var(--radius-md);
     }
-    .editor-card-header { padding: var(--space-3); }
-    .form-container { padding: var(--space-3); }
+    .editor-card-header { 
+        padding: var(--space-2) var(--space-3); 
+    }
+    .form-container { 
+        padding: var(--space-2); 
+    }
     textarea {
-        min-height: clamp(360px, calc(100vh - 300px), 460px);
-        padding: var(--space-3);
-        font-size: 0.9375rem;
+        min-height: clamp(320px, calc(100vh - 280px), 440px);
+        padding: var(--space-2);
+        font-size: 0.875rem;
+        border-radius: var(--radius-sm);
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
     .form-actions {
         justify-content: space-between;
         gap: var(--space-2);
+        margin-top: var(--space-2);
     }
     .form-hint {
         margin-right: 0;
@@ -782,11 +793,51 @@ textarea:focus {
     .form-actions .btn {
         flex: 0 0 auto;
         padding: 0 var(--space-3);
+        height: 34px;
+    }
+    
+    /* Compact borders & word-wrapping for code / paste view */
+    .paste-container {
+        border-radius: var(--radius-sm);
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    .paste-line {
+        grid-template-columns: 42px 1fr;
+        min-width: 0;
+        width: 100%;
+    }
+    .paste-line-number {
+        padding: var(--space-1) var(--space-1);
+        font-size: 0.75rem;
+    }
+    .paste-line-text {
+        padding: var(--space-1) var(--space-2);
+        font-size: 0.85rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+    .paste-header {
+        gap: var(--space-2);
+        margin-bottom: var(--space-2);
+        padding: var(--space-2);
+    }
+    .markdown-view-card {
+        padding: var(--space-3);
+        border-radius: var(--radius-sm);
+    }
+    .markdown-body pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        padding: var(--space-2);
     }
     .site-footer-container {
         width: 100%;
         max-width: 100%;
-        padding: var(--space-3) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+        padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
     }
 }
 
