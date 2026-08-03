@@ -64,6 +64,33 @@
     </footer>
     <div id="notification" class="notification"></div>
     <script>
+    const footer = document.querySelector('.site-footer');
+    if (footer) {
+        let scrollTimeout;
+        let isHoveringFooter = false;
+        
+        footer.addEventListener('mouseenter', () => isHoveringFooter = true);
+        footer.addEventListener('mouseleave', () => {
+            isHoveringFooter = false;
+            setTimeout(() => { if(!isHoveringFooter) footer.classList.remove('is-visible'); }, 500);
+        });
+        
+        const showFooter = () => {
+            footer.classList.add('is-visible');
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                if (!isHoveringFooter) {
+                    footer.classList.remove('is-visible');
+                }
+            }, 2000);
+        };
+        
+        window.addEventListener('scroll', showFooter, { passive: true });
+        
+        // Show initially
+        showFooter();
+    }
+
     function showNotification(message) {
         const notification = document.getElementById("notification");
         if (!notification) return;
