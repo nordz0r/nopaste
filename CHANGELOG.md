@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.6.1 (2026-08-03)
+
+### Bug Fixes
+
+- Restrict auto-markdown detection to prevent false positives on code and scripts
+  ([`b911bfc`](https://github.com/nordz0r/nopaste/commit/b911bfc3f823150a12baf36e0938fc4e57ab5ed9))
+
+### Documentation
+
+- Update CHANGELOG.md for v1.6.0 release
+  ([`7ff25ec`](https://github.com/nordz0r/nopaste/commit/7ff25ec8d52c8f6bc29a8969053855c2aefecc99))
+
+### Refactoring
+
+- Remove tab buttons and make Markdown badge clickable for raw view
+  ([`23f4191`](https://github.com/nordz0r/nopaste/commit/23f419181862add5d2fea03fb4c34cf334185113))
+
+
 ## v1.6.0 (2026-08-03)
 
 ### Features
