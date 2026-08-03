@@ -26,3 +26,9 @@ This repository uses conventional commits because the release workflow derives s
 
 ## Security & Configuration Tips
 Store local overrides in `.env`; `src/config.py` reads `APP_PORT`, `DEBUG`, `DATABASE_PATH`, `COOKIE_SIGNING_SECRET`, `MAX_PASTE_SIZE_BYTES`, and `MAX_RECENT_PASTES`. Do not commit `.env`, SQLite database files, or log output. The default local database path is `/tmp/pastes.db`; the compose files override this to `/data/pastes.db` inside a Docker volume. For GitHub automation, keep `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` in repository secrets rather than in tracked files.
+
+## Production Deployment
+To deploy the latest `main` branch to production:
+1. Ensure your changes are committed and pushed to `main` (CI will automatically build and publish the Docker image).
+2. SSH into the production server and restart the k3s deployment to pull the new image:
+   `ssh -p 55522 dd.goldfinches.ru '/usr/local/bin/kubectl rollout restart deploy nopaste -n sites'`
