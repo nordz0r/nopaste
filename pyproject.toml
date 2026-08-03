@@ -1,6 +1,6 @@
 [project]
 name = "nopaste"
-version = "1.6.1"
+version = "1.6.2"
 description = "API для простого nopaste приложения"
 authors = [
     {name = "ascheglov05", email = "Andrey.Scheglov@bia-tech.ru"}

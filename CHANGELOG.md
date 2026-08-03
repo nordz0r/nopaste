@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.6.2 (2026-08-03)
+
+### Bug Fixes
+
+- Eliminate false positives in Markdown detection for code and configs
+  ([`ed72d3d`](https://github.com/nordz0r/nopaste/commit/ed72d3db51387d7ca50405c49d825ce305c3f595))
+
+
 ## v1.6.1 (2026-08-03)
 
 ### Bug Fixes
