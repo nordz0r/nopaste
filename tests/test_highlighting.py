@@ -62,3 +62,11 @@ def test_highlighted_paste_ignores_bash_script_with_comments_for_markdown():
     highlighted_paste = highlighting_module.build_highlighted_paste(bash_code)
 
     assert highlighted_paste.is_markdown is False
+
+
+def test_highlighted_paste_detects_markdown_with_backticks():
+    md_content = "# Title\n\nSome text with `inline code` and [link](http://example.com)"
+    highlighted_paste = highlighting_module.build_highlighted_paste(md_content)
+
+    assert highlighted_paste.is_markdown is True
+    assert highlighted_paste.language == "Markdown"

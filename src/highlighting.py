@@ -49,6 +49,12 @@ DISQUALIFYING_CODE_KEYWORDS = (
     "wget ",
     "apt ",
     "yum ",
+    "select ",
+    "create table ",
+    "insert into ",
+    "update ",
+    "alter table ",
+    "drop table ",
 )
 
 
@@ -61,23 +67,29 @@ def is_markdown_content(content: str, language: str) -> bool:
     if not trimmed:
         return False
 
-    if any(kw in trimmed for kw in DISQUALIFYING_CODE_KEYWORDS):
+    trimmed_lower = trimmed.lower()
+    if any(kw in trimmed_lower for kw in DISQUALIFYING_CODE_KEYWORDS):
         return False
 
     lines = trimmed.splitlines()
     has_code_fences = "```" in trimmed
     has_mermaid = "mermaid" in trimmed
-    has_headers = any(line.startswith(("# ", "## ", "### ", "#### ")) for line in lines)
+    has_headers = any(line.lstrip().startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")) for line in lines)
     has_links = any("[" in line and "](" in line for line in lines)
+    has_lists = any(line.lstrip().startswith(("- ", "* ", "+ ", "1. ", "2. ", "3. ")) for line in lines)
 
     if has_mermaid:
         return True
 
-    if has_code_fences and (has_headers or has_links):
+    if has_code_fences:
         return True
 
-    if lang_lower not in (PLAIN_TEXT_LANGUAGE.lower(), "text only", "text"):
-        return False
+    if has_headers or has_links or (has_lists and (has_headers or has_links or "`" in trimmed)):
+        return True
+
+    if lang_lower in (PLAIN_TEXT_LANGUAGE.lower(), "text only", "text"):
+        if has_lists or "`" in trimmed:
+            return True
 
     return False
 
@@ -130,15 +142,24 @@ def build_line_records(highlighted_lines: list[str]) -> list[dict[str, int | str
 def build_highlighted_paste(content: str) -> HighlightedPaste:
     normalized_content = normalize_newlines(content)
     lexer = guess_paste_lexer(normalized_content)
+    language = get_lexer_display_name(lexer)
+
+    is_md = is_markdown_content(normalized_content, language)
+    if is_md:
+        language = "Markdown"
+        try:
+            from pygments.lexers import MarkdownLexer
+            lexer = MarkdownLexer()
+        except ClassNotFound:
+            pass
+
     highlighted_html = highlight(normalized_content, lexer, HTML_FORMATTER)
     highlighted_lines = split_highlighted_lines(normalized_content, highlighted_html)
-    language = get_lexer_display_name(lexer)
 
     if highlighted_lines is None:
         highlighted_lines = build_plain_text_lines(normalized_content)
-        language = PLAIN_TEXT_LANGUAGE
-
-    is_md = is_markdown_content(normalized_content, language)
+        if not is_md:
+            language = PLAIN_TEXT_LANGUAGE
 
     return HighlightedPaste(
         language=language,
