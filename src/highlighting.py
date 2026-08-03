@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 from html import escape
 
@@ -26,35 +27,18 @@ def normalize_newlines(content: str) -> str:
     return content.replace("\r\n", "\n").replace("\r", "\n")
 
 
-DISQUALIFYING_CODE_KEYWORDS = (
-    "() {",
-    "def ",
-    "class ",
-    "function ",
-    "return ",
-    "case ",
-    "esac",
-    "local ",
-    "unset ",
-    "export ",
-    "systemctl ",
-    "docker ",
-    "chmod ",
-    "chown ",
-    "sudo ",
-    "npm ",
-    "git ",
-    "pip ",
-    "curl ",
-    "wget ",
-    "apt ",
-    "yum ",
-    "select ",
-    "create table ",
-    "insert into ",
-    "update ",
-    "alter table ",
-    "drop table ",
+CODE_LINE_PATTERNS = (
+    re.compile(r"^\s*[\w.-]+\s*\([^)]*\)\s*\{"),
+    re.compile(r"^\s*(?:def|class|function)\s+[\w$.-]+\b", re.IGNORECASE),
+    re.compile(r"^\s*(?:return|case|esac|local|unset|export)\b", re.IGNORECASE),
+    re.compile(
+        r"^\s*(?:systemctl|docker|chmod|chown|sudo|npm|git|pip|curl|wget|apt|yum)\s+",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\s*(?:select|create\s+table|insert\s+into|update|alter\s+table|drop\s+table)\b",
+        re.IGNORECASE,
+    ),
 )
 
 
@@ -67,24 +51,30 @@ def is_markdown_content(content: str, language: str) -> bool:
     if not trimmed:
         return False
 
-    trimmed_lower = trimmed.lower()
-    if any(kw in trimmed_lower for kw in DISQUALIFYING_CODE_KEYWORDS):
+    lines = trimmed.splitlines()
+    has_code_fences = any(line.lstrip().startswith("```") for line in lines)
+    has_mermaid = any(line.strip().lower() == "mermaid" for line in lines)
+    has_headers = any(re.match(r"^\s{0,3}#{1,6}\s+\S", line) for line in lines)
+    has_links = any(re.search(r"\[[^\]]+\]\([^\)]+\)", line) for line in lines)
+    has_lists = (
+        sum(bool(re.match(r"^\s{0,3}(?:[-*+]|\d+[.)])\s+\S", line)) for line in lines)
+        >= 2
+    )
+    has_code_syntax = any(
+        pattern.search(line) for line in lines for pattern in CODE_LINE_PATTERNS
+    )
+
+    if has_mermaid or has_code_fences:
+        return True
+
+    if has_code_syntax:
         return False
 
-    lines = trimmed.splitlines()
-    has_code_fences = "```" in trimmed
-    has_mermaid = "mermaid" in trimmed
-    has_headers = any(line.lstrip().startswith(("# ", "## ", "### ", "#### ", "##### ", "###### ")) for line in lines)
-    has_links = any("[" in line and "](" in line for line in lines)
-    has_lists = any(line.lstrip().startswith(("- ", "* ", "+ ", "1. ", "2. ", "3. ")) for line in lines)
-
-    if has_mermaid:
-        return True
-
-    if has_code_fences:
-        return True
-
-    if has_headers or has_links or (has_lists and (has_headers or has_links or "`" in trimmed)):
+    if (
+        has_headers
+        or has_links
+        or (has_lists and (has_headers or has_links or "`" in trimmed))
+    ):
         return True
 
     if lang_lower in (PLAIN_TEXT_LANGUAGE.lower(), "text only", "text"):
@@ -149,6 +139,7 @@ def build_highlighted_paste(content: str) -> HighlightedPaste:
         language = "Markdown"
         try:
             from pygments.lexers import MarkdownLexer
+
             lexer = MarkdownLexer()
         except ClassNotFound:
             pass
