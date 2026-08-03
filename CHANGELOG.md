@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.7.1 (2026-08-03)
+
+### Bug Fixes
+
+- Position footer in document flow and hide on scroll
+  ([`ce3f8ec`](https://github.com/nordz0r/nopaste/commit/ce3f8ec0fb06f99c1a01d6f1ac4fbb842248aa81))
+
+### Code Style
+
+- Compact mobile borders and wrap long lines on small screens
+  ([`4e4afb0`](https://github.com/nordz0r/nopaste/commit/4e4afb065806233905b111257d726ef9b68b8038))
+
+- Support mobile safe area inset for footer
+  ([`e74c747`](https://github.com/nordz0r/nopaste/commit/e74c747d7199ac7d9bc34dfda278ee3c2fa655eb))
+
+### Documentation
+
+- Add production deployment instructions
+  ([`24c0dbf`](https://github.com/nordz0r/nopaste/commit/24c0dbf918ae4f96560ac1a303a689e623f1b48d))
+
+
 ## v1.7.0 (2026-08-03)
 
 ### Features
