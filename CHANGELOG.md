@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.7.0 (2026-08-03)
+
+### Features
+
+- Redesign light theme and animate footer on scroll
+  ([`4577eef`](https://github.com/nordz0r/nopaste/commit/4577eef58c95a7a9fef29684b73fd9393132ee17))
+
+
 ## v1.6.2 (2026-08-03)
 
 ### Bug Fixes
