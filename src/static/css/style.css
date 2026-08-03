@@ -85,36 +85,36 @@
 
 [data-theme="light"],
 html[data-design="light"] {
-    /* Color Palette - Premium Light */
-    --bg-app: #f4f7f9;
-    --bg-surface: rgba(255, 255, 255, 0.65);
-    --bg-surface-alt: rgba(255, 255, 255, 0.45);
+    /* Color Palette - Stylish Soft Slate Light */
+    --bg-app: #e2e8f0;
+    --bg-surface: rgba(241, 245, 249, 0.85);
+    --bg-surface-alt: rgba(226, 232, 240, 0.8);
     
-    --bg-code-surface: rgba(255, 255, 255, 0.85);
-    --bg-code-lines: rgba(248, 250, 252, 0.5);
-    --border-code-lines: rgba(226, 232, 240, 0.6);
-    --text-code-main: #1e293b;
-    --text-code-lines: #94a3b8;
-    --bg-line-hover: rgba(241, 245, 249, 0.7);
-    --bg-line-active: rgba(239, 246, 255, 0.8);
+    --bg-code-surface: #f1f5f9;
+    --bg-code-lines: #e2e8f0;
+    --border-code-lines: #cbd5e1;
+    --text-code-main: #0f172a;
+    --text-code-lines: #64748b;
+    --bg-line-hover: #e2e8f0;
+    --bg-line-active: #dbeafe;
     
     --text-main: #0f172a;
-    --text-muted: #64748b;
+    --text-muted: #475569;
     --text-on-accent: #ffffff;
     
-    --accent: #3b82f6;
-    --accent-hover: #2563eb;
-    --accent-soft: rgba(59, 130, 246, 0.1);
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-soft: rgba(37, 99, 235, 0.12);
     
-    --border: rgba(226, 232, 240, 0.7);
-    --border-hover: rgba(203, 213, 225, 0.9);
-    --border-focus: #3b82f6;
+    --border: #cbd5e1;
+    --border-hover: #94a3b8;
+    --border-focus: #2563eb;
     
-    --error: #ef4444;
-    --success: #10b981;
+    --error: #dc2626;
+    --success: #16a34a;
 
-    --shadow-sm: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
-    --shadow-md: 0 10px 25px -3px rgba(15, 23, 42, 0.05), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+    --shadow-sm: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
 }
 
 /* Reset & Base */
@@ -915,19 +915,19 @@ textarea:focus {
 
 /* Light Mode Polish & Component Overrides */
 [data-theme="light"] body {
-    background-color: #f8fafc;
+    background-color: #e2e8f0;
     background-image: 
-        radial-gradient(circle at 15% 50%, rgba(224, 231, 255, 1) 0%, transparent 50%),
-        radial-gradient(circle at 85% 30%, rgba(224, 242, 254, 1) 0%, transparent 50%),
-        radial-gradient(circle at 50% 80%, rgba(243, 232, 255, 1) 0%, transparent 50%);
+        radial-gradient(circle at 15% 50%, rgba(199, 210, 254, 0.6) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, rgba(186, 230, 253, 0.6) 0%, transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(221, 214, 254, 0.6) 0%, transparent 50%);
     background-attachment: fixed;
 }
 
 [data-theme="light"] .site-header {
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(241, 245, 249, 0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    border-bottom: 1px solid #cbd5e1;
 }
 
 [data-theme="light"] .brand-mark::before,
@@ -936,57 +936,60 @@ textarea:focus {
 }
 
 [data-theme="light"] .brand-logo {
-    filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.08));
+    filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.12));
 }
 
 [data-theme="light"] .btn-secondary {
-    background-color: #ffffff;
-    color: #334155;
+    background-color: #f1f5f9;
+    color: #1e293b;
     border-color: #cbd5e1;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
 [data-theme="light"] .btn-secondary:hover {
-    background-color: #f8fafc;
+    background-color: #e2e8f0;
     color: #0f172a;
     border-color: #94a3b8;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06);
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
 }
 
 [data-theme="light"] .btn-primary {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     color: #ffffff;
     border: none;
-    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.22);
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.28);
 }
 
 [data-theme="light"] .btn-primary:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.32);
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    box-shadow: 0 5px 15px rgba(37, 99, 235, 0.38);
     transform: translateY(-1px);
 }
 
 [data-theme="light"] .editor-card,
 [data-theme="light"] .paste-header,
 [data-theme="light"] .paste-card {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(241, 245, 249, 0.85);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-color: rgba(226, 232, 240, 0.9);
-    box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), 0 4px 10px -2px rgba(15, 23, 42, 0.02);
+    border-color: #cbd5e1;
+    box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.07), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
 }
 
 [data-theme="light"] .editor-card-header {
-    background: linear-gradient(180deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.6) 100%);
-    border-bottom-color: rgba(226, 232, 240, 0.9);
+    background: linear-gradient(180deg, rgba(226, 232, 240, 0.8) 0%, rgba(203, 213, 225, 0.5) 100%);
+    border-bottom-color: #cbd5e1;
 }
 
 [data-theme="light"] textarea {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(248, 250, 252, 0.9);
     color: #0f172a;
-    border-color: rgba(203, 213, 225, 0.8);
+    border-color: #cbd5e1;
+}
+
+[data-theme="light"] textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 [data-theme="light"] textarea:focus {
