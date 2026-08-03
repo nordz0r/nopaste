@@ -11,10 +11,17 @@
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 18h17v-6H4v6zM4 5v6h17V5H4z"/></svg>
             <span>{{ lines|length }} lines</span>
         </div>
+        {% if is_markdown %}
+        <button type="button" id="toggle-raw-btn" class="paste-meta-item paste-language-badge paste-language-badge-clickable" title="Нажмите для переключения между отформатированным Markdown и исходным кодом (Raw)">
+            <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M8.59 16.59L4 12l4.59-4.59L10 8.83 6.83 12 10 15.17l-1.41 1.42zM15.41 16.59L14 15.17 17.17 12 14 8.83l1.41-1.42L20 12l-4.59 4.59z"/></svg>
+            <span id="badge-text">Markdown</span>
+        </button>
+        {% else %}
         <div class="paste-meta-item paste-language-badge" title="Automatically detected syntax">
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M8.59 16.59L4 12l4.59-4.59L10 8.83 6.83 12 10 15.17l-1.41 1.42zM15.41 16.59L14 15.17 17.17 12 14 8.83l1.41-1.42L20 12l-4.59 4.59z"/></svg>
             <span>{{ highlighted_language }}</span>
         </div>
+        {% endif %}
         {% if created_at %}
         <div class="paste-meta-item">
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2C11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
@@ -50,17 +57,6 @@
         <a href="{{ short_url }}" id="short-url-link">{{ short_url }}</a>
     </div>
     {% endif %}
-</div>
-
-<div class="view-mode-tabs" id="view-mode-tabs">
-    <button type="button" class="tab-btn {% if not is_markdown %}active{% endif %}" id="tab-code-btn" title="Просмотр исходного кода и строк">
-        <svg class="icon-svg" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
-        <span>Code View</span>
-    </button>
-    <button type="button" class="tab-btn {% if is_markdown %}active{% endif %}" id="tab-markdown-btn" title="Отформатированный Markdown и Mermaid диаграммы">
-        <svg class="icon-svg" viewBox="0 0 24 24" style="width:15px;height:15px;"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14h-2v-4l-2 2-2-2v4H6V7h2l2 2.5L12 7h2v10z"/></svg>
-        <span>Markdown & Mermaid</span>
-    </button>
 </div>
 
 <div id="paste-code-view" class="paste-container {% if is_markdown %}is-hidden-view{% endif %}">
@@ -184,32 +180,31 @@ function renderMarkdownAndMermaid() {
     }
 }
 
-const tabCodeBtn = document.getElementById("tab-code-btn");
-const tabMarkdownBtn = document.getElementById("tab-markdown-btn");
+const toggleRawBtn = document.getElementById("toggle-raw-btn");
+const badgeText = document.getElementById("badge-text");
 const pasteCodeView = document.getElementById("paste-code-view");
 const pasteMarkdownView = document.getElementById("paste-markdown-view");
 
-function showCodeView() {
-    if (tabCodeBtn) tabCodeBtn.classList.add("active");
-    if (tabMarkdownBtn) tabMarkdownBtn.classList.remove("active");
-    if (pasteCodeView) pasteCodeView.classList.remove("is-hidden-view");
-    if (pasteMarkdownView) pasteMarkdownView.classList.add("is-hidden-view");
+if (toggleRawBtn) {
+    toggleRawBtn.addEventListener("click", () => {
+        const isMarkdownHidden = pasteMarkdownView.classList.contains("is-hidden-view");
+        if (isMarkdownHidden) {
+            // Switch to Markdown view
+            pasteMarkdownView.classList.remove("is-hidden-view");
+            pasteCodeView.classList.add("is-hidden-view");
+            if (badgeText) badgeText.textContent = "Markdown";
+            if (!markdownRendered) {
+                renderMarkdownAndMermaid();
+                markdownRendered = true;
+            }
+        } else {
+            // Switch to Raw code view
+            pasteMarkdownView.classList.add("is-hidden-view");
+            pasteCodeView.classList.remove("is-hidden-view");
+            if (badgeText) badgeText.textContent = "Markdown (Raw)";
+        }
+    });
 }
-
-function showMarkdownView() {
-    if (tabMarkdownBtn) tabMarkdownBtn.classList.add("active");
-    if (tabCodeBtn) tabCodeBtn.classList.remove("active");
-    if (pasteCodeView) pasteCodeView.classList.add("is-hidden-view");
-    if (pasteMarkdownView) pasteMarkdownView.classList.remove("is-hidden-view");
-
-    if (!markdownRendered) {
-        renderMarkdownAndMermaid();
-        markdownRendered = true;
-    }
-}
-
-if (tabCodeBtn) tabCodeBtn.addEventListener("click", showCodeView);
-if (tabMarkdownBtn) tabMarkdownBtn.addEventListener("click", showMarkdownView);
 
 window.addEventListener("DOMContentLoaded", () => {
     updateActiveLine();

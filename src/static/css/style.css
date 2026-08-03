@@ -490,6 +490,22 @@ textarea:focus {
     color: var(--accent);
 }
 
+.paste-language-badge-clickable {
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.paste-language-badge-clickable:hover {
+    background-color: var(--accent-soft);
+    color: var(--accent-hover);
+}
+
 .paste-container {
     background: var(--bg-code-surface);
     color: var(--text-code-main);
