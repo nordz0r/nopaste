@@ -56,6 +56,22 @@ PYTHONPATH=src uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 uv run python src/main.py
 ```
 
+## Получение исходного текста
+
+Исходное содержимое nopaste без HTML-обёртки доступно по основному raw URL:
+
+```bash
+curl -fsSL 'http://localhost:8000/raw/<paste_id>'
+```
+
+Также поддерживается alias, привязанный к URL страницы nopaste:
+
+```bash
+curl -fsSL 'http://localhost:8000/paste/<paste_id>/raw'
+```
+
+Оба endpoint возвращают `text/plain; charset=utf-8`.
+
 Проверки:
 
 ```bash

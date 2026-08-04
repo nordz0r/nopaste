@@ -481,6 +481,26 @@ async def get_paste(request: Request, paste_id: str):
 
 
 @app.get(
+    "/raw/{paste_id}",
+    summary="Получить исходный текст nopaste",
+    description="Возвращает содержимое nopaste без HTML-обёртки.",
+    response_class=PlainTextResponse,
+)
+@app.get(
+    "/paste/{paste_id}/raw",
+    summary="Получить исходный текст nopaste",
+    description="Альтернативный URL для получения содержимого nopaste без HTML-обёртки.",
+    response_class=PlainTextResponse,
+)
+async def get_raw_paste(paste_id: str):
+    paste = db.get_paste(paste_id)
+    if not paste:
+        raise HTTPException(status_code=404, detail="Paste not found")
+    logger.info("Retrieved raw paste: id=%s", paste_id)
+    return PlainTextResponse(content=paste["content"])
+
+
+@app.get(
     "/list",
     summary="Список моих nopaste",
     description="Отображает список nopaste пользователя.",

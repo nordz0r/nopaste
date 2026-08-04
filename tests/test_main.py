@@ -213,6 +213,35 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert "Use line numbers" not in response.text
 
 
+@pytest.mark.parametrize(
+    "raw_path",
+    ["/raw/{paste_id}", "/paste/{paste_id}/raw"],
+)
+def test_get_raw_paste_returns_plain_text(client, raw_path):
+    content = '<script>alert("raw")</script>\nПривет, мир!'
+    create_response = client.post(
+        "/paste", data={"content": content}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(raw_path.format(paste_id=paste_id))
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "text/plain; charset=utf-8"
+    assert response.text == content
+
+
+@pytest.mark.parametrize(
+    "raw_path",
+    ["/raw/does-not-exist", "/paste/does-not-exist/raw"],
+)
+def test_get_raw_paste_returns_404_for_missing(client, raw_path):
+    response = client.get(raw_path)
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Paste not found"}
+
+
 def test_get_paste_auto_highlights_python_content(client):
     python_content = (
         'import os\n\ndef greet(name: str) -> str:\n    return f"hi {name}"'
