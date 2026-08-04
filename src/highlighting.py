@@ -1,3 +1,4 @@
+import json
 import re
 from dataclasses import dataclass
 from html import escape
@@ -5,7 +6,7 @@ from html import escape
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexer import Lexer
-from pygments.lexers import TextLexer, guess_lexer
+from pygments.lexers import JsonLexer, TextLexer, guess_lexer
 from pygments.util import ClassNotFound
 
 HIGHLIGHT_STYLE = "nord-darker"
@@ -85,8 +86,18 @@ def is_markdown_content(content: str, language: str) -> bool:
 
 
 def guess_paste_lexer(content: str) -> Lexer:
-    if not content.strip():
+    trimmed = content.strip()
+    if not trimmed:
         return TextLexer()
+
+    if (trimmed.startswith("{") and trimmed.endswith("}")) or (
+        trimmed.startswith("[") and trimmed.endswith("]")
+    ):
+        try:
+            json.loads(trimmed)
+            return JsonLexer()
+        except Exception:
+            pass
 
     try:
         return guess_lexer(content)
