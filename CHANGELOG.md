@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.8.0 (2026-08-04)
+
+### Features
+
+- Add raw paste endpoints
+  ([`fde3013`](https://github.com/nordz0r/nopaste/commit/fde3013f4601482f3a78da78cf39d36895fd8195))
+
+
 ## v1.7.5 (2026-08-04)
 
 ### Bug Fixes
