@@ -105,4 +105,3 @@ def test_highlighted_paste_detects_json_with_urls():
 
     assert highlighted_paste.language == "JSON"
     assert highlighted_paste.is_markdown is False
-
