@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.7.4 (2026-08-04)
+
+### Bug Fixes
+
+- **highlighting**: Autodetect valid JSON before Pygments fallback
+  ([`da6d179`](https://github.com/nordz0r/nopaste/commit/da6d1799b7c8a6ae9cc85b42318e1e78777e9626))
+
+
 ## v1.7.3 (2026-08-03)
 
 ### Bug Fixes
