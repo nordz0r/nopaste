@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.7.5 (2026-08-04)
+
+### Bug Fixes
+
+- **frontend**: Handle token object parameter in marked.js v1.7.4 code renderer
+  ([`6ce15c7`](https://github.com/nordz0r/nopaste/commit/6ce15c7581c86b1d07d0b72c016ba3e514d42345))
+
+### Code Style
+
+- **header**: Change site-header positioning from sticky to relative
+  ([`6c8e3fc`](https://github.com/nordz0r/nopaste/commit/6c8e3fcc398b65d09c6583ba916d157c949580b6))
+
+- **header**: Hide header after scrolling past threshold
+  ([`f090f16`](https://github.com/nordz0r/nopaste/commit/f090f168e2346e27c90c88a4189d0210abfefac8))
+
+
 ## v1.7.4 (2026-08-04)
 
 ### Bug Fixes
