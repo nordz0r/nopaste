@@ -141,15 +141,16 @@ function renderMarkdownAndMermaid() {
     const defaultCodeRenderer = renderer.code.bind(renderer);
 
     renderer.code = function(code, language, isEscaped) {
-        if (typeof code === 'object') {
-            language = code.lang;
-            code = code.text;
+        let codeText = typeof code === "object" && code ? (code.text || "") : (code || "");
+        let langStr = typeof code === "object" && code ? (code.lang || "") : (language || "");
+        const lang = (langStr || "").trim().toLowerCase();
+        if (lang === "mermaid") {
+            return `<div class="mermaid-wrap"><pre class="mermaid">${codeText}</pre></div>`;
         }
-        const lang = (language || '').trim().toLowerCase();
-        if (lang === 'mermaid') {
-            return `<div class="mermaid-wrap"><pre class="mermaid">${code}</pre></div>`;
+        if (typeof code === "object") {
+            return defaultCodeRenderer(code);
         }
-        return defaultCodeRenderer(code, language, isEscaped);
+        return defaultCodeRenderer(codeText, langStr, isEscaped);
     };
 
     marked.setOptions({
