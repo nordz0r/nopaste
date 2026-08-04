@@ -76,6 +76,21 @@
         }, { passive: true });
     }
 
+    const header = document.querySelector('.site-header');
+    if (header) {
+        let lastScrollY = window.scrollY;
+        const HIDE_THRESHOLD = 180;
+        window.addEventListener('scroll', () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > HIDE_THRESHOLD && currentScrollY > lastScrollY) {
+                header.classList.add('is-hidden');
+            } else if (currentScrollY < lastScrollY || currentScrollY <= HIDE_THRESHOLD) {
+                header.classList.remove('is-hidden');
+            }
+            lastScrollY = currentScrollY;
+        }, { passive: true });
+    }
+
     function showNotification(message) {
         const notification = document.getElementById("notification");
         if (!notification) return;
