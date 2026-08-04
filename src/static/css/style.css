@@ -173,8 +173,7 @@ a { color: inherit; text-decoration: none; }
     height: 68px;
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 100;
 }
 
