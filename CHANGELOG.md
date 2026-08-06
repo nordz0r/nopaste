@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.10.4 (2026-08-06)
+
+### Bug Fixes
+
+- **ui**: Stop clipping characters in short-url slug input
+  ([`27ee819`](https://github.com/nordz0r/nopaste/commit/27ee8198f4f6f50b65b26b4b5195cbaccdc536f2))
+
+
 ## v1.10.3 (2026-08-06)
 
 ### Bug Fixes
