@@ -24,8 +24,9 @@
     <script>
         (function() {
             const savedTheme = localStorage.getItem("nopaste-theme");
-            const theme = savedTheme ? savedTheme : "light";
-            document.documentElement.setAttribute("data-theme", theme);
+            if (savedTheme) {
+                document.documentElement.setAttribute("data-theme", savedTheme);
+            }
         })();
     </script>
 </head>

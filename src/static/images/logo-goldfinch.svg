@@ -1,19 +1,99 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-    <g class="gf-wing gf-wing-left">
-        <path class="gf-feather-dark" d="M14.2 16.1C11.5 14.3 8.8 11.3 6.3 7.4C5.7 10.7 6.4 13.4 8.2 15.8C6 15.9 4.1 16.7 2.4 18.2C5.4 19.1 8.0 19.2 10.3 18.7C8.9 20.3 8.1 22.1 7.8 24.3C10.5 23.4 12.7 21.4 14.5 18.2L14.2 16.1Z" fill="#20190d"/>
-        <path class="gf-feather-gold" d="M12.6 15.2C10.5 13.8 8.7 11.9 7.1 9.4C7.4 11.7 8.3 13.6 9.8 15.3Z" fill="#d7b64d"/>
-        <path class="gf-feather-gold" d="M11.8 17.8C10.0 18.2 8.5 19.1 7.4 20.7C9.2 20.5 10.8 19.5 12.1 17.9Z" fill="#d7b64d"/>
-    </g>
-    <g class="gf-wing gf-wing-right">
-        <path class="gf-feather-dark" d="M17.8 16.1C20.5 14.3 23.2 11.3 25.7 7.4C26.3 10.7 25.6 13.4 23.8 15.8C26 15.9 27.9 16.7 29.6 18.2C26.6 19.1 24 19.2 21.7 18.7C23.1 20.3 23.9 22.1 24.2 24.3C21.5 23.4 19.3 21.4 17.5 18.2L17.8 16.1Z" fill="#20190d"/>
-        <path class="gf-feather-gold" d="M19.4 15.2C21.5 13.8 23.3 11.9 24.9 9.4C24.6 11.7 23.7 13.6 22.2 15.3Z" fill="#d7b64d"/>
-        <path class="gf-feather-gold" d="M20.2 17.8C22.0 18.2 23.5 19.1 24.6 20.7C22.8 20.5 21.2 19.5 19.9 17.9Z" fill="#d7b64d"/>
-    </g>
-    <path class="gf-body" d="M16.1 11.4C18.2 11.4 20 12.6 20.9 14.4C21.9 16.5 21.6 19.1 20 21.2C18.9 22.7 17.4 23.8 15.7 24.7C13.8 23.7 12.4 22.4 11.5 20.6C10.4 18.4 10.6 15.8 12.3 13.7C13.2 12.2 14.6 11.4 16.1 11.4Z" fill="#2c2518"/>
-    <path class="gf-belly" d="M15.6 14.3C17 14.5 18.2 15.2 18.9 16.2C18.5 18.8 17.4 20.9 15.7 22.6C14.1 21.8 13 20.4 12.4 18.5C12.7 16.3 13.8 14.9 15.6 14.3Z" fill="#d7b64d"/>
-    <path class="gf-tail" d="M14.8 24.4L12.7 28.1L15.3 26.8L16.2 29.2L17.3 26.8L19.9 28.1L17.8 24.4Z" fill="#2c2518"/>
-    <path class="gf-head" d="M20.7 9.7C22.4 9.7 23.8 11 24.1 12.5C24.4 14.1 23.4 15.6 21.8 16C20.2 16.4 18.6 15.7 17.9 14.3C17.5 13.4 17.5 12.4 17.9 11.5C18.5 10.4 19.5 9.7 20.7 9.7Z" fill="#2c2518"/>
-    <path class="gf-mask" d="M18.3 10.9C18.9 10.1 19.9 9.7 21.1 9.7C22.6 9.7 23.8 10.8 24.1 12.2C23.1 12.5 22.3 12.9 21.6 13.6C20.7 14.3 19.8 14.6 18.7 14.6C18.2 14 17.9 13.2 17.9 12.5C17.9 11.9 18 11.3 18.3 10.9Z" fill="#c95f47"/>
-    <circle class="gf-eye" cx="21.2" cy="12.3" r="0.85" fill="#fffdf9"/>
-    <path class="gf-beak" d="M24.1 12.6L28.3 11.8L24.8 14.9L23.5 14.1Z" fill="#eadfca"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Premium color gradients for depth & vibrant modern aesthetics -->
+    <linearGradient id="gf-red" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF3B30"/>
+      <stop offset="60%" stop-color="#E52C2C"/>
+      <stop offset="100%" stop-color="#B71C1C"/>
+    </linearGradient>
+
+    <linearGradient id="gf-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE082"/>
+      <stop offset="40%" stop-color="#FFC107"/>
+      <stop offset="100%" stop-color="#FF8F00"/>
+    </linearGradient>
+
+    <linearGradient id="gf-dark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D3238"/>
+      <stop offset="60%" stop-color="#1A1D20"/>
+      <stop offset="100%" stop-color="#0F1113"/>
+    </linearGradient>
+
+    <linearGradient id="gf-tan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E4C59E"/>
+      <stop offset="70%" stop-color="#C89B67"/>
+      <stop offset="100%" stop-color="#A47745"/>
+    </linearGradient>
+
+    <linearGradient id="gf-cream" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="70%" stop-color="#F5F0EB"/>
+      <stop offset="100%" stop-color="#EAE3D9"/>
+    </linearGradient>
+
+    <linearGradient id="gf-beak" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF8E7"/>
+      <stop offset="100%" stop-color="#E2D4BF"/>
+    </linearGradient>
+
+    <filter id="gf-drop-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Main Goldfinch Mark -->
+  <g id="goldfinch-logo-mark" filter="url(#gf-drop-shadow)">
+    <!-- Wooden Branch -->
+    <path d="M 64 424 C 160 416, 280 432, 448 448 C 410 440, 270 420, 64 424 Z" fill="#6D4C41" opacity="0.85"/>
+    <path d="M 80 422 C 180 410, 320 426, 440 442 C 320 430, 180 414, 80 422 Z" fill="#8D6E63"/>
+
+    <!-- Bird Feet / Claws -->
+    <path d="M 205 388 C 195 400, 192 414, 202 422 C 206 424, 214 416, 218 402 Z" fill="#A1887F"/>
+    <path d="M 255 380 C 248 394, 245 410, 256 418 C 262 420, 270 408, 272 392 Z" fill="#8D6E63"/>
+
+    <!-- Tail Feathers -->
+    <path d="M 285 360 L 415 448 C 425 455, 435 450, 420 432 L 315 325 Z" fill="url(#gf-dark)"/>
+    <path d="M 300 355 L 428 442 C 434 446, 438 440, 425 428 L 325 315 Z" fill="#0F1113"/>
+    <path d="M 330 370 L 412 432" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+
+    <!-- Body & Back (Warm Tan) -->
+    <path d="M 210 160 C 270 150, 330 200, 345 300 C 350 330, 335 365, 305 375 C 240 395, 180 340, 150 270 C 135 235, 160 175, 210 160 Z" fill="url(#gf-tan)"/>
+
+    <!-- Breast / Belly (Clean Cream/White) -->
+    <path d="M 175 220 C 160 250, 165 310, 210 365 C 245 385, 280 375, 295 355 C 265 355, 220 320, 200 270 C 190 245, 185 225, 175 220 Z" fill="url(#gf-cream)"/>
+
+    <!-- Main Wing Structure (Dark Charcoal/Black) -->
+    <path d="M 215 210 C 265 200, 335 240, 385 330 C 395 348, 385 362, 365 365 C 325 370, 265 330, 225 285 C 205 260, 205 230, 215 210 Z" fill="url(#gf-dark)"/>
+
+    <!-- Iconic Golden Yellow Wing Bar -->
+    <path d="M 235 225 C 275 220, 315 245, 355 300 C 335 305, 285 280, 250 255 C 238 245, 232 235, 235 225 Z" fill="url(#gf-gold)"/>
+    <path d="M 248 248 C 280 245, 320 270, 352 318 C 342 322, 308 300, 270 275 Z" fill="#FFE082" opacity="0.6"/>
+
+    <!-- White Feather Spots on Wing Edge -->
+    <circle cx="365" cy="335" r="4" fill="#FFFFFF"/>
+    <circle cx="350" cy="348" r="4" fill="#FFFFFF"/>
+    <circle cx="335" cy="358" r="4" fill="#FFFFFF"/>
+
+    <!-- Nape / Back of Neck (Black Hood) -->
+    <path d="M 195 125 C 220 115, 255 130, 250 170 C 235 170, 205 160, 195 125 Z" fill="url(#gf-dark)"/>
+
+    <!-- White Cheek & Collar Surround -->
+    <path d="M 160 155 C 175 140, 205 140, 220 165 C 225 185, 210 210, 180 215 C 165 210, 150 180, 160 155 Z" fill="url(#gf-cream)"/>
+
+    <!-- Black Head Cap -->
+    <path d="M 155 130 C 170 100, 215 95, 235 120 C 245 135, 230 155, 215 155 C 190 155, 160 145, 155 130 Z" fill="url(#gf-dark)"/>
+
+    <!-- Vibrant Crimson Red Mask -->
+    <path d="M 105 150 C 115 125, 145 120, 165 135 C 175 145, 175 165, 160 180 C 140 190, 115 180, 105 150 Z" fill="url(#gf-red)"/>
+
+    <!-- Ivory Beak -->
+    <path d="M 115 148 L 60 158 C 52 160, 52 165, 62 170 L 118 178 Z" fill="url(#gf-beak)"/>
+    <path d="M 115 148 L 60 158 C 55 159, 58 164, 117 163 Z" fill="#E4C59E"/>
+
+    <!-- Expressive Eye -->
+    <circle cx="145" cy="148" r="11" fill="#0F1113"/>
+    <circle cx="145" cy="148" r="8" fill="#1C1E22"/>
+    <circle cx="148" cy="145" r="3.5" fill="#FFFFFF"/>
+    <circle cx="143" cy="151" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+  </g>
 </svg>
