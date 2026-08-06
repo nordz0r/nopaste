@@ -44,7 +44,8 @@ def test_read_root(client):
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
     assert "nopasteForm.requestSubmit()" in response.text
-    assert 'name="custom_slug"' in response.text
+    assert 'name="custom_slug"' not in response.text
+    assert "Имя короткой ссылки" not in response.text
 
 
 def test_load_asset_version_prefers_environment(monkeypatch):
