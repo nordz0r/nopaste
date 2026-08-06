@@ -54,7 +54,22 @@
     {% if short_url %}
     <div class="paste-meta-item">
         <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
-        <a href="{{ short_url }}" id="short-url-link">{{ short_url }}</a>
+        <span class="short-url-editor" id="short-url-editor">
+            <a href="{{ short_url }}" id="short-url-link">
+                <span aria-hidden="true">{{ short_url.rsplit('/', 1)[0] }}/</span><span id="short-url-slug-display">{{ short_url.rsplit('/', 1)[-1] }}</span>
+            </a>
+            <span id="short-url-edit-wrap" class="is-hidden-view">
+                <span aria-hidden="true">{{ short_url.rsplit('/', 1)[0] }}/</span>
+                <input
+                    id="short-url-slug"
+                    type="text"
+                    value="{{ short_url.rsplit('/', 1)[-1] }}"
+                    aria-label="Имя короткой ссылки"
+                    maxlength="64"
+                    pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}"
+                >
+            </span>
+        </span>
     </div>
     {% endif %}
 </div>
@@ -119,13 +134,118 @@ document.querySelectorAll(".paste-line-number").forEach(link => {
     });
 });
 
+const rawContentField = document.getElementById("paste-raw-content");
 const copyContentBtn = document.getElementById("copy-content-btn");
-if (copyContentBtn) {
+if (copyContentBtn && rawContentField) {
     copyContentBtn.addEventListener("click", () => {
-        const contentField = document.getElementById("paste-raw-content");
-        if (contentField) copyToClipboard(contentField.value, "Содержимое скопировано!");
+        copyToClipboard(rawContentField.value, "Содержимое скопировано!");
     });
 }
+
+// Ctrl+A / Cmd+A selects only the original paste text, not the page chrome or line numbers.
+document.addEventListener("keydown", (event) => {
+    const isSelectAll = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "a";
+    if (!isSelectAll || !rawContentField || event.target.closest("input, textarea, [contenteditable='true']")) return;
+
+    const pasteCodeViewElement = document.getElementById("paste-code-view");
+    const pasteMarkdownViewElement = document.getElementById("paste-markdown-view");
+    const activeContainer = (pasteMarkdownViewElement && !pasteMarkdownViewElement.classList.contains("is-hidden-view"))
+        ? document.getElementById("markdown-rendered-content")
+        : pasteCodeViewElement;
+
+    if (activeContainer) {
+        event.preventDefault();
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(activeContainer);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+});
+
+const shortUrlLink = document.getElementById("short-url-link");
+const shortUrlEditWrap = document.getElementById("short-url-edit-wrap");
+const shortUrlSlug = document.getElementById("short-url-slug");
+const shortUrlSlugDisplay = document.getElementById("short-url-slug-display");
+if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
+    let originalSlug = shortUrlSlug.value;
+
+    function showLinkView() {
+        shortUrlEditWrap.classList.add("is-hidden-view");
+        shortUrlLink.classList.remove("is-hidden-view");
+    }
+
+    function showEditView() {
+        originalSlug = shortUrlSlug.value;
+        shortUrlLink.classList.add("is-hidden-view");
+        shortUrlEditWrap.classList.remove("is-hidden-view");
+        shortUrlSlug.removeAttribute("readonly");
+        shortUrlSlug.focus();
+        shortUrlSlug.select();
+    }
+
+    shortUrlLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        showEditView();
+    });
+
+    async function saveSlug() {
+        const newSlug = shortUrlSlug.value.trim();
+        if (!newSlug || newSlug === originalSlug) {
+            shortUrlSlug.value = originalSlug;
+            showLinkView();
+            return;
+        }
+
+        const pasteId = "{{ paste_id }}";
+        try {
+            const formData = new FormData();
+            formData.append("custom_slug", newSlug);
+
+            const response = await fetch(`/paste/${pasteId}/slug`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.short_url) {
+                    shortUrlLink.href = data.short_url;
+                    if (shortUrlSlugDisplay) {
+                        shortUrlSlugDisplay.textContent = data.slug;
+                    }
+                    originalSlug = data.slug;
+                    shortUrlSlug.value = data.slug;
+                    showNotification("Ссылка обновлена!");
+                }
+            } else {
+                const errData = await response.json().catch(() => ({}));
+                showNotification(errData.detail || "Ошибка при обновлении ссылки");
+                shortUrlSlug.value = originalSlug;
+            }
+        } catch (err) {
+            showNotification("Не удалось связаться с сервером");
+            shortUrlSlug.value = originalSlug;
+        }
+        showLinkView();
+    }
+
+    shortUrlSlug.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            shortUrlSlug.blur();
+        } else if (event.key === "Escape") {
+            event.preventDefault();
+            shortUrlSlug.value = originalSlug;
+            showLinkView();
+        }
+    });
+
+    shortUrlSlug.addEventListener("blur", () => {
+        saveSlug();
+    });
+}
+
 
 // Markdown & Mermaid rendering engine
 let markdownRendered = false;

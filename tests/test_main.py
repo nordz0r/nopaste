@@ -44,6 +44,7 @@ def test_read_root(client):
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
     assert "nopasteForm.requestSubmit()" in response.text
+    assert 'name="custom_slug"' in response.text
 
 
 def test_load_asset_version_prefers_environment(monkeypatch):
@@ -486,8 +487,72 @@ def test_shorten_url_returns_none_when_only_url_configured(monkeypatch):
     assert result is None
 
 
+def test_shorten_url_sends_custom_slug(monkeypatch):
+    class MockResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"shortUrl": "https://gldf.ru/my-note"}
+
+    class MockClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def post(self, url, **kwargs):
+            calls.append((url, kwargs))
+            return MockResponse()
+
+    calls = []
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+    monkeypatch.setattr(main_module.httpx, "AsyncClient", MockClient)
+
+    result = asyncio.run(
+        main_module.shorten_url(
+            "https://example.com/paste/abc123", custom_slug="my-note"
+        )
+    )
+
+    assert result == "https://gldf.ru/my-note"
+    assert calls[0][1]["json"] == {
+        "longUrl": "https://example.com/paste/abc123",
+        "customSlug": "my-note",
+    }
+
+
+def test_create_paste_passes_custom_slug_to_shrink(client, monkeypatch):
+    received = {}
+
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        received["custom_slug"] = custom_slug
+        return "https://gldf.ru/my-note"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+    response = client.post(
+        "/paste",
+        data={"content": "custom slug test", "custom_slug": "my-note"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert received == {"custom_slug": "my-note"}
+
+
+def test_create_paste_rejects_invalid_custom_slug(client):
+    response = client.post(
+        "/paste", data={"content": "invalid slug", "custom_slug": "bad slug"}
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid custom short link name"}
+
+
 def test_create_paste_with_shrink_shows_short_url_in_view(client, monkeypatch):
-    async def mock_shorten(_url: str) -> str:
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
         return "https://gldf.ru/ab12c"
 
     monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
@@ -501,6 +566,7 @@ def test_create_paste_with_shrink_shows_short_url_in_view(client, monkeypatch):
     assert view_response.status_code == 200
     assert "https://gldf.ru/ab12c" in view_response.text
     assert 'id="short-url-link"' in view_response.text
+    assert "short-url-editor" in view_response.text
 
 
 def test_create_paste_without_shrink_omits_short_url(client):
@@ -515,7 +581,7 @@ def test_create_paste_without_shrink_omits_short_url(client):
 
 
 def test_copy_link_uses_short_url_when_shrink_configured(client, monkeypatch):
-    async def mock_shorten(_url: str) -> str:
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
         return "https://gldf.ru/xy99z"
 
     monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
@@ -541,8 +607,58 @@ def test_copy_link_uses_page_url_without_shrink(client):
     assert "window.location.href" in view_response.text
 
 
+def test_paste_view_selects_content_container_on_select_all(client):
+    response = client.post(
+        "/paste", data={"content": "line one\nline two"}, follow_redirects=False
+    )
+    paste_id = response.headers["location"].split("/")[-1]
+    view_response = client.get(f"/paste/{paste_id}")
+
+    assert view_response.status_code == 200
+    assert 'id="paste-raw-content"' in view_response.text
+    assert "event.ctrlKey || event.metaKey" in view_response.text
+    assert "selectNodeContents(activeContainer)" in view_response.text
+
+
+def test_update_paste_slug_success(client, monkeypatch):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        return f"https://gldf.ru/{custom_slug}"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    create_response = client.post(
+        "/paste", data={"content": "slug edit test"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    update_response = client.post(
+        f"/paste/{paste_id}/slug",
+        data={"custom_slug": "updated-slug"},
+    )
+
+    assert update_response.status_code == 200
+    assert update_response.json() == {
+        "status": "ok",
+        "short_url": "https://gldf.ru/updated-slug",
+        "slug": "updated-slug",
+    }
+
+
+def test_update_paste_slug_invalid_or_missing(client):
+    create_response = client.post(
+        "/paste", data={"content": "slug test"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    invalid_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "bad slug"})
+    assert invalid_res.status_code == 400
+
+    missing_res = client.post("/paste/nonexistent/slug", data={"custom_slug": "valid-slug"})
+    assert missing_res.status_code == 404
+
+
 def test_create_paste_succeeds_when_shrink_fails(client, monkeypatch):
-    async def mock_shorten_fail(_url: str) -> None:
+    async def mock_shorten_fail(_url: str, custom_slug: str | None = None) -> None:
         return None
 
     monkeypatch.setattr(main_module, "shorten_url", mock_shorten_fail)
@@ -553,3 +669,4 @@ def test_create_paste_succeeds_when_shrink_fails(client, monkeypatch):
 
     assert response.status_code == 303
     assert response.headers["location"].startswith("/paste/")
+

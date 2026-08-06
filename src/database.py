@@ -37,6 +37,15 @@ class Database:
                 (paste_id, content, short_url),
             )
 
+    def update_paste_short_url(self, paste_id: str, short_url: str) -> None:
+        """Update short_url for an existing paste."""
+        with self.conn:
+            self.conn.execute(
+                "UPDATE pastes SET short_url = ? WHERE id = ?",
+                (short_url, paste_id),
+            )
+
+
     def get_paste(self, paste_id: str) -> dict | None:
         """Retrieve a paste by its id."""
         cur = self.conn.execute(

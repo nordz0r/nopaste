@@ -5,6 +5,7 @@ import hmac
 import json
 import logging
 import os
+import re
 import secrets
 import tomllib
 from datetime import datetime
@@ -177,10 +178,18 @@ def get_design_base_template() -> str:
     return f"designs/{get_active_design_name()}/base.html"
 
 
+def get_shrink_base_url() -> str:
+    if settings.SHRINK_URL:
+        return settings.SHRINK_URL.rstrip("/")
+    return "https://gldf.ru"
+
+
 APP_VERSION = load_asset_version()
 templates.env.globals["asset_version"] = APP_VERSION
 templates.env.globals["app_version"] = APP_VERSION
 templates.env.globals["current_year"] = current_year
+templates.env.globals["shrink_base_url"] = get_shrink_base_url
+
 
 
 def load_user_pastes(request: Request) -> list[str]:
@@ -342,14 +351,31 @@ def build_page_meta(
     }
 
 
-async def shorten_url(long_url: str) -> str | None:
+CUSTOM_SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
+
+
+def normalize_custom_slug(custom_slug: str | None) -> str | None:
+    normalized_slug = (custom_slug or "").strip()
+    if not normalized_slug:
+        return None
+    if not CUSTOM_SLUG_PATTERN.fullmatch(normalized_slug):
+        raise HTTPException(status_code=400, detail="Invalid custom short link name")
+    return normalized_slug
+
+
+async def shorten_url(
+    long_url: str, custom_slug: str | None = None
+) -> str | None:
     if not settings.SHRINK_URL or not settings.SHRINK_TOKEN:
         return None
     try:
+        payload = {"longUrl": long_url}
+        if custom_slug:
+            payload["customSlug"] = custom_slug
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{settings.SHRINK_URL.rstrip('/')}/rest/v3/short-urls",
-                json={"longUrl": long_url},
+                json=payload,
                 headers={"X-Api-Key": settings.SHRINK_TOKEN},
                 timeout=5.0,
             )
@@ -407,8 +433,13 @@ async def read_root(request: Request):
     response_description="Перенаправление на страницу нового nopaste",
 )
 async def create_paste(
-    request: Request, content: str = Form(..., description="Содержимое nopaste")
+    request: Request,
+    content: str = Form(..., description="Содержимое nopaste"),
+    custom_slug: str | None = Form(
+        None, description="Имя короткой ссылки, если настроен Shlink"
+    ),
 ):
+    custom_slug = normalize_custom_slug(custom_slug)
     if not content.strip():
         raise HTTPException(status_code=400, detail="Content cannot be empty")
     if len(content.encode("utf-8")) > settings.MAX_PASTE_SIZE_BYTES:
@@ -419,7 +450,7 @@ async def create_paste(
 
     paste_id = generate_paste_id(db)
     paste_url = str(request.url_for("get_paste", paste_id=paste_id))
-    short_url = await shorten_url(paste_url)
+    short_url = await shorten_url(paste_url, custom_slug)
     db.save_paste(paste_id, content, short_url)
     logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
 
@@ -478,6 +509,38 @@ async def get_paste(request: Request, paste_id: str):
             ),
         },
     )
+
+
+@app.post(
+    "/paste/{paste_id}/slug",
+    summary="Обновить имя короткой ссылки nopaste",
+    description="Создает или обновляет короткую ссылку Shlink для существующего nopaste с новым custom slug.",
+)
+async def update_paste_slug(
+    request: Request,
+    paste_id: str,
+    custom_slug: str = Form(..., description="Новое имя короткой ссылки"),
+):
+    paste = db.get_paste(paste_id)
+    if not paste:
+        raise HTTPException(status_code=404, detail="Paste not found")
+
+    normalized_slug = normalize_custom_slug(custom_slug)
+    if not normalized_slug:
+        raise HTTPException(status_code=400, detail="Slug cannot be empty")
+
+    paste_url = str(request.url_for("get_paste", paste_id=paste_id))
+    short_url = await shorten_url(paste_url, normalized_slug)
+    if not short_url:
+        raise HTTPException(
+            status_code=500,
+            detail="Could not update short URL",
+        )
+
+    db.update_paste_short_url(paste_id, short_url)
+    logger.info("Updated short_url for paste %s: %s", paste_id, short_url)
+    return JSONResponse(content={"status": "ok", "short_url": short_url, "slug": normalized_slug})
+
 
 
 @app.get(

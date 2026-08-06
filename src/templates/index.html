@@ -10,6 +10,22 @@
         <form action="/paste" method="post" id="nopaste-form">
             <label class="sr-only" for="paste-content-input">Paste content</label>
             <textarea id="paste-content-input" name="content" rows="14" placeholder="Paste your text, logs, notes, or config here..." autofocus></textarea>
+            <div class="custom-slug-field">
+                <label for="custom-slug-input">Имя короткой ссылки <span>(необязательно)</span></label>
+                <div class="custom-slug-input-wrap">
+                    <span aria-hidden="true">{{ shrink_base_url() }}/</span>
+                    <input
+                        id="custom-slug-input"
+                        name="custom_slug"
+                        type="text"
+                        maxlength="64"
+                        pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}"
+                        autocomplete="off"
+                        placeholder="my-note"
+                    >
+                </div>
+                <small>Латинские буквы, цифры, <code>-</code> и <code>_</code>.</small>
+            </div>
             <div class="form-actions">
                 <span class="form-hint">Ctrl + Enter to save</span>
                 <button type="submit" class="btn btn-primary">
