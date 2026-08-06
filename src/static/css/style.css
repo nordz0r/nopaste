@@ -572,21 +572,40 @@ textarea::placeholder {
     position: relative;
     display: inline-flex;
     align-items: center;
+    max-width: 100%;
     color: var(--accent);
     font-family: var(--font-mono);
     white-space: nowrap;
+    overflow: visible;
 }
 
 .short-url-edit-wrap {
     display: inline-flex;
     align-items: center;
+    max-width: 100%;
     white-space: nowrap;
+    overflow: visible;
 }
 
-.short-url-editor input {
+/* Mirror for measuring slug text width (same font metrics as the input). */
+.short-url-slug-sizer {
+    position: absolute;
+    visibility: hidden;
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
+    white-space: pre;
+    font: inherit;
+    font-family: var(--font-mono);
+}
+
+.short-url-editor input#short-url-slug {
     display: inline-block;
-    width: auto;
-    min-width: 3ch;
+    /* content-box: width = text only; padding/border sit outside so glyphs are not clipped */
+    box-sizing: content-box;
+    width: 4ch;
+    min-width: 4ch;
+    max-width: min(36rem, 70vw);
     padding: 2px 8px;
     margin: 0;
     border: 1px solid var(--border);
@@ -596,12 +615,20 @@ textarea::placeholder {
     color: var(--accent);
     font: inherit;
     font-family: var(--font-mono);
+    letter-spacing: inherit;
     transition: border-color 0.2s;
+    overflow: visible;
+    /* Modern browsers: auto-grow without JS; JS sizer remains as fallback */
+    field-sizing: content;
 }
 
-.short-url-editor input:focus {
+.short-url-editor input#short-url-slug:focus {
     border-color: var(--accent);
     background: transparent;
+}
+
+#short-url-slug-display {
+    white-space: pre;
 }
 
 /* Hover tooltip — same surface language as notifications */

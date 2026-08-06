@@ -72,7 +72,11 @@
                     aria-label="{{ t('paste.short_url_label') }}"
                     maxlength="64"
                     pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}"
+                    size="4"
+                    spellcheck="false"
+                    autocomplete="off"
                 >
+                <span id="short-url-slug-sizer" class="short-url-slug-sizer" aria-hidden="true"></span>
             </span>
         </span>
     </div>
@@ -177,12 +181,30 @@ const shortUrlLink = document.getElementById("short-url-link");
 const shortUrlEditWrap = document.getElementById("short-url-edit-wrap");
 const shortUrlSlug = document.getElementById("short-url-slug");
 const shortUrlSlugDisplay = document.getElementById("short-url-slug-display");
+const shortUrlSlugSizer = document.getElementById("short-url-slug-sizer");
 if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
     let originalSlug = shortUrlSlug.value;
     let saving = false;
 
     function updateSlugInputWidth() {
-        shortUrlSlug.style.width = Math.max((shortUrlSlug.value || "").length + 1, 4) + "ch";
+        // Measure real glyph width (ch + border-box padding used to clip letters).
+        const text = shortUrlSlug.value || "";
+        const measure = text.length ? text : "W".repeat(4);
+        if (shortUrlSlugSizer) {
+            const cs = window.getComputedStyle(shortUrlSlug);
+            shortUrlSlugSizer.style.font = cs.font;
+            shortUrlSlugSizer.style.fontFamily = cs.fontFamily;
+            shortUrlSlugSizer.style.fontSize = cs.fontSize;
+            shortUrlSlugSizer.style.fontWeight = cs.fontWeight;
+            shortUrlSlugSizer.style.letterSpacing = cs.letterSpacing;
+            shortUrlSlugSizer.textContent = measure;
+            // +2px caret room; content-box so padding is outside this width
+            const px = Math.ceil(shortUrlSlugSizer.getBoundingClientRect().width) + 2;
+            shortUrlSlug.style.width = Math.max(px, 24) + "px";
+        } else {
+            shortUrlSlug.style.width = Math.max(text.length + 2, 4) + "ch";
+        }
+        shortUrlSlug.size = Math.max(text.length + 1, 4);
     }
 
     function showLinkView() {
@@ -192,10 +214,10 @@ if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
 
     function showEditView() {
         originalSlug = shortUrlSlug.value;
-        updateSlugInputWidth();
         shortUrlLink.classList.add("is-hidden-view");
         shortUrlEditWrap.classList.remove("is-hidden-view");
         shortUrlSlug.removeAttribute("readonly");
+        updateSlugInputWidth();
         shortUrlSlug.focus();
         shortUrlSlug.select();
     }
