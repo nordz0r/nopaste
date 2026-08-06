@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.10.2 (2026-08-06)
+
+### Bug Fixes
+
+- **docker**: Healthcheck without wget; upgrade deps and uv 0.12
+  ([`910cb50`](https://github.com/nordz0r/nopaste/commit/910cb501e2a56801bc744c542670761272d9e39f))
+
+### Chores
+
+- Remove unused assets and slim static images
+  ([`2e3ca67`](https://github.com/nordz0r/nopaste/commit/2e3ca67559a15ca55038884deb368213ab61ab8f))
+
+
 ## v1.10.1 (2026-08-06)
 
 ### Bug Fixes
