@@ -27,12 +27,8 @@ htmlcov
 *.log
 
 # Docs & operator helpers (not needed in image)
-AGENTS.md
 README.md
 README.ru.md
-logs.sh
-restart.sh
-stop.sh
 
 # Tests only needed for test-runtime target — keep in context for multi-stage
 # (tests/ is copied explicitly in Dockerfile test stage)

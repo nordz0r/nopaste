@@ -13,7 +13,6 @@ def test_version_txt_is_not_a_release_source():
         ".github/workflows/dockerhub.yml",
         "Dockerfile",
         "README.md",
-        "AGENTS.md",
         "CLAUDE.md",
         "GEMINI.md",
     ]
