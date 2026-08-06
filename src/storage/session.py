@@ -39,7 +39,11 @@ def get_engine(database_url: str, *, echo: bool = False) -> Engine:
 
 
 def init_db(database_url: str, *, echo: bool = False) -> Engine:
-    """Create engine and apply schema (Alembic upgrade head when available)."""
+    """Create engine and apply schema (Alembic upgrade head when available).
+
+    Always ends with metadata.create_all so tests and first boot stay reliable
+    even if Alembic is unavailable or the revision graph is empty.
+    """
     engine = get_engine(database_url, echo=echo)
     try:
         from pathlib import Path
@@ -59,11 +63,10 @@ def init_db(database_url: str, *, echo: bool = False) -> Engine:
             if ini.is_file():
                 cfg = Config(str(ini))
                 cfg.set_main_option("sqlalchemy.url", database_url)
-                # script_location relative to ini file directory
                 command.upgrade(cfg, "head")
-                return engine
+                break
     except Exception:
-        # Fallback for tests / missing alembic tree: create metadata
+        # Fallback for missing alembic tree / env issues
         pass
 
     from storage.models import Base
