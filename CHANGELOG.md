@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.10.1 (2026-08-06)
+
+### Bug Fixes
+
+- **storage**: Always ensure schema via create_all after alembic
+  ([`e91b9f3`](https://github.com/nordz0r/nopaste/commit/e91b9f316a0232a0fb233bdf3ab05bbf2538de16))
+
+
 ## v1.10.0 (2026-08-06)
 
 ### Bug Fixes
