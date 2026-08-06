@@ -12,7 +12,6 @@ services:
       target: runtime
       args:
         APP_VERSION: ${APP_VERSION:-}
-        UV_VERSION: ${UV_VERSION:-0.12.2}
     image: nopaste:local
     container_name: nopaste-local
     ports:
@@ -85,7 +84,6 @@ services:
       target: test-runtime
       args:
         APP_VERSION: ${APP_VERSION:-}
-        UV_VERSION: ${UV_VERSION:-0.12.2}
     image: nopaste:test
     container_name: nopaste-test
     environment:

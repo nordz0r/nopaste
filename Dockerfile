@@ -1,13 +1,10 @@
 # syntax=docker/dockerfile:1.7
-# Multi-stage build: uv installs into a venv, slim alpine runtime.
+# Multi-stage: uv installs into a venv; slim alpine runtime.
 
-ARG UV_VERSION=0.12.2
-ARG PYTHON_IMAGE=python:3.12-alpine
-
-# ---- base-builder: uv + lockfiles (shared cache layer) ----
-FROM ${PYTHON_IMAGE} AS base-builder
-ARG UV_VERSION
-COPY --from=ghcr.io/astral-sh/uv:${UV_VERSION} /uv /usr/local/bin/uv
+# ---- base-builder: uv + lockfiles ----
+FROM python:3.12-alpine AS base-builder
+# Pin uv explicitly (COPY --from cannot expand build-args for image refs).
+COPY --from=ghcr.io/astral-sh/uv:0.12.2 /uv /usr/local/bin/uv
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -29,7 +26,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --extra test --no-install-project --compile-bytecode
 
 # ---- test-runtime ----
-FROM ${PYTHON_IMAGE} AS test-runtime
+FROM python:3.12-alpine AS test-runtime
 ARG APP_VERSION=""
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -47,7 +44,7 @@ COPY tests ./tests
 CMD ["pytest", "-q"]
 
 # ---- prod-runtime ----
-FROM ${PYTHON_IMAGE} AS runtime
+FROM python:3.12-alpine AS runtime
 ARG APP_VERSION=""
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -74,6 +71,5 @@ COPY --chown=sam:sam src ./
 USER sam
 EXPOSE 8000
 
-# K8s/compose: SIGTERM + zombie reaping
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
