@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.11.0 (2026-08-06)
+
+### Features
+
+- **ui**: Slug as display name; changelog modal
+  ([`709fa47`](https://github.com/nordz0r/nopaste/commit/709fa47f35cc1ac6fdce12f3dc79d6d341ae6623))
+
+
 ## v1.10.4 (2026-08-06)
 
 ### Bug Fixes
