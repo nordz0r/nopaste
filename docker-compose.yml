@@ -1,4 +1,7 @@
 ---
+# Published image stack (SQLite by default).
+# Postgres: DATABASE_URL=postgresql+psycopg://nopaste:nopaste@postgres:5432/nopaste \
+#           docker compose --profile postgres up -d
 services:
   nopaste-app:
     image: nordz0r/nopaste:main
@@ -6,6 +9,9 @@ services:
     container_name: nopaste
     ports:
       - "${APP_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_PATH: ${DATABASE_PATH:-/data/pastes.db}
       DATABASE_URL: ${DATABASE_URL:-}
@@ -20,21 +26,32 @@ services:
       SHRINK_URL: ${SHRINK_URL:-}
       SHRINK_TOKEN: ${SHRINK_TOKEN:-}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      UI_DESIGN: ${UI_DESIGN:-default}
     volumes:
       - nopaste_data:/data
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health/ready"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     depends_on:
       postgres:
         condition: service_healthy
         required: false
 
-  # Optional Postgres profile: docker compose --profile postgres up -d
   postgres:
     profiles: ["postgres"]
     image: postgres:16-alpine
@@ -54,6 +71,8 @@ services:
       retries: 10
       start_period: 5s
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   nopaste_data:

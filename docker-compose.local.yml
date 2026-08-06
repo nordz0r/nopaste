@@ -1,4 +1,9 @@
 ---
+# Local build stack. Same env model as docker-compose.yml.
+#   docker compose -f docker-compose.local.yml up --build -d
+#   docker compose -f docker-compose.local.yml --profile test run --rm tests
+#   DATABASE_URL=postgresql+psycopg://nopaste:nopaste@postgres:5432/nopaste \
+#     docker compose -f docker-compose.local.yml --profile postgres up --build -d
 services:
   nopaste-app:
     build:
@@ -7,10 +12,14 @@ services:
       target: runtime
       args:
         APP_VERSION: ${APP_VERSION:-}
+        UV_VERSION: ${UV_VERSION:-0.12.2}
     image: nopaste:local
     container_name: nopaste-local
     ports:
       - "${APP_PORT:-8000}:8000"
+    env_file:
+      - path: .env
+        required: false
     environment:
       DATABASE_PATH: ${DATABASE_PATH:-/tmp/pastes.db}
       DATABASE_URL: ${DATABASE_URL:-}
@@ -25,13 +34,22 @@ services:
       SHRINK_URL: ${SHRINK_URL:-}
       SHRINK_TOKEN: ${SHRINK_TOKEN:-}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      UI_DESIGN: ${UI_DESIGN:-default}
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health/ready"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)",
+        ]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 15s
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,6 +74,8 @@ services:
       retries: 10
       start_period: 5s
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
 
   tests:
     profiles: ["test"]
@@ -65,10 +85,12 @@ services:
       target: test-runtime
       args:
         APP_VERSION: ${APP_VERSION:-}
+        UV_VERSION: ${UV_VERSION:-0.12.2}
     image: nopaste:test
     container_name: nopaste-test
     environment:
       DATABASE_PATH: ":memory:"
+    command: ["pytest", "-q"]
 
 volumes:
   nopaste_pgdata_local:
