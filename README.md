@@ -102,7 +102,8 @@ COMPOSE_FILE=docker-compose.local.yml ./logs.sh nopaste-app
 COMPOSE_FILE=docker-compose.local.yml ./stop.sh nopaste-app
 ```
 
-По умолчанию данные SQLite сохраняются в volume `/data/pastes.db` внутри контейнера.
+По умолчанию локальные данные SQLite сохраняются в volume `/data/pastes.db` внутри контейнера.
+В production (`paste.goldfinches.ru`) pastes хранятся в shared PostgreSQL (tenant `nopaste`) и переживают рестарт pod.
 
 ## Конфигурация
 
@@ -110,7 +111,9 @@ COMPOSE_FILE=docker-compose.local.yml ./stop.sh nopaste-app
 
 - `APP_PORT` — внешний порт приложения, по умолчанию `8000`
 - `DEBUG` — включает debug-режим FastAPI
-- `DATABASE_PATH` — путь к SQLite-базе
+- `DATABASE_PATH` — путь к SQLite-базе (local/tests; используется, если Postgres не задан)
+- `DATABASE_URL` — PostgreSQL DSN (`postgresql://...`); приоритетнее `DATABASE_PATH` и `POSTGRES_*`
+- `POSTGRES_HOST` / `POSTGRES_PORT` / `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_SSLMODE` — дискретные credentials для production
 - `COOKIE_SIGNING_SECRET` — секрет подписи cookie со списком recent pastes
 - `MAX_PASTE_SIZE_BYTES` — максимальный размер одного paste в байтах
 - `MAX_RECENT_PASTES` — сколько recent pastes хранить в cookie

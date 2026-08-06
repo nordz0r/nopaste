@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from config import settings
-from database import Database
+from database import Database, create_database_from_settings
 from highlighting import build_highlighted_paste
 
 logging.basicConfig(level=logging.INFO)
@@ -48,7 +48,8 @@ class CacheStaticFiles(StaticFiles):
         return response
 
 
-db = Database(settings.DATABASE_PATH)
+db = create_database_from_settings(settings)
+logger.info("Paste storage backend: %s", db.backend_name)
 
 BASE_DIR = Path(__file__).parent
 PROJECT_ROOT = BASE_DIR.parent

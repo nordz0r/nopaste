@@ -10,7 +10,35 @@ class Settings(BaseSettings):
     )
     DEBUG: bool = Field(default=False, description="Enable debug mode.")
     DATABASE_PATH: str = Field(
-        default="/tmp/pastes.db", description="Path to the SQLite database file."
+        default="/tmp/pastes.db",
+        description="Path to the SQLite database file (used when Postgres is not configured).",
+    )
+    DATABASE_URL: str | None = Field(
+        default=None,
+        description=(
+            "PostgreSQL connection URL (e.g. postgresql://user:pass@host:5432/db). "
+            "When set, takes precedence over DATABASE_PATH and discrete POSTGRES_* vars."
+        ),
+    )
+    POSTGRES_HOST: str | None = Field(
+        default=None,
+        description="PostgreSQL host. Used with POSTGRES_DB/USER/PASSWORD when DATABASE_URL is empty.",
+    )
+    POSTGRES_PORT: int = Field(
+        default=5432, description="PostgreSQL port for discrete connection settings."
+    )
+    POSTGRES_DB: str | None = Field(
+        default=None, description="PostgreSQL database name for discrete connection settings."
+    )
+    POSTGRES_USER: str | None = Field(
+        default=None, description="PostgreSQL user for discrete connection settings."
+    )
+    POSTGRES_PASSWORD: str | None = Field(
+        default=None, description="PostgreSQL password for discrete connection settings."
+    )
+    POSTGRES_SSLMODE: str = Field(
+        default="disable",
+        description="libpq sslmode when building a DSN from discrete POSTGRES_* settings.",
     )
     COOKIE_SIGNING_SECRET: str = Field(
         default="local-development-cookie-secret",
