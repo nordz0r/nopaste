@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.10.3 (2026-08-06)
+
+### Bug Fixes
+
+- **docker**: Pin uv image ref for buildx COPY --from
+  ([`ef8b4b9`](https://github.com/nordz0r/nopaste/commit/ef8b4b9ae258a9839e907543deec8356c9ea7e87))
+
+
 ## v1.10.2 (2026-08-06)
 
 ### Bug Fixes
