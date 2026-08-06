@@ -65,6 +65,7 @@ class PasteRepository:
                     "id": p.id,
                     "content": content,
                     "created_at": p.created_at,
+                    "short_url": p.short_url,
                 }
             return [by_id[i] for i in ids if i in by_id]
 

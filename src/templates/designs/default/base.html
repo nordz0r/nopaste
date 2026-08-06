@@ -60,10 +60,32 @@
     </main>
     <footer class="site-footer">
         <div class="site-footer-container">
-            <p class="site-footer-text">© {{ current_year() }} <a href="https://cv.goldfinches.ru">NorD</a> · Nopaste v{{ app_version }} · <a href="/nopaste_changelog">{{ t('footer.changelog') if t is defined else 'Changelog' }}</a></p>
+            <p class="site-footer-text">© {{ current_year() }} <a href="https://cv.goldfinches.ru">NorD</a> · Nopaste v{{ app_version }} · <button type="button" class="link-btn" id="open-changelog-btn" data-changelog-open>{{ t('footer.changelog') if t is defined else 'Changelog' }}</button></p>
         </div>
     </footer>
+
+    <div
+        id="changelog-modal"
+        class="modal-backdrop"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="changelog-modal-title"
+        hidden
+    >
+        <div class="modal-dialog" role="document">
+            <div class="modal-header">
+                <h2 id="changelog-modal-title">{{ t('changelog.title') if t is defined else 'Nopaste Changelog' }}</h2>
+                <button type="button" class="modal-close" id="changelog-modal-close" aria-label="{{ t('changelog.close') if t is defined else 'Close' }}">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="changelog-modal-status" class="modal-status">{{ t('changelog.loading') if t is defined else 'Loading…' }}</p>
+                <div id="changelog-modal-markdown" class="markdown-body" hidden></div>
+            </div>
+        </div>
+    </div>
+
     <div id="notification" class="notification"></div>
+    <script src="/static/js/marked.min.js?v={{ asset_version }}"></script>
     <script>
     const footer = document.querySelector('.site-footer');
     if (footer) {
@@ -186,6 +208,101 @@
             updateToggleIcons(activeTheme);
         });
     }
+
+    // Changelog modal (footer + /#changelog + permanent /nopaste_changelog redirect)
+    (function initChangelogModal() {
+        const modal = document.getElementById("changelog-modal");
+        const openBtn = document.getElementById("open-changelog-btn");
+        const closeBtn = document.getElementById("changelog-modal-close");
+        const statusEl = document.getElementById("changelog-modal-status");
+        const mdEl = document.getElementById("changelog-modal-markdown");
+        if (!modal) return;
+
+        let loaded = false;
+        let loading = false;
+        const msgLoading = {{ (t('changelog.loading') if t is defined else 'Loading…')|tojson }};
+        const msgError = {{ (t('changelog.load_error') if t is defined else 'Could not load changelog')|tojson }};
+
+        async function ensureLoaded() {
+            if (loaded || loading) return;
+            loading = true;
+            if (statusEl) {
+                statusEl.hidden = false;
+                statusEl.textContent = msgLoading;
+            }
+            if (mdEl) mdEl.hidden = true;
+            try {
+                const res = await fetch("/api/changelog", { headers: { Accept: "text/markdown, text/plain" } });
+                if (!res.ok) throw new Error("bad status");
+                const text = await res.text();
+                if (mdEl && window.marked) {
+                    marked.setOptions({ gfm: true, breaks: false });
+                    mdEl.innerHTML = marked.parse(text);
+                    mdEl.hidden = false;
+                    if (statusEl) statusEl.hidden = true;
+                } else if (mdEl) {
+                    mdEl.textContent = text;
+                    mdEl.hidden = false;
+                    if (statusEl) statusEl.hidden = true;
+                }
+                loaded = true;
+            } catch (err) {
+                if (statusEl) {
+                    statusEl.hidden = false;
+                    statusEl.textContent = msgError;
+                }
+            } finally {
+                loading = false;
+            }
+        }
+
+        function openModal() {
+            modal.hidden = false;
+            // force reflow for transition
+            void modal.offsetWidth;
+            modal.classList.add("is-open");
+            document.body.classList.add("modal-open");
+            ensureLoaded();
+            if (closeBtn) closeBtn.focus();
+        }
+
+        function closeModal() {
+            modal.classList.remove("is-open");
+            document.body.classList.remove("modal-open");
+            window.setTimeout(() => {
+                if (!modal.classList.contains("is-open")) modal.hidden = true;
+            }, 160);
+            if (window.location.hash === "#changelog") {
+                history.replaceState(null, "", window.location.pathname + window.location.search);
+            }
+        }
+
+        if (openBtn) {
+            openBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                openModal();
+            });
+        }
+        if (closeBtn) closeBtn.addEventListener("click", closeModal);
+
+        modal.addEventListener("click", (e) => {
+            // Click on backdrop (outside dialog) closes
+            if (e.target === modal) closeModal();
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && modal.classList.contains("is-open")) {
+                e.preventDefault();
+                closeModal();
+            }
+        });
+
+        function maybeOpenFromHash() {
+            if (window.location.hash === "#changelog") openModal();
+        }
+        window.addEventListener("hashchange", maybeOpenFromHash);
+        maybeOpenFromHash();
+    })();
     </script>
 </body>
 </html>

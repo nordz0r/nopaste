@@ -5,7 +5,7 @@
     <div class="paste-meta">
         <div class="paste-meta-item">
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-            <strong>Paste {{ paste_id }}</strong>
+            <strong id="paste-title-label">Paste {{ display_name or paste_id }}</strong>
         </div>
         <div class="paste-meta-item">
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 18h17v-6H4v6zM4 5v6h17V5H4z"/></svg>
@@ -259,6 +259,18 @@ if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
                     }
                     originalSlug = data.slug;
                     shortUrlSlug.value = data.slug;
+                    // Keep tab title + header label in sync with custom slug.
+                    const titleLabel = document.getElementById("paste-title-label");
+                    if (titleLabel && data.slug) {
+                        titleLabel.textContent = `Paste ${data.slug}`;
+                    }
+                    if (data.slug) {
+                        document.title = `Nopaste — ${data.slug}`;
+                        const ogTitle = document.querySelector('meta[property="og:title"]');
+                        if (ogTitle) ogTitle.setAttribute("content", `Nopaste — ${data.slug}`);
+                        const twTitle = document.querySelector('meta[name="twitter:title"]');
+                        if (twTitle) twTitle.setAttribute("content", `Nopaste — ${data.slug}`);
+                    }
                     showNotification(i18n["toast.link_updated"] || "Link updated!");
                 }
                 showLinkView();

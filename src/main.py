@@ -317,6 +317,19 @@ def build_paste_lines(content: str) -> list[dict[str, Any]]:
     ]
 
 
+def short_slug_from_url(short_url: str | None) -> str | None:
+    """Extract the last path segment from a short URL (custom slug)."""
+    if not short_url or not isinstance(short_url, str):
+        return None
+    slug = short_url.rstrip("/").rsplit("/", 1)[-1].strip()
+    return slug or None
+
+
+def paste_display_name(paste_id: str, short_url: str | None = None) -> str:
+    """Human-facing paste name: custom short slug when set, otherwise paste id."""
+    return short_slug_from_url(short_url) or str(paste_id)
+
+
 def build_paste_summary(paste: dict[str, Any]) -> dict[str, Any]:
     normalized_content = normalize_newlines(str(paste.get("content", "")))
     preview_source = normalized_content.split("\n", 1)[0].strip()
@@ -324,9 +337,17 @@ def build_paste_summary(paste: dict[str, Any]) -> dict[str, Any]:
     if len(preview) > 120:
         preview = f"{preview[:117].rstrip()}..."
     created_at = paste.get("created_at")
+    paste_id = str(paste["id"])
+    short_url = paste.get("short_url")
+    slug = short_slug_from_url(short_url if isinstance(short_url, str) else None)
 
     return {
-        "id": str(paste["id"]),
+        "id": paste_id,
+        "short_url": short_url,
+        "slug": slug,
+        "display_name": paste_display_name(
+            paste_id, short_url if isinstance(short_url, str) else None
+        ),
         "created_at": created_at,
         "created_at_display": format_created_at(created_at),
         "preview": preview,
@@ -478,25 +499,28 @@ async def read_root(request: Request):
 
 
 @app.get(
+    "/api/changelog",
+    summary="Changelog markdown",
+    description="Raw CHANGELOG.md for the in-app modal.",
+    response_class=PlainTextResponse,
+    include_in_schema=False,
+)
+async def api_changelog():
+    return PlainTextResponse(
+        content=load_changelog_markdown(),
+        media_type="text/markdown; charset=utf-8",
+    )
+
+
+@app.get(
     "/nopaste_changelog",
     summary="Changelog",
-    description="Rendered project changelog (Markdown).",
+    description="Permanent link — opens the app with the changelog modal.",
     response_class=None,
 )
-async def nopaste_changelog(request: Request):
-    return templates.TemplateResponse(
-        request,
-        "changelog.html",
-        template_context(
-            request,
-            changelog_markdown=load_changelog_markdown(),
-            meta=build_page_meta(
-                request,
-                title="Nopaste — Changelog",
-                description="Nopaste release history and changelog.",
-            ),
-        ),
-    )
+async def nopaste_changelog():
+    # Keep the path stable; UI shows changelog as a modal on every page.
+    return RedirectResponse(url="/#changelog", status_code=303)
 
 
 @app.post(
@@ -564,6 +588,9 @@ async def get_paste(request: Request, paste_id: str):
     content = paste["content"]
     created_at = format_created_at(paste["created_at"])
     short_url = paste.get("short_url")
+    display_name = paste_display_name(
+        paste_id, short_url if isinstance(short_url, str) else None
+    )
     highlighted_paste = build_highlighted_paste(content)
     logger.info("Retrieved paste: id=%s", paste_id)
     return templates.TemplateResponse(
@@ -572,6 +599,7 @@ async def get_paste(request: Request, paste_id: str):
         template_context(
             request,
             paste_id=paste_id,
+            display_name=display_name,
             content=content,
             created_at=created_at,
             lines=highlighted_paste.lines,
@@ -580,9 +608,9 @@ async def get_paste(request: Request, paste_id: str):
             short_url=short_url,
             meta=build_page_meta(
                 request,
-                title=f"Nopaste — paste {paste_id}",
+                title=f"Nopaste — {display_name}",
                 description=(
-                    f"Open paste {paste_id} in Nopaste — a clean way to share text, "
+                    f"Open paste {display_name} in Nopaste — a clean way to share text, "
                     "logs, notes, and configs."
                 ),
             ),

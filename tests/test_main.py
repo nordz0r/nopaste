@@ -2,7 +2,6 @@ import asyncio
 from http.cookies import SimpleCookie
 from pathlib import Path
 import re
-from datetime import datetime
 
 import pytest
 import src.main as main_module
@@ -26,10 +25,6 @@ def client(tmp_path, monkeypatch):
 def test_read_root(client):
     response = client.get("/")
     asset_version = main_module.APP_VERSION
-    expected_footer = (
-        f'© {datetime.now().year} <a href="https://cv.goldfinches.ru">NorD</a> · '
-        f'Nopaste v{asset_version} · <a href="/nopaste_changelog">Changelog</a>'
-    )
 
     assert response.status_code == 200
     assert "Nopaste" in response.text
@@ -40,7 +35,9 @@ def test_read_root(client):
     assert 'src="/static/images/save.png"' in response.text
     assert 'rel="icon" href="/static/images/favicon.png"' in response.text
     assert f"/static/css/style.css?v={asset_version}" in response.text
-    assert expected_footer in response.text
+    assert f"Nopaste v{asset_version}" in response.text
+    assert 'id="open-changelog-btn"' in response.text
+    assert 'id="changelog-modal"' in response.text
     assert "updateFooterVisibility" in response.text
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
@@ -49,13 +46,18 @@ def test_read_root(client):
     assert "Имя короткой ссылки" not in response.text
 
 
-def test_nopaste_changelog_page(client):
-    response = client.get("/nopaste_changelog")
+def test_nopaste_changelog_redirects_to_hash(client):
+    response = client.get("/nopaste_changelog", follow_redirects=False)
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/#changelog"
+
+
+def test_api_changelog_returns_markdown(client):
+    response = client.get("/api/changelog")
 
     assert response.status_code == 200
-    assert "Nopaste Changelog" in response.text
-    assert 'id="changelog-markdown"' in response.text
-    assert "Changelog" in response.text
+    assert "text/markdown" in response.headers.get("content-type", "")
     assert "# Changelog" in response.text or "version list" in response.text
 
 
@@ -327,10 +329,7 @@ def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
 
     assert response.status_code == 200
     assert '<meta property="og:site_name" content="Nopaste">' in response.text
-    assert (
-        f'<meta property="og:title" content="Nopaste — paste {paste_id}">'
-        in response.text
-    )
+    assert f'<meta property="og:title" content="Nopaste — {paste_id}">' in response.text
     assert '<meta property="og:description" content="Open paste ' in response.text
     assert (
         f'<meta property="og:url" content="http://testserver/paste/{paste_id}">'
@@ -390,6 +389,34 @@ def test_list_pastes_shows_newest_first_with_preview_and_line_count(client):
     assert response.text.index(second_id) < response.text.index(first_id)
     assert "first line" in response.text
     assert "2 lines" in response.text
+
+
+def test_list_and_tab_title_use_short_slug_as_display_name(client, monkeypatch):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        return f"https://gldf.ru/{custom_slug or 'auto'}"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+
+    create_response = client.post(
+        "/paste", data={"content": "named paste"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    update = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "my-note"})
+    assert update.status_code == 200
+
+    view = client.get(f"/paste/{paste_id}")
+    assert view.status_code == 200
+    assert "<title>Nopaste — my-note</title>" in view.text
+    assert 'id="paste-title-label">Paste my-note</strong>' in view.text
+    assert "document.title = `Nopaste — ${data.slug}`" in view.text
+
+    listing = client.get("/list")
+    assert listing.status_code == 200
+    assert "my-note" in listing.text
+    assert 'paste-card-title">my-note</span>' in listing.text
 
 
 def test_list_pastes_ignores_tampered_signed_cookie(client):

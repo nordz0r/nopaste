@@ -16,7 +16,7 @@
     {% for paste in pastes %}
     <a class="paste-card" href="/paste/{{ paste.id }}">
         <div class="paste-card-header">
-            <span class="paste-card-title">{{ paste.id }}</span>
+            <span class="paste-card-title">{{ paste.display_name or paste.id }}</span>
             <span class="paste-card-time">{{ paste.created_at_display or t("list.unknown_date") }}</span>
         </div>
         <pre class="paste-card-preview">{{ paste.preview or "Empty first line" }}</pre>
