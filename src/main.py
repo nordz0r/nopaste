@@ -580,6 +580,7 @@ async def list_pastes(request: Request):
             "pastes": pastes,
             "meta": build_page_meta(
                 request,
+                # Inline short URL slug edit update
                 title="Nopaste — your recent pastes",
                 description="Browse the pastes saved in your recent Nopaste history.",
             ),
