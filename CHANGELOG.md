@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.10.0 (2026-08-06)
+
+### Bug Fixes
+
+- **paste**: Hide custom slug on create and restyle inline editor
+  ([`c3bf74a`](https://github.com/nordz0r/nopaste/commit/c3bf74ac509bd8df94299f2d8a5cbbd9d4953596))
+
+- **paste**: Restore short url placement and add edit tooltip
+  ([`da743b3`](https://github.com/nordz0r/nopaste/commit/da743b349c95beb38f291ff9f586d4d6fed7a8d1))
+
+### Features
+
+- Multi-db storage, optional encryption, i18n and paste UX
+  ([`9e01c4f`](https://github.com/nordz0r/nopaste/commit/9e01c4f5c54abc708b08a2bec1a0cfa4a3cfbf6d))
+
+- **storage**: Support PostgreSQL for durable pastes
+  ([`a00a05b`](https://github.com/nordz0r/nopaste/commit/a00a05bbb01424c3cbe56d592a1da98fdd99cc56))
+
+- **ui**: Improve footer scroll behavior and expose changelog
+  ([`b8c8a38`](https://github.com/nordz0r/nopaste/commit/b8c8a38c3dbb69ced3720ce9819957636f8601fa))
+
+
 ## v1.9.0 (2026-08-06)
 
 ### Chores
