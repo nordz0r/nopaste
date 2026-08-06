@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.9.0 (2026-08-06)
+
+### Chores
+
+- Fix release formatting and lock version
+  ([`604cd22`](https://github.com/nordz0r/nopaste/commit/604cd22693809aac39a9e225020afe2be226b81d))
+
+### Code Style
+
+- **format**: Apply ruff code formatting
+  ([`13b4e87`](https://github.com/nordz0r/nopaste/commit/13b4e875aedfbf6f2ed5500998bb6a5f6fcdf943))
+
+### Features
+
+- **paste**: Support Ctrl+A text selection and editable short url slug
+  ([`57628d5`](https://github.com/nordz0r/nopaste/commit/57628d52aa8924b6f09efa9797f2ba98716b276e))
+
+
 ## v1.8.0 (2026-08-04)
 
 ### Features
