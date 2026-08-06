@@ -1,19 +1,42 @@
+# VCS / IDE
 .git
 .github
-.gitlab-ci.yml
 .idea
+.vscode
+
+# Python caches & envs
+.venv
+.tox
 .mypy_cache
 .pytest_cache
 .ruff_cache
-.tox
-.venv
 __pycache__
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*.egg-info
+.coverage
+htmlcov
+
+# Local secrets & data
 .env
+.env.*
+!.env.example
+*.db
+*.sqlite
+*.bak
+*.backup
+*.log
+
+# Docs & operator helpers (not needed in image)
 AGENTS.md
 README.md
+README.ru.md
 logs.sh
 restart.sh
 stop.sh
+
+# Tests only needed for test-runtime target — keep in context for multi-stage
+# (tests/ is copied explicitly in Dockerfile test stage)
+
+# Lock noise
+*.md~
+*~

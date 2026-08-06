@@ -350,21 +350,11 @@ a { color: inherit; text-decoration: none; }
     flex-shrink: 0;
 }
 
-.icon-badge-warm {
-    background: linear-gradient(135deg, rgba(255, 178, 36, 0.28), rgba(255, 111, 0, 0.14));
-    color: #ffbf47;
-}
-
 .icon-badge-plain {
     background: transparent;
     color: inherit;
     border-radius: 0;
     box-shadow: none;
-}
-
-.icon-badge-cool {
-    background: linear-gradient(135deg, rgba(214, 236, 255, 0.28), rgba(156, 210, 255, 0.16));
-    color: #d3ebff;
 }
 
 .icon-svg {
@@ -394,24 +384,6 @@ a { color: inherit; text-decoration: none; }
 .btn-icon-image-list {
     width: 18px;
     height: 18px;
-}
-
-.icon-mask {
-    width: 12px;
-    height: 12px;
-    display: block;
-    background-color: currentColor;
-    mask-repeat: no-repeat;
-    mask-position: center;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    -webkit-mask-size: contain;
-}
-
-.icon-mask-copy {
-    mask-image: url("/static/images/icon-copy.svg");
-    -webkit-mask-image: url("/static/images/icon-copy.svg");
 }
 
 /* Layout */

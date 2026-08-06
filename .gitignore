@@ -1,7 +1,50 @@
-.idea
-.tox
-.venv
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtualenv / tooling
+.venv/
+.tox/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+.cache/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local env & secrets
 .env
-/build/
-/src/nopaste.egg-info/
-*.pyc
+.env.*
+!.env.example
+
+# Local DBs / dumps / backups
+*.db
+*.sqlite
+*.sqlite3
+*.sql
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*.log
+*.dump
+
+# Container local data
+/data/
