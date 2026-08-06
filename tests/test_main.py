@@ -28,7 +28,7 @@ def test_read_root(client):
     asset_version = main_module.APP_VERSION
     expected_footer = (
         f'© {datetime.now().year} <a href="https://cv.goldfinches.ru">NorD</a> · '
-        f"Nopaste v{asset_version}"
+        f'Nopaste v{asset_version} · <a href="/nopaste_changelog">Changelog</a>'
     )
 
     assert response.status_code == 200
@@ -41,11 +41,22 @@ def test_read_root(client):
     assert 'rel="icon" href="/static/images/favicon.png"' in response.text
     assert f"/static/css/style.css?v={asset_version}" in response.text
     assert expected_footer in response.text
+    assert "updateFooterVisibility" in response.text
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
     assert "nopasteForm.requestSubmit()" in response.text
     assert 'name="custom_slug"' not in response.text
     assert "Имя короткой ссылки" not in response.text
+
+
+def test_nopaste_changelog_page(client):
+    response = client.get("/nopaste_changelog")
+
+    assert response.status_code == 200
+    assert "Nopaste Changelog" in response.text
+    assert 'id="changelog-markdown"' in response.text
+    assert "Changelog" in response.text
+    assert "# Changelog" in response.text or "version list" in response.text
 
 
 def test_load_asset_version_prefers_environment(monkeypatch):

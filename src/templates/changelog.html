@@ -1,0 +1,25 @@
+{% extends base_template %}
+
+{% block content %}
+<div class="changelog-card">
+    <div class="changelog-card-header">
+        <h1>Nopaste Changelog</h1>
+        <p>Permanent link: <code>/nopaste_changelog</code></p>
+    </div>
+    <div class="changelog-body">
+        <div id="changelog-markdown" class="markdown-body"></div>
+    </div>
+</div>
+
+<textarea id="changelog-raw" class="sr-only" aria-hidden="true" readonly>{{ changelog_markdown }}</textarea>
+<script src="/static/js/marked.min.js?v={{ asset_version }}"></script>
+<script>
+(function () {
+    const rawField = document.getElementById("changelog-raw");
+    const target = document.getElementById("changelog-markdown");
+    if (!rawField || !target || !window.marked) return;
+    marked.setOptions({ gfm: true, breaks: false });
+    target.innerHTML = marked.parse(rawField.value);
+})();
+</script>
+{% endblock %}

@@ -54,6 +54,7 @@ WORKDIR /app
 
 COPY --from=prod-builder --chown=sam:sam /app/.venv .venv
 COPY --chown=sam:sam pyproject.toml ./
+COPY --chown=sam:sam CHANGELOG.md ./CHANGELOG.md
 COPY --chown=sam:sam ./src ./
 
 USER sam

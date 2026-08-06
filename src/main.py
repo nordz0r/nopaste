@@ -404,6 +404,22 @@ def generate_paste_id(database: Database) -> str:
     raise HTTPException(status_code=503, detail="Could not allocate paste id")
 
 
+def load_changelog_markdown() -> str:
+    """Load CHANGELOG.md from the container root or project root."""
+    candidates = (
+        BASE_DIR / "CHANGELOG.md",
+        PROJECT_ROOT / "CHANGELOG.md",
+        Path("/app/CHANGELOG.md"),
+    )
+    for path in candidates:
+        if path.is_file():
+            return path.read_text(encoding="utf-8")
+    return (
+        "# Changelog\n\n"
+        "Changelog file is not available in this build.\n"
+    )
+
+
 @app.get(
     "/",
     summary="Главная страница",
@@ -420,6 +436,30 @@ async def read_root(request: Request):
             "meta": build_page_meta(
                 request,
                 title="Nopaste — create and share text instantly",
+            ),
+        },
+    )
+
+
+@app.get(
+    "/nopaste_changelog",
+    summary="Changelog",
+    description="Rendered project changelog (Markdown).",
+    response_class=None,
+)
+async def nopaste_changelog(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "changelog.html",
+        {
+            "request": request,
+            "base_template": get_design_base_template(),
+            "design_name": get_active_design_name(),
+            "changelog_markdown": load_changelog_markdown(),
+            "meta": build_page_meta(
+                request,
+                title="Nopaste — Changelog",
+                description="Nopaste release history and changelog.",
             ),
         },
     )

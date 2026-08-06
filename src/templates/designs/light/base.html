@@ -59,21 +59,32 @@
     </main>
     <footer class="site-footer">
         <div class="site-footer-container">
-            <p class="site-footer-text">© {{ current_year() }} <a href="https://cv.goldfinches.ru">NorD</a> · Nopaste v{{ app_version }}</p>
+            <p class="site-footer-text">© {{ current_year() }} <a href="https://cv.goldfinches.ru">NorD</a> · Nopaste v{{ app_version }} · <a href="/nopaste_changelog">Changelog</a></p>
         </div>
     </footer>
     <div id="notification" class="notification"></div>
     <script>
     const footer = document.querySelector('.site-footer');
     if (footer) {
-        let scrollTimeout;
-        window.addEventListener('scroll', () => {
-            footer.classList.add('is-hidden');
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-                footer.classList.remove('is-hidden');
-            }, 1200);
-        }, { passive: true });
+        const BOTTOM_THRESHOLD_PX = 24;
+        function updateFooterVisibility() {
+            const doc = document.documentElement;
+            const scrollable = doc.scrollHeight > window.innerHeight + 4;
+            if (!scrollable) {
+                footer.classList.remove("is-hidden");
+                return;
+            }
+            const atTop = window.scrollY <= 2;
+            const atBottom = (window.innerHeight + window.scrollY) >= (doc.scrollHeight - BOTTOM_THRESHOLD_PX);
+            if (atTop || atBottom) {
+                footer.classList.remove("is-hidden");
+            } else {
+                footer.classList.add("is-hidden");
+            }
+        }
+        window.addEventListener("scroll", updateFooterVisibility, { passive: true });
+        window.addEventListener("resize", updateFooterVisibility, { passive: true });
+        updateFooterVisibility();
     }
 
     const header = document.querySelector('.site-header');
