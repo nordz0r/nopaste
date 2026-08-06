@@ -191,7 +191,6 @@ templates.env.globals["current_year"] = current_year
 templates.env.globals["shrink_base_url"] = get_shrink_base_url
 
 
-
 def load_user_pastes(request: Request) -> list[str]:
     user_pastes_cookie = request.cookies.get("user_pastes")
     if not user_pastes_cookie:
@@ -363,9 +362,7 @@ def normalize_custom_slug(custom_slug: str | None) -> str | None:
     return normalized_slug
 
 
-async def shorten_url(
-    long_url: str, custom_slug: str | None = None
-) -> str | None:
+async def shorten_url(long_url: str, custom_slug: str | None = None) -> str | None:
     if not settings.SHRINK_URL or not settings.SHRINK_TOKEN:
         return None
     try:
@@ -539,8 +536,9 @@ async def update_paste_slug(
 
     db.update_paste_short_url(paste_id, short_url)
     logger.info("Updated short_url for paste %s: %s", paste_id, short_url)
-    return JSONResponse(content={"status": "ok", "short_url": short_url, "slug": normalized_slug})
-
+    return JSONResponse(
+        content={"status": "ok", "short_url": short_url, "slug": normalized_slug}
+    )
 
 
 @app.get(

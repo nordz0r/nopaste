@@ -650,10 +650,14 @@ def test_update_paste_slug_invalid_or_missing(client):
     )
     paste_id = create_response.headers["location"].split("/")[-1]
 
-    invalid_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "bad slug"})
+    invalid_res = client.post(
+        f"/paste/{paste_id}/slug", data={"custom_slug": "bad slug"}
+    )
     assert invalid_res.status_code == 400
 
-    missing_res = client.post("/paste/nonexistent/slug", data={"custom_slug": "valid-slug"})
+    missing_res = client.post(
+        "/paste/nonexistent/slug", data={"custom_slug": "valid-slug"}
+    )
     assert missing_res.status_code == 404
 
 
@@ -669,4 +673,3 @@ def test_create_paste_succeeds_when_shrink_fails(client, monkeypatch):
 
     assert response.status_code == 303
     assert response.headers["location"].startswith("/paste/")
-

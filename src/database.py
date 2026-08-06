@@ -45,7 +45,6 @@ class Database:
                 (short_url, paste_id),
             )
 
-
     def get_paste(self, paste_id: str) -> dict | None:
         """Retrieve a paste by its id."""
         cur = self.conn.execute(
