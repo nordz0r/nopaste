@@ -583,30 +583,34 @@ textarea::placeholder {
 .short-url-editor {
     display: inline-flex;
     align-items: center;
-    max-width: min(22rem, 60vw);
     color: var(--accent);
     font-family: var(--font-mono);
+    white-space: nowrap;
+}
+
+.short-url-edit-wrap {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
 }
 
 .short-url-editor input {
-    width: 100%;
-    min-width: 4rem;
-    padding: 2px 4px;
-    border: 1px solid transparent;
+    display: inline-block;
+    width: auto;
+    min-width: 3ch;
+    padding: 0 4px;
+    margin: 0;
+    border: 1px solid var(--accent);
     border-radius: var(--radius-sm);
     outline: none;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-}
-
-.short-url-editor input:not([readonly]) {
-    border-color: var(--accent);
     background: var(--bg-input);
+    color: var(--accent);
+    font: inherit;
+    font-family: var(--font-mono);
 }
 
 .short-url-editor input:focus {
-    border-color: var(--accent);
+    border-color: var(--accent-hover);
 }
 
 .paste-meta a:hover,
