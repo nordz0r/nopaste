@@ -3,7 +3,7 @@ name = "nopaste"
 version = "1.9.0"
 description = "API для простого nopaste приложения"
 authors = [
-    {name = "ascheglov05", email = "Andrey.Scheglov@bia-tech.ru"}
+    {name = "nordz0r"}
 ]
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -15,6 +15,9 @@ dependencies = [
     "pydantic-settings>=2.0.0",
     "pygments>=2.20.0",
     "psycopg[binary]>=3.2.0",
+    "sqlalchemy>=2.0.36",
+    "alembic>=1.14.0",
+    "cryptography>=50.0.0",
 ]
 
 [project.optional-dependencies]

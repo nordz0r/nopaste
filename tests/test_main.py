@@ -20,7 +20,7 @@ def client(tmp_path, monkeypatch):
     with TestClient(main_module.app) as test_client:
         yield test_client
 
-    test_db.conn.close()
+    test_db.close()
 
 
 def test_read_root(client):
@@ -352,7 +352,7 @@ def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
 
 def test_public_base_url_overrides_share_metadata_urls(client, monkeypatch):
     monkeypatch.setattr(
-        main_module.settings, "PUBLIC_BASE_URL", "https://paste.goldfinches.ru"
+        main_module.settings, "PUBLIC_BASE_URL", "https://paste.example.com"
     )
     create_response = client.post(
         "/paste", data={"content": "metadata base url"}, follow_redirects=False
@@ -363,12 +363,12 @@ def test_public_base_url_overrides_share_metadata_urls(client, monkeypatch):
 
     assert response.status_code == 200
     assert (
-        f'<meta property="og:url" content="https://paste.goldfinches.ru/paste/{paste_id}">'
+        f'<meta property="og:url" content="https://paste.example.com/paste/{paste_id}">'
         in response.text
     )
     assert (
         '<meta property="og:image" '
-        'content="https://paste.goldfinches.ru/static/images/goldfinches_logo.png">'
+        'content="https://paste.example.com/static/images/goldfinches_logo.png">'
         in response.text
     )
 
@@ -636,6 +636,8 @@ def test_update_paste_slug_success(client, monkeypatch):
     async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
         return f"https://gldf.ru/{custom_slug}"
 
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
     monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
 
     create_response = client.post(
@@ -656,7 +658,10 @@ def test_update_paste_slug_success(client, monkeypatch):
     }
 
 
-def test_update_paste_slug_invalid_or_missing(client):
+def test_update_paste_slug_invalid_or_missing(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+
     create_response = client.post(
         "/paste", data={"content": "slug test"}, follow_redirects=False
     )
@@ -673,6 +678,42 @@ def test_update_paste_slug_invalid_or_missing(client):
     assert missing_res.status_code == 404
 
 
+def test_update_paste_slug_taken_returns_409(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+
+    async def mock_shorten_taken(_url: str, custom_slug: str | None = None) -> str:
+        raise main_module.SlugTakenError(custom_slug or "")
+
+    create_response = client.post(
+        "/paste", data={"content": "slug conflict"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten_taken)
+
+    response = client.post(
+        f"/paste/{paste_id}/slug", data={"custom_slug": "taken-name"}
+    )
+    assert response.status_code == 409
+    assert (
+        "taken" in response.json()["detail"].lower()
+        or "занят" in response.json()["detail"].lower()
+    )
+
+
+def test_update_paste_slug_requires_shrink(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", None)
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", None)
+
+    create_response = client.post(
+        "/paste", data={"content": "no shrink"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "any-slug"})
+    assert response.status_code == 503
+
+
 def test_create_paste_succeeds_when_shrink_fails(client, monkeypatch):
     async def mock_shorten_fail(_url: str, custom_slug: str | None = None) -> None:
         return None
@@ -685,3 +726,31 @@ def test_create_paste_succeeds_when_shrink_fails(client, monkeypatch):
 
     assert response.status_code == 303
     assert response.headers["location"].startswith("/paste/")
+
+
+def test_paste_page_exposes_mutable_share_url_and_ghost_buttons(client, monkeypatch):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        return "https://gldf.ru/share1"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+    create_response = client.post(
+        "/paste", data={"content": "share url js"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    response = client.get(f"/paste/{paste_id}")
+
+    assert response.status_code == 200
+    assert "let shareUrl" in response.text
+    assert "btn-ghost" in response.text
+    assert "flashPress" in response.text
+    assert "shareUrl = data.short_url" in response.text
+    assert "response.status === 409" in response.text
+
+
+def test_index_uses_accept_language_for_empty_toast(client):
+    response = client.get("/", headers={"Accept-Language": "en"})
+    assert response.status_code == 200
+    assert (
+        "Cannot save an empty paste" in response.text
+        or "empty" in response.text.lower()
+    )

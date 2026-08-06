@@ -3,20 +3,20 @@
 {% block content %}
 <div class="editor-card">
     <div class="editor-card-header">
-        <h2>Create a new paste</h2>
-        <p>Your paste will be saved and linked to this browser's history.</p>
+        <h2>{{ t("create.title") }}</h2>
+        <p>{{ t("create.subtitle") }}</p>
     </div>
     <div class="form-container">
         <form action="/paste" method="post" id="nopaste-form">
             <label class="sr-only" for="paste-content-input">Paste content</label>
-            <textarea id="paste-content-input" name="content" rows="14" placeholder="Paste your text, logs, notes, or config here..." autofocus></textarea>
+            <textarea id="paste-content-input" name="content" rows="14" placeholder="{{ t('create.placeholder') }}" autofocus></textarea>
             <div class="form-actions">
-                <span class="form-hint">Ctrl + Enter to save</span>
+                <span class="form-hint">{{ t("create.hint") }}</span>
                 <button type="submit" class="btn btn-primary">
                     <span class="icon-badge icon-badge-plain" aria-hidden="true">
                         <img src="/static/images/save.png" alt="" class="btn-icon-image btn-icon-image-save">
                     </span>
-                    <span>Save Paste</span>
+                    <span>{{ t("create.save") }}</span>
                 </button>
             </div>
         </form>
@@ -26,11 +26,12 @@
 <script>
 const nopasteForm = document.getElementById("nopaste-form");
 const textarea = document.getElementById("paste-content-input");
+const emptyMsg = {{ i18n_js["toast.empty_paste"]|tojson }};
 
 nopasteForm.addEventListener("submit", function(event) {
     if (!textarea.value.trim()) {
         event.preventDefault();
-        showNotification("Нельзя сохранить пустой nopaste!");
+        showNotification(emptyMsg);
     }
 });
 

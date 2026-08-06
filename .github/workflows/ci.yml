@@ -61,3 +61,38 @@ jobs:
 
       - name: Run tests
         run: uv run pytest --cov=src --cov-report=term-missing
+
+  compose-smoke:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build local image
+        run: docker compose -f docker-compose.local.yml build nopaste-app
+
+      - name: Start SQLite stack
+        run: docker compose -f docker-compose.local.yml up -d nopaste-app
+
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/health/ready; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f docker-compose.local.yml logs
+          exit 1
+
+      - name: Create paste and fetch raw
+        run: |
+          loc=$(curl -fsS -o /dev/null -w '%{redirect_url}' -X POST \
+            -F 'content=compose-smoke-ok' http://127.0.0.1:8000/paste)
+          paste_id=$(basename "$loc")
+          test -n "$paste_id"
+          curl -fsS "http://127.0.0.1:8000/raw/${paste_id}" | grep -q compose-smoke-ok
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.local.yml down -v

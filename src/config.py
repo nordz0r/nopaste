@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from urllib.parse import quote_plus
+
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,34 +15,32 @@ class Settings(BaseSettings):
     DEBUG: bool = Field(default=False, description="Enable debug mode.")
     DATABASE_PATH: str = Field(
         default="/tmp/pastes.db",
-        description="Path to the SQLite database file (used when Postgres is not configured).",
+        description="SQLite file path when DATABASE_URL is not set.",
     )
     DATABASE_URL: str | None = Field(
         default=None,
         description=(
-            "PostgreSQL connection URL (e.g. postgresql://user:pass@host:5432/db). "
-            "When set, takes precedence over DATABASE_PATH and discrete POSTGRES_* vars."
+            "SQLAlchemy URL. Examples: sqlite:////data/pastes.db , "
+            "postgresql+psycopg://user:pass@host:5432/db"
         ),
     )
-    POSTGRES_HOST: str | None = Field(
+    DATABASE_BACKEND: str | None = Field(
         default=None,
-        description="PostgreSQL host. Used with POSTGRES_DB/USER/PASSWORD when DATABASE_URL is empty.",
+        description="Optional backend hint: sqlite | postgres (validated against URL).",
     )
-    POSTGRES_PORT: int = Field(
-        default=5432, description="PostgreSQL port for discrete connection settings."
-    )
-    POSTGRES_DB: str | None = Field(
-        default=None, description="PostgreSQL database name for discrete connection settings."
-    )
-    POSTGRES_USER: str | None = Field(
-        default=None, description="PostgreSQL user for discrete connection settings."
-    )
-    POSTGRES_PASSWORD: str | None = Field(
-        default=None, description="PostgreSQL password for discrete connection settings."
-    )
-    POSTGRES_SSLMODE: str = Field(
-        default="disable",
-        description="libpq sslmode when building a DSN from discrete POSTGRES_* settings.",
+    POSTGRES_HOST: str | None = Field(default=None)
+    POSTGRES_PORT: int = Field(default=5432)
+    POSTGRES_DB: str | None = Field(default=None)
+    POSTGRES_USER: str | None = Field(default=None)
+    POSTGRES_PASSWORD: str | None = Field(default=None)
+    POSTGRES_SSLMODE: str = Field(default="disable")
+    PASTE_ENCRYPTION_KEY: str | None = Field(
+        default=None,
+        description=(
+            "Optional shared key for encrypting paste bodies at rest. "
+            "When unset/empty, content is stored as plaintext. "
+            "Fernet key or any passphrase (SHA-256 derived)."
+        ),
     )
     COOKIE_SIGNING_SECRET: str = Field(
         default="local-development-cookie-secret",
@@ -53,7 +55,7 @@ class Settings(BaseSettings):
     )
     SHRINK_URL: str | None = Field(
         default=None,
-        description="Base URL of the Shlink URL shortener (e.g. https://gldf.ru). If set together with SHRINK_TOKEN, paste links will be shortened.",
+        description="Base URL of the Shlink URL shortener (e.g. https://example.com).",
     )
     SHRINK_TOKEN: str | None = Field(
         default=None,
@@ -61,18 +63,15 @@ class Settings(BaseSettings):
     )
     PUBLIC_BASE_URL: str | None = Field(
         default=None,
-        description="Public base URL used for canonical/share metadata when the app is served behind a proxy.",
+        description="Public base URL for canonical/Open Graph metadata.",
     )
     UI_DESIGN: str = Field(
         default="default",
-        description="Active UI design name. Designs provide a base.html under src/templates/designs/<name>/ .",
+        description="Active UI design name under templates/designs/<name>/.",
     )
-
-    # Stored as raw string so that pydantic-settings never attempts to json-decode
-    # the value from .env (empty strings and "1.2.3.4,10.0.0.0/8" would otherwise break).
     DOCS_ALLOWLIST_RAW: str = Field(
         default="",
-        description="Raw DOCS_ALLOWLIST value (comma-separated). See DOCS_ALLOWLIST computed property.",
+        description="Raw DOCS_ALLOWLIST value (comma-separated).",
         alias="DOCS_ALLOWLIST",
         validation_alias="DOCS_ALLOWLIST",
     )
@@ -80,11 +79,45 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def DOCS_ALLOWLIST(self) -> list[str]:
-        """Final parsed allowlist for docs access control."""
         raw = (self.DOCS_ALLOWLIST_RAW or "").strip()
         if not raw:
             return []
         return [item.strip() for item in raw.split(",") if item.strip()]
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def shrink_enabled(self) -> bool:
+        return bool(
+            (self.SHRINK_URL or "").strip() and (self.SHRINK_TOKEN or "").strip()
+        )
+
+    def resolve_database_url(self) -> str:
+        """Return SQLAlchemy database URL (sqlite or postgresql+psycopg)."""
+        explicit = (self.DATABASE_URL or "").strip()
+        if explicit:
+            url = explicit
+            if url.startswith("postgresql://") and "+psycopg" not in url:
+                url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+            return url
+
+        host = (self.POSTGRES_HOST or "").strip()
+        dbname = (self.POSTGRES_DB or "").strip()
+        user = (self.POSTGRES_USER or "").strip()
+        if host and dbname and user:
+            password = self.POSTGRES_PASSWORD or ""
+            return (
+                f"postgresql+psycopg://{quote_plus(user)}:{quote_plus(password)}"
+                f"@{host}:{self.POSTGRES_PORT}/{quote_plus(dbname)}"
+                f"?sslmode={self.POSTGRES_SSLMODE}"
+            )
+
+        path = self.DATABASE_PATH or "/tmp/pastes.db"
+        if path == ":memory:":
+            return "sqlite+pysqlite:///:memory:"
+        # Absolute path form for SQLAlchemy
+        if path.startswith("/"):
+            return f"sqlite+pysqlite:///{path}"
+        return f"sqlite+pysqlite:///{path}"
 
     model_config = SettingsConfigDict(
         case_sensitive=False,

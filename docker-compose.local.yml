@@ -11,17 +11,50 @@ services:
     container_name: nopaste-local
     ports:
       - "${APP_PORT:-8000}:8000"
-    # network_mode: host   # Disabled for better cross-platform support (Windows + WSL2).
-    # With ports mapping, http://localhost:8000 works from Windows, WSL and native Linux.
-    # If you specifically need host networking on Linux, uncomment it and remove the ports section.
     environment:
-      DATABASE_PATH: /tmp/pastes.db
+      DATABASE_PATH: ${DATABASE_PATH:-/tmp/pastes.db}
+      DATABASE_URL: ${DATABASE_URL:-}
+      POSTGRES_HOST: ${POSTGRES_HOST:-}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-}
+      POSTGRES_USER: ${POSTGRES_USER:-}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
+      PASTE_ENCRYPTION_KEY: ${PASTE_ENCRYPTION_KEY:-}
+      COOKIE_SIGNING_SECRET: ${COOKIE_SIGNING_SECRET:-local-development-cookie-secret}
+      SHRINK_URL: ${SHRINK_URL:-}
+      SHRINK_TOKEN: ${SHRINK_TOKEN:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health/ready"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
+
+  postgres:
+    profiles: ["postgres"]
+    image: postgres:16-alpine
+    container_name: nopaste-postgres-local
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-nopaste}
+      POSTGRES_USER: ${POSTGRES_USER:-nopaste}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nopaste}
+    ports:
+      - "${POSTGRES_PUBLISH_PORT:-5432}:5432"
+    volumes:
+      - nopaste_pgdata_local:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
     restart: unless-stopped
 
   tests:
@@ -36,3 +69,6 @@ services:
     container_name: nopaste-test
     environment:
       DATABASE_PATH: ":memory:"
+
+volumes:
+  nopaste_pgdata_local:

@@ -96,9 +96,9 @@ def test_highlighted_paste_detects_changelog_markdown_with_code_terms():
 
 def test_highlighted_paste_detects_json_with_urls():
     json_content = """{
-  "username": "agornostaev",
+  "username": "demo-user",
   "gateway": {
-    "http": "http://agornostaev:9a552b7c49593e81@proxy.gldf.ru:28080"
+    "http": "http://user:secret@proxy.example.com:8080"
   }
 }"""
     highlighted_paste = highlighting_module.build_highlighted_paste(json_content)

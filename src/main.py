@@ -21,6 +21,7 @@ from fastapi.templating import Jinja2Templates
 from config import settings
 from database import Database, create_database_from_settings
 from highlighting import build_highlighted_paste
+from i18n import client_bundle, resolve_lang, t as i18n_t
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,6 +39,29 @@ app = FastAPI(
     description="API для простого nopaste приложения",
     debug=settings.DEBUG,
 )
+
+
+class SlugTakenError(Exception):
+    """Raised when Shlink rejects a custom slug as already taken."""
+
+
+def request_lang(request: Request) -> str:
+    return resolve_lang(accept_language=request.headers.get("accept-language"))
+
+
+def template_context(request: Request, **extra: Any) -> dict[str, Any]:
+    lang = request_lang(request)
+    ctx: dict[str, Any] = {
+        "request": request,
+        "base_template": get_design_base_template(),
+        "design_name": get_active_design_name(),
+        "lang": lang,
+        "t": lambda key, **kwargs: i18n_t(key, lang, **kwargs),
+        "i18n_js": client_bundle(lang),
+        "shrink_enabled": settings.shrink_enabled,
+    }
+    ctx.update(extra)
+    return ctx
 
 
 # Кастомный класс для добавления заголовков кэширования
@@ -364,10 +388,14 @@ def normalize_custom_slug(custom_slug: str | None) -> str | None:
 
 
 async def shorten_url(long_url: str, custom_slug: str | None = None) -> str | None:
+    """Create a short URL via Shlink. Returns None when shrink is disabled or fails.
+
+    Raises SlugTakenError when custom_slug is already in use (HTTP 400/409 from Shlink).
+    """
     if not settings.SHRINK_URL or not settings.SHRINK_TOKEN:
         return None
     try:
-        payload = {"longUrl": long_url}
+        payload: dict[str, str] = {"longUrl": long_url}
         if custom_slug:
             payload["customSlug"] = custom_slug
         async with httpx.AsyncClient() as client:
@@ -377,6 +405,17 @@ async def shorten_url(long_url: str, custom_slug: str | None = None) -> str | No
                 headers={"X-Api-Key": settings.SHRINK_TOKEN},
                 timeout=5.0,
             )
+            status_code = getattr(response, "status_code", None)
+            if status_code in {400, 409} and custom_slug:
+                body_text = (getattr(response, "text", None) or "").lower()
+                # Shlink typically returns 400 with type containing "non-unique-slug"
+                if (
+                    status_code == 409
+                    or "slug" in body_text
+                    or "unique" in body_text
+                    or "already" in body_text
+                ):
+                    raise SlugTakenError(custom_slug)
             response.raise_for_status()
             short_url = response.json().get("shortUrl", "")
             if not isinstance(short_url, str) or not short_url.startswith(
@@ -387,7 +426,9 @@ async def shorten_url(long_url: str, custom_slug: str | None = None) -> str | No
                 )
                 return None
             return short_url
-    except (httpx.HTTPError, KeyError):
+    except SlugTakenError:
+        raise
+    except (httpx.HTTPError, KeyError, ValueError):
         logger.warning("Failed to shorten URL: %s", long_url, exc_info=True)
         return None
 
@@ -414,10 +455,7 @@ def load_changelog_markdown() -> str:
     for path in candidates:
         if path.is_file():
             return path.read_text(encoding="utf-8")
-    return (
-        "# Changelog\n\n"
-        "Changelog file is not available in this build.\n"
-    )
+    return "# Changelog\n\nChangelog file is not available in this build.\n"
 
 
 @app.get(
@@ -429,15 +467,13 @@ async def read_root(request: Request):
     return templates.TemplateResponse(
         request,
         "index.html",
-        {
-            "request": request,
-            "base_template": get_design_base_template(),
-            "design_name": get_active_design_name(),
-            "meta": build_page_meta(
+        template_context(
+            request,
+            meta=build_page_meta(
                 request,
                 title="Nopaste — create and share text instantly",
             ),
-        },
+        ),
     )
 
 
@@ -451,17 +487,15 @@ async def nopaste_changelog(request: Request):
     return templates.TemplateResponse(
         request,
         "changelog.html",
-        {
-            "request": request,
-            "base_template": get_design_base_template(),
-            "design_name": get_active_design_name(),
-            "changelog_markdown": load_changelog_markdown(),
-            "meta": build_page_meta(
+        template_context(
+            request,
+            changelog_markdown=load_changelog_markdown(),
+            meta=build_page_meta(
                 request,
                 title="Nopaste — Changelog",
                 description="Nopaste release history and changelog.",
             ),
-        },
+        ),
     )
 
 
@@ -477,32 +511,41 @@ async def create_paste(
         None, description="Имя короткой ссылки, если настроен Shlink"
     ),
 ):
+    lang = request_lang(request)
     custom_slug = normalize_custom_slug(custom_slug)
     if not content.strip():
-        raise HTTPException(status_code=400, detail="Content cannot be empty")
+        raise HTTPException(
+            status_code=400, detail=i18n_t("errors.empty_content", lang)
+        )
     if len(content.encode("utf-8")) > settings.MAX_PASTE_SIZE_BYTES:
         raise HTTPException(
             status_code=413,
-            detail=(f"Content exceeds the {settings.MAX_PASTE_SIZE_BYTES} byte limit"),
+            detail=i18n_t(
+                "errors.content_too_large",
+                lang,
+                limit=settings.MAX_PASTE_SIZE_BYTES,
+            ),
         )
 
     paste_id = generate_paste_id(db)
     paste_url = str(request.url_for("get_paste", paste_id=paste_id))
-    short_url = await shorten_url(paste_url, custom_slug)
+    try:
+        short_url = await shorten_url(paste_url, custom_slug)
+    except SlugTakenError:
+        # On create, fall back to auto slug (or no short url) rather than fail paste
+        short_url = await shorten_url(paste_url, None)
     db.save_paste(paste_id, content, short_url)
     logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
 
-    # Получаем текущие пасты пользователя из куки
     user_pastes = load_user_pastes(request)
     user_pastes.append(paste_id)
 
-    # Создаем ответ с редиректом и устанавливаем куки
     response = RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
     response.set_cookie(
         key="user_pastes",
         value=dump_user_pastes_cookie(user_pastes),
         httponly=True,
-        max_age=31536000,  # 1 год
+        max_age=31536000,  # 1 year
         samesite="lax",
         secure=request.url.scheme == "https",
     )
@@ -526,18 +569,16 @@ async def get_paste(request: Request, paste_id: str):
     return templates.TemplateResponse(
         request,
         "paste.html",
-        {
-            "request": request,
-            "base_template": get_design_base_template(),
-            "design_name": get_active_design_name(),
-            "paste_id": paste_id,
-            "content": content,
-            "created_at": created_at,
-            "lines": highlighted_paste.lines,
-            "highlighted_language": highlighted_paste.language,
-            "is_markdown": highlighted_paste.is_markdown,
-            "short_url": short_url,
-            "meta": build_page_meta(
+        template_context(
+            request,
+            paste_id=paste_id,
+            content=content,
+            created_at=created_at,
+            lines=highlighted_paste.lines,
+            highlighted_language=highlighted_paste.language,
+            is_markdown=highlighted_paste.is_markdown,
+            short_url=short_url,
+            meta=build_page_meta(
                 request,
                 title=f"Nopaste — paste {paste_id}",
                 description=(
@@ -545,7 +586,7 @@ async def get_paste(request: Request, paste_id: str):
                     "logs, notes, and configs."
                 ),
             ),
-        },
+        ),
     )
 
 
@@ -559,20 +600,40 @@ async def update_paste_slug(
     paste_id: str,
     custom_slug: str = Form(..., description="Новое имя короткой ссылки"),
 ):
+    lang = request_lang(request)
     paste = db.get_paste(paste_id)
     if not paste:
-        raise HTTPException(status_code=404, detail="Paste not found")
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
 
-    normalized_slug = normalize_custom_slug(custom_slug)
+    if not settings.shrink_enabled:
+        raise HTTPException(
+            status_code=503, detail=i18n_t("errors.shrink_disabled", lang)
+        )
+
+    try:
+        normalized_slug = normalize_custom_slug(custom_slug)
+    except HTTPException as exc:
+        if exc.status_code == 400:
+            raise HTTPException(
+                status_code=400, detail=i18n_t("errors.slug_invalid", lang)
+            ) from exc
+        raise
     if not normalized_slug:
-        raise HTTPException(status_code=400, detail="Slug cannot be empty")
+        raise HTTPException(status_code=400, detail=i18n_t("errors.slug_empty", lang))
 
     paste_url = str(request.url_for("get_paste", paste_id=paste_id))
-    short_url = await shorten_url(paste_url, normalized_slug)
+    try:
+        short_url = await shorten_url(paste_url, normalized_slug)
+    except SlugTakenError:
+        raise HTTPException(
+            status_code=409, detail=i18n_t("errors.slug_taken", lang)
+        ) from None
     if not short_url:
         raise HTTPException(
             status_code=500,
-            detail="Could not update short URL",
+            detail=i18n_t("errors.shrink_unavailable", lang),
         )
 
     db.update_paste_short_url(paste_id, short_url)
@@ -594,10 +655,13 @@ async def update_paste_slug(
     description="Альтернативный URL для получения содержимого nopaste без HTML-обёртки.",
     response_class=PlainTextResponse,
 )
-async def get_raw_paste(paste_id: str):
+async def get_raw_paste(request: Request, paste_id: str):
     paste = db.get_paste(paste_id)
     if not paste:
-        raise HTTPException(status_code=404, detail="Paste not found")
+        raise HTTPException(
+            status_code=404,
+            detail=i18n_t("errors.paste_not_found", request_lang(request)),
+        )
     logger.info("Retrieved raw paste: id=%s", paste_id)
     return PlainTextResponse(content=paste["content"])
 
@@ -614,18 +678,15 @@ async def list_pastes(request: Request):
     return templates.TemplateResponse(
         request,
         "list.html",
-        {
-            "request": request,
-            "base_template": get_design_base_template(),
-            "design_name": get_active_design_name(),
-            "pastes": pastes,
-            "meta": build_page_meta(
+        template_context(
+            request,
+            pastes=pastes,
+            meta=build_page_meta(
                 request,
-                # Inline short URL slug edit update
                 title="Nopaste — your recent pastes",
                 description="Browse the pastes saved in your recent Nopaste history.",
             ),
-        },
+        ),
     )
 
 

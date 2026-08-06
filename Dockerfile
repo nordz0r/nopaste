@@ -27,6 +27,8 @@ WORKDIR /app
 
 COPY --from=test-builder /app/.venv .venv
 COPY pyproject.toml ./
+COPY alembic.ini ./alembic.ini
+COPY alembic ./alembic
 COPY ./src ./src
 COPY ./tests ./tests
 
@@ -55,6 +57,8 @@ WORKDIR /app
 COPY --from=prod-builder --chown=sam:sam /app/.venv .venv
 COPY --chown=sam:sam pyproject.toml ./
 COPY --chown=sam:sam CHANGELOG.md ./CHANGELOG.md
+COPY --chown=sam:sam alembic.ini ./alembic.ini
+COPY --chown=sam:sam alembic ./alembic
 COPY --chown=sam:sam ./src ./
 
 USER sam

@@ -9,45 +9,45 @@
         </div>
         <div class="paste-meta-item">
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 18h17v-6H4v6zM4 5v6h17V5H4z"/></svg>
-            <span>{{ lines|length }} lines</span>
+            <span>{{ t("paste.lines", n=lines|length) }}</span>
         </div>
         {% if is_markdown %}
-        <button type="button" id="toggle-raw-btn" class="paste-meta-item paste-language-badge paste-language-badge-clickable" title="Нажмите для переключения между отформатированным Markdown и исходным кодом (Raw)">
+        <button type="button" id="toggle-raw-btn" class="paste-meta-item paste-language-badge paste-language-badge-clickable" title="{{ t('paste.markdown_toggle') }}">
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M8.59 16.59L4 12l4.59-4.59L10 8.83 6.83 12 10 15.17l-1.41 1.42zM15.41 16.59L14 15.17 17.17 12 14 8.83l1.41-1.42L20 12l-4.59 4.59z"/></svg>
             <span id="badge-text">Markdown</span>
         </button>
         {% else %}
-        <div class="paste-meta-item paste-language-badge" title="Automatically detected syntax">
+        <div class="paste-meta-item paste-language-badge" title="{{ t('paste.syntax_title') }}">
             <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M8.59 16.59L4 12l4.59-4.59L10 8.83 6.83 12 10 15.17l-1.41 1.42zM15.41 16.59L14 15.17 17.17 12 14 8.83l1.41-1.42L20 12l-4.59 4.59z"/></svg>
             <span>{{ highlighted_language }}</span>
         </div>
         {% endif %}
         {% if created_at %}
         <div class="paste-meta-item">
-            <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2C11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            <svg class="icon-svg" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/><path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
             <span>{{ created_at }}</span>
         </div>
         {% endif %}
         <div class="paste-meta-actions" aria-label="Paste actions">
             <button
                 id="copy-btn"
-                class="btn btn-secondary btn-icon-only"
+                class="btn btn-ghost btn-icon-only"
                 type="button"
-                title="Скопировать ссылку"
-                aria-label="Скопировать ссылку"
+                title="{{ t('paste.copy_link') }}"
+                aria-label="{{ t('paste.copy_link') }}"
             >
                 <img src="/static/images/favicon.png" alt="" class="btn-icon-image">
-                <span class="sr-only">Copy Link</span>
+                <span class="sr-only">{{ t("paste.copy_link") }}</span>
             </button>
             <button
                 type="button"
                 id="copy-content-btn"
-                class="btn btn-secondary btn-icon-only"
-                title="Скопировать содержимое"
-                aria-label="Скопировать содержимое"
+                class="btn btn-ghost btn-icon-only"
+                title="{{ t('paste.copy_content') }}"
+                aria-label="{{ t('paste.copy_content') }}"
             >
                 <img src="/static/images/copy.png" alt="" class="btn-icon-image btn-icon-image-copy">
-                <span class="sr-only">Copy Content</span>
+                <span class="sr-only">{{ t("paste.copy_content") }}</span>
             </button>
         </div>
     </div>
@@ -59,9 +59,9 @@
                 href="{{ short_url }}"
                 id="short-url-link"
                 class="short-url-link"
-                data-tooltip="Нажмите, чтобы изменить"
+                data-tooltip="{{ t('paste.short_url_edit') }}"
             >
-                <span aria-hidden="true">{{ short_url.rsplit('/', 1)[0] }}/</span><span id="short-url-slug-display">{{ short_url.rsplit('/', 1)[-1] }}</span>
+                <span aria-hidden="true" id="short-url-prefix">{{ short_url.rsplit('/', 1)[0] }}/</span><span id="short-url-slug-display">{{ short_url.rsplit('/', 1)[-1] }}</span>
             </a>
             <span id="short-url-edit-wrap" class="short-url-edit-wrap is-hidden-view">
                 <span aria-hidden="true">{{ short_url.rsplit('/', 1)[0] }}/</span>
@@ -69,7 +69,7 @@
                     id="short-url-slug"
                     type="text"
                     value="{{ short_url.rsplit('/', 1)[-1] }}"
-                    aria-label="Имя короткой ссылки"
+                    aria-label="{{ t('paste.short_url_label') }}"
                     maxlength="64"
                     pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,63}"
                 >
@@ -100,6 +100,10 @@
 <script src="/static/js/mermaid.min.js?v={{ asset_version }}"></script>
 
 <script>
+const i18n = {{ i18n_js|tojson }};
+// Mutable share URL used by the copy-link button (updated after slug edit).
+let shareUrl = {% if short_url %}{{ short_url|tojson }}{% else %}window.location.href{% endif %};
+
 function getSelectedRangeFromHash() {
     const match = window.location.hash.match(/^#L(\d+)(?:-L?(\d+))?$/);
     if (!match) return null;
@@ -127,7 +131,8 @@ function copyLineUrl(anchor, lineNumber) {
     const lineUrl = `${window.location.origin}${window.location.pathname}#${anchor}`;
     window.location.hash = anchor;
     updateActiveLine();
-    copyToClipboard(lineUrl, `Line ${lineNumber} link copied`);
+    const msg = (i18n["toast.line_link_copied"] || "Line {n} link copied").replace("{n}", lineNumber);
+    copyToClipboard(lineUrl, msg);
 }
 
 document.querySelectorAll(".paste-line-number").forEach(link => {
@@ -143,7 +148,7 @@ const rawContentField = document.getElementById("paste-raw-content");
 const copyContentBtn = document.getElementById("copy-content-btn");
 if (copyContentBtn && rawContentField) {
     copyContentBtn.addEventListener("click", () => {
-        copyToClipboard(rawContentField.value, "Содержимое скопировано!");
+        copyToClipboard(rawContentField.value, i18n["toast.content_copied"] || "Content copied!");
     });
 }
 
@@ -174,6 +179,7 @@ const shortUrlSlug = document.getElementById("short-url-slug");
 const shortUrlSlugDisplay = document.getElementById("short-url-slug-display");
 if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
     let originalSlug = shortUrlSlug.value;
+    let saving = false;
 
     function updateSlugInputWidth() {
         shortUrlSlug.style.width = Math.max((shortUrlSlug.value || "").length + 1, 4) + "ch";
@@ -202,6 +208,7 @@ if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
     });
 
     async function saveSlug() {
+        if (saving) return;
         const newSlug = shortUrlSlug.value.trim();
         if (!newSlug || newSlug === originalSlug) {
             shortUrlSlug.value = originalSlug;
@@ -209,7 +216,8 @@ if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
             return;
         }
 
-        const pasteId = "{{ paste_id }}";
+        const pasteId = {{ paste_id|tojson }};
+        saving = true;
         try {
             const formData = new FormData();
             formData.append("custom_slug", newSlug);
@@ -223,23 +231,35 @@ if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
                 const data = await response.json();
                 if (data.short_url) {
                     shortUrlLink.href = data.short_url;
+                    shareUrl = data.short_url;
                     if (shortUrlSlugDisplay) {
                         shortUrlSlugDisplay.textContent = data.slug;
                     }
                     originalSlug = data.slug;
                     shortUrlSlug.value = data.slug;
-                    showNotification("Ссылка обновлена!");
+                    showNotification(i18n["toast.link_updated"] || "Link updated!");
                 }
+                showLinkView();
             } else {
                 const errData = await response.json().catch(() => ({}));
-                showNotification(errData.detail || "Ошибка при обновлении ссылки");
-                shortUrlSlug.value = originalSlug;
+                if (response.status === 409) {
+                    showNotification(errData.detail || i18n["toast.slug_taken"] || "Slug taken");
+                    // Keep edit open so the user can pick another slug
+                    shortUrlSlug.focus();
+                    shortUrlSlug.select();
+                } else {
+                    showNotification(errData.detail || i18n["toast.slug_error"] || "Error");
+                    shortUrlSlug.value = originalSlug;
+                    showLinkView();
+                }
             }
         } catch (err) {
-            showNotification("Не удалось связаться с сервером");
+            showNotification(i18n["toast.network_error"] || "Network error");
             shortUrlSlug.value = originalSlug;
+            showLinkView();
+        } finally {
+            saving = false;
         }
-        showLinkView();
     }
 
     shortUrlSlug.addEventListener("keydown", (event) => {
@@ -322,7 +342,6 @@ if (toggleRawBtn) {
     toggleRawBtn.addEventListener("click", () => {
         const isMarkdownHidden = pasteMarkdownView.classList.contains("is-hidden-view");
         if (isMarkdownHidden) {
-            // Switch to Markdown view
             pasteMarkdownView.classList.remove("is-hidden-view");
             pasteCodeView.classList.add("is-hidden-view");
             if (badgeText) badgeText.textContent = "Markdown";
@@ -331,7 +350,6 @@ if (toggleRawBtn) {
                 markdownRendered = true;
             }
         } else {
-            // Switch to Raw code view
             pasteMarkdownView.classList.add("is-hidden-view");
             pasteCodeView.classList.remove("is-hidden-view");
             if (badgeText) badgeText.textContent = "Markdown (Raw)";

@@ -1,34 +1,88 @@
 # Repository Guidelines
 
+Guidelines for coding agents working in this repository. Keep this file about **project structure and workflow** — not any private deployment topology.
+
 ## Project Structure & Module Organization
-`src/` contains the FastAPI application. `src/main.py` defines routes and mounts templates/static assets, `src/database.py` wraps SQLite access, and `src/config.py` loads environment-based settings. Jinja templates live in `src/templates/`; CSS and images live in `src/static/`. Tests are under `tests/`. Delivery files stay at the repo root: `Dockerfile`, `docker-compose.yml`, `docker-compose.local.yml`, shell helpers, `pyproject.toml`, `uv.lock`, and `CHANGELOG.md`.
+
+```text
+src/
+  main.py           FastAPI routes, middleware, app lifespan
+  config.py         Environment settings (pydantic-settings)
+  storage/          Persistence: models, repository, engine factory
+  i18n/             Locale resolution and message catalogs (ru/en)
+  highlighting.py   Syntax / markdown detection
+  templates/        Jinja2 templates (designs under designs/<name>/)
+  static/           CSS, fonts, images, vendor JS
+alembic/            Database migrations
+tests/              pytest suite
+.github/workflows/  CI, Docker publish, semantic-release
+```
+
+Root delivery files: `Dockerfile`, `docker-compose.yml`, `docker-compose.local.yml`, `pyproject.toml`, `uv.lock`, `CHANGELOG.md`, `.env.example`.
+
+## Where to Change What
+
+| Concern | Location |
+|---------|----------|
+| HTTP routes / HTML context | `src/main.py`, `src/templates/` |
+| DB models / queries | `src/storage/` |
+| Schema changes | `alembic/versions/` (never hand-edit prod DBs ad hoc) |
+| Settings / env | `src/config.py`, `.env.example` |
+| UI strings / API errors (i18n) | `src/i18n/` |
+| Styles / client UX | `src/static/css/`, template `<script>` blocks |
+| Release notes page | `CHANGELOG.md` → served at `/nopaste_changelog` |
 
 ## Build, Test, and Development Commands
-`uv sync --frozen --extra test --group dev` installs the pinned app, test dependencies, and dev tools such as Ruff from `uv.lock`.
-`PYTHONPATH=src uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000` starts the local dev server with reload (uses bare module names because `src/` is treated as the import root, matching the pytest config).
-`uv run python src/main.py` runs the app through its entry point (works without PYTHONPATH because Python adds the script directory to sys.path).
-`uv run pytest` executes the test suite.
-`uv run pytest --cov=src --cov-report=term-missing` checks coverage for changed code.
-`uv run ruff check src tests` lints Python sources and tests.
-`uv run ruff format src tests` formats Python code.
-`docker compose up -d` runs the published `nordz0r/nopaste:main` image.
-`docker compose -f docker-compose.local.yml up --build -d` builds and runs the local source tree.
-`COMPOSE_FILE=docker-compose.local.yml ./restart.sh nopaste-app` restarts the local compose service using the helper scripts.
+
+```bash
+uv sync --frozen --extra test --group dev
+PYTHONPATH=src uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uv run python src/main.py
+uv run pytest
+uv run pytest --cov=src --cov-report=term-missing
+uv run ruff check src tests
+uv run ruff format src tests
+uv run alembic upgrade head
+docker compose up -d
+docker compose --profile postgres up -d
+docker compose -f docker-compose.local.yml up --build -d
+```
+
+`PYTHONPATH=src` is required for uvicorn because the app uses bare imports (`from config import ...`), matching pytest `pythonpath = ["./src"]`.
 
 ## Coding Style & Naming Conventions
-Target Python 3.12 and follow the Ruff configuration in `pyproject.toml`. Use 4-space indentation, `snake_case` for modules/functions/variables, and `PascalCase` for classes. Add type hints to new Python code and keep route handlers thin; move persistence logic into `src/database.py` or another dedicated module instead of embedding SQL in endpoints. Keep template filenames lowercase and route-aligned, for example `index.html` and `paste.html`.
+
+- Python 3.12, 4-space indent, Ruff config in `pyproject.toml`
+- `snake_case` functions/modules, `PascalCase` classes, type hints on new code
+- Keep route handlers thin; persistence in `src/storage/`
+- Template names lowercase and route-aligned (`index.html`, `paste.html`)
 
 ## Testing Guidelines
-Use `pytest` with FastAPI’s `TestClient`. Name files `test_*.py` and test functions `test_*`. Add coverage for new routes, redirects, cookie behavior, and database interactions. No minimum coverage threshold is enforced in config, so avoid lowering coverage on touched code and run the coverage command before opening a PR.
+
+- `pytest` + FastAPI `TestClient`
+- Files `test_*.py`, functions `test_*`
+- Cover routes, cookies, storage backends, i18n `Accept-Language`, Shlink slug errors
+- Prefer SQLite in-memory for unit tests; optional Postgres via compose profile / CI service
 
 ## Commit & Pull Request Guidelines
-This repository uses conventional commits because the release workflow derives semver bumps and changelog entries from commit history. Use `feat:` for minor releases, `fix:` for patch releases, and keep `ci:`, `docs:`, and `chore:` for non-user-facing changes. Prefer focused subjects such as `fix: validate empty paste content` over vague messages like `update`. PRs should include a concise description, linked issue when applicable, the verification commands you ran, and screenshots for HTML/CSS changes.
 
-## Security & Configuration Tips
-Store local overrides in `.env`; `src/config.py` reads `APP_PORT`, `DEBUG`, storage settings (`DATABASE_PATH` for SQLite, or `DATABASE_URL` / discrete `POSTGRES_*` for PostgreSQL), `COOKIE_SIGNING_SECRET`, `MAX_PASTE_SIZE_BYTES`, and `MAX_RECENT_PASTES`. Prefer PostgreSQL in production for durable pastes across restarts; keep SQLite for local/tests. Do not commit `.env`, SQLite database files, or log output. The default local database path is `/tmp/pastes.db`; the compose files override this to `/data/pastes.db` inside a Docker volume. For GitHub automation, keep `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` in repository secrets rather than in tracked files.
+Conventional Commits (semantic-release):
 
-## Production Deployment
-To deploy the latest `main` branch to production:
-1. Ensure your changes are committed and pushed to `main` (CI will automatically build and publish the Docker image).
-2. SSH into the production server and restart the k3s deployment to pull the new image:
-   `ssh -p 55522 dd.goldfinches.ru '/usr/local/bin/kubectl rollout restart deploy nopaste -n sites'`
+- `feat:` minor · `fix:` patch · `docs:` / `ci:` / `chore:` non-user-facing
+
+PRs: short description, commands run, screenshots for HTML/CSS changes.
+
+## Security & Configuration
+
+- Local overrides in `.env` (never commit)
+- Do not commit secrets, API keys, or database files
+- Document env vars generically in `.env.example` and README (`DATABASE_URL`, `SHRINK_URL`, `SHRINK_TOKEN`, …)
+- `PASTE_ENCRYPTION_KEY` is **optional**: unset/empty → plaintext paste bodies; set → Fernet `enc:v1:` ciphertext for new writes (legacy plaintext still readable)
+
+## Shipping
+
+1. Push to `main` (CI lint/test; Docker image publish when paths match).
+2. Releases: semantic-release updates `CHANGELOG.md` and tags; release workflow publishes versioned images.
+3. Operators deploy the published image with **their** orchestrator or `docker compose pull && docker compose up -d`.
+
+Do not put hostnames, SSH, cluster namespaces, or private inventory in this file.

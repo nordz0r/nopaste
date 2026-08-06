@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="{{ lang|default('ru') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#0e1012">
     <link rel="canonical" href="{{ meta.url if meta else request.url }}">
     <link rel="icon" href="/static/images/favicon.png" type="image/png">
-    <meta property="og:locale" content="ru_RU">
+    <meta property="og:locale" content="{{ 'en_US' if lang|default('ru') == 'en' else 'ru_RU' }}">
     <meta property="og:site_name" content="{{ meta.site_name if meta else 'Nopaste' }}">
     <meta property="og:type" content="{{ meta.type if meta else 'website' }}">
     <meta property="og:title" content="{{ meta.title if meta else 'Nopaste' }}">
@@ -42,14 +42,14 @@
                 </a>
             </div>
             <div class="header-actions">
-                <button type="button" id="theme-toggle-btn" class="btn btn-secondary theme-toggle-btn" title="Переключить тему" aria-label="Переключить тему">
+                <button type="button" id="theme-toggle-btn" class="btn btn-secondary theme-toggle-btn" title="{{ t('nav.theme') if t is defined else 'Toggle theme' }}" aria-label="{{ t('nav.theme') if t is defined else 'Toggle theme' }}">
                     <svg class="icon-svg theme-icon-sun" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
                     <svg class="icon-svg theme-icon-moon" viewBox="0 0 24 24" style="width:16px;height:16px;display:none;"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
                 </button>
                 <nav aria-label="Primary">
-                    <a href="/list" class="btn btn-secondary" title="My Pastes">
+                    <a href="/list" class="btn btn-secondary" title="{{ t('nav.my_list') if t is defined else 'My List' }}">
                         <img src="/static/images/list.png" alt="" class="btn-icon-image btn-icon-image-list">
-                        <span>My List</span>
+                        <span>{{ t('nav.my_list') if t is defined else 'My List' }}</span>
                     </a>
                 </nav>
             </div>
@@ -60,7 +60,7 @@
     </main>
     <footer class="site-footer">
         <div class="site-footer-container">
-            <p class="site-footer-text">© {{ current_year() }} <a href="https://cv.goldfinches.ru">NorD</a> · Nopaste v{{ app_version }} · <a href="/nopaste_changelog">Changelog</a></p>
+            <p class="site-footer-text">© {{ current_year() }} <a href="https://cv.goldfinches.ru">NorD</a> · Nopaste v{{ app_version }} · <a href="/nopaste_changelog">{{ t('footer.changelog') if t is defined else 'Changelog' }}</a></p>
         </div>
     </footer>
     <div id="notification" class="notification"></div>
@@ -117,6 +117,8 @@
         }, 2000);
     }
 
+    const i18nBase = {{ (i18n_js if i18n_js is defined else {})|tojson }};
+
     async function copyToClipboard(text, successMsg) {
         try {
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -129,16 +131,32 @@
                 document.execCommand('copy');
                 document.body.removeChild(textArea);
             }
-            showNotification(successMsg || "Скопировано!");
+            showNotification(successMsg || i18nBase["toast.copied"] || "Copied!");
         } catch (err) {
-            showNotification("Ошибка копирования");
+            showNotification(i18nBase["toast.copy_error"] || "Copy failed");
         }
+    }
+
+    function flashPress(btn) {
+        if (!btn) return;
+        btn.classList.add("is-pressed");
+        window.setTimeout(() => btn.classList.remove("is-pressed"), 180);
     }
 
     const copyBtn = document.getElementById("copy-btn");
     if (copyBtn) {
-        const copyTarget = {% if short_url %}"{{ short_url }}"{% else %}window.location.href{% endif %};
-        copyBtn.addEventListener("click", () => copyToClipboard(copyTarget, "Ссылка скопирована!"));
+        copyBtn.addEventListener("click", () => {
+            flashPress(copyBtn);
+            const target = (typeof shareUrl !== "undefined" && shareUrl)
+                ? shareUrl
+                : ({% if short_url %}{{ short_url|tojson }}{% else %}window.location.href{% endif %});
+            copyToClipboard(target, i18nBase["toast.link_copied"] || "Link copied!");
+        });
+    }
+
+    const copyContentBtnBase = document.getElementById("copy-content-btn");
+    if (copyContentBtnBase) {
+        copyContentBtnBase.addEventListener("click", () => flashPress(copyContentBtnBase));
     }
 
     const themeToggleBtn = document.getElementById("theme-toggle-btn");

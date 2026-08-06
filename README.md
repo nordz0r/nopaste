@@ -1,165 +1,140 @@
 # Nopaste
 
-Простое FastAPI-приложение для хранения и публикации текстовых сниппетов. Данные сохраняются в SQLite, интерфейс собран на Jinja2-шаблонах, а контейнерный деплой ориентирован на Docker Hub и GitHub Actions.
+[![CI](https://github.com/nordz0r/nopaste/actions/workflows/ci.yml/badge.svg)](https://github.com/nordz0r/nopaste/actions/workflows/ci.yml)
+[![Docker Hub](https://img.shields.io/docker/v/nordz0r/nopaste?label=docker&logo=docker)](https://hub.docker.com/r/nordz0r/nopaste)
+[![License](https://img.shields.io/badge/license-see%20repo-blue)](./LICENSE)
+[![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)](./pyproject.toml)
 
-## Возможности
+Self-hosted pastebin for text, logs, notes, and configs. FastAPI + Jinja2, SQLite or PostgreSQL, optional Shlink short links, optional at-rest encryption.
 
-- создание паст и переход по короткой ссылке
-- ссылки на конкретные строки и диапазоны вида `#L12` и `#L12-L20`, плюс кнопки копирования line-link
-- список пользовательских паст через cookie
-- health-check endpoints: `/health/live` и `/health/ready`
-- локальный запуск через `uv` или Docker Compose
-- автоматическая публикация образа `nordz0r/nopaste`
+> 🇷🇺 [Русская версия](./README.ru.md)
 
-## Структура проекта
+## Features
 
-```text
-src/
-  main.py          FastAPI routes and app setup
-  database.py      SQLite access layer
-  config.py        environment-based settings
-  templates/       Jinja2 templates
-  static/          CSS and images
-tests/             pytest suite
-.github/workflows/ Docker Hub and release workflows
+- Create pastes and share by ID or optional short URL
+- Line anchors (`#L12`, `#L12-L20`) and one-click copy buttons
+- Recent pastes list via signed browser cookie
+- Syntax highlighting + Markdown / Mermaid rendering
+- SQLite (default) or PostgreSQL first-class backends (SQLAlchemy + Alembic)
+- Optional body encryption when `PASTE_ENCRYPTION_KEY` is set
+- RU/EN UI strings from `Accept-Language` / browser language
+- Health endpoints: `/health/live`, `/health/ready`
+- Docker image `nordz0r/nopaste` and Compose profiles
+
+## Architecture
+
+```mermaid
+flowchart LR
+  Browser -->|HTTP| App[Nopaste FastAPI]
+  App --> Templates[Jinja2 + static]
+  App --> Storage[SQLAlchemy repository]
+  Storage --> SQLite[(SQLite)]
+  Storage --> PG[(PostgreSQL)]
+  App -.->|optional| Shlink[Shlink API]
+  App -.->|optional| Crypto[Fernet encrypt]
+  Crypto -.-> Storage
 ```
 
-В корне также лежат `docker-compose.yml`, `docker-compose.local.yml`, `CHANGELOG.md`, `pyproject.toml` и `uv.lock`.
-
-## Локальная разработка
-
-Требования:
-
-- Python 3.12
-- `uv`
-- Docker и Docker Compose, если нужен контейнерный запуск
-
-Установка зависимостей:
+## Quick start
 
 ```bash
+# Dependencies
 uv sync --frozen --extra test --group dev
-```
 
-Запуск dev-сервера:
-
-```bash
-# PYTHONPATH=src нужен, потому что проект использует bare-импорты
-# (from config import ..., from database import ...) и src/ выступает корнем.
-# Это согласуется с настройкой pytest (pythonpath = ["./src"]).
+# Dev server (bare imports live under src/)
 PYTHONPATH=src uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
 
-Приложение будет доступно на `http://localhost:8000`.
-
-Альтернатива (работает без PYTHONPATH, т.к. Python сам добавляет директорию скрипта в sys.path):
-```bash
+# Or
 uv run python src/main.py
 ```
 
-## Получение исходного текста
-
-Исходное содержимое nopaste без HTML-обёртки доступно по основному raw URL:
+Open http://localhost:8000
 
 ```bash
-curl -fsSL 'http://localhost:8000/raw/<paste_id>'
+# Published image
+docker compose up -d
+
+# Local build
+docker compose -f docker-compose.local.yml up --build -d
+
+# App + Postgres profile
+DATABASE_URL=postgresql+psycopg://nopaste:nopaste@postgres:5432/nopaste \
+  docker compose --profile postgres up -d
 ```
 
-Также поддерживается alias, привязанный к URL страницы nopaste:
+## Configuration
+
+Settings load from environment / `.env` (see `.env.example`).
+
+| Variable | Description |
+|----------|-------------|
+| `APP_PORT` | Listen port (default `8000`) |
+| `DEBUG` | FastAPI debug mode |
+| `DATABASE_PATH` | SQLite path when URL/Postgres unset |
+| `DATABASE_URL` | SQLAlchemy URL (`sqlite+…` or `postgresql+psycopg://…`) |
+| `POSTGRES_*` | Discrete Postgres credentials (used if URL empty) |
+| `PASTE_ENCRYPTION_KEY` | **Optional.** If set/non-empty, encrypt paste bodies at rest (Fernet). Unset = plaintext. |
+| `COOKIE_SIGNING_SECRET` | HMAC secret for recent-pastes cookie |
+| `MAX_PASTE_SIZE_BYTES` | Max paste size |
+| `MAX_RECENT_PASTES` | Cookie history cap |
+| `SHRINK_URL` / `SHRINK_TOKEN` | Shlink base URL + API key (both required) |
+| `PUBLIC_BASE_URL` | Canonical / Open Graph base URL |
+| `UI_DESIGN` | Template design under `templates/designs/<name>/` |
+| `DOCS_ALLOWLIST` | CIDR/IP list for `/docs` (empty = open) |
+| `APP_VERSION` | Display version (release images set this) |
+
+### Encryption (optional)
+
+- **Off** (default): bodies stored as plaintext — no key required.
+- **On**: set `PASTE_ENCRYPTION_KEY` to a Fernet key or any passphrase (SHA-256 derived).
+- New writes use prefix `enc:v1:…`. Legacy plaintext rows stay readable after enabling the key.
+- Losing the key makes encrypted pastes unreadable; treat the key as a secret.
 
 ```bash
-curl -fsSL 'http://localhost:8000/paste/<paste_id>/raw'
+python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 ```
 
-Оба endpoint возвращают `text/plain; charset=utf-8`.
+## Project layout
 
-Проверки:
+```text
+src/
+  main.py           FastAPI routes
+  config.py         pydantic-settings
+  storage/          models, repository, crypto, engine
+  i18n/             en/ru catalogs
+  highlighting.py   syntax / markdown
+  templates/        Jinja2 designs
+  static/           CSS, fonts, images, JS
+alembic/            migrations
+tests/              pytest
+.github/workflows/  CI, Docker, semantic-release
+```
+
+## Development & tests
 
 ```bash
 uv run pytest
+uv run pytest --cov=src --cov-report=term-missing
 uv run ruff check src tests
 uv run ruff format src tests
+uv run alembic upgrade head
 ```
 
-## Docker Compose
-
-Основной compose-файл тянет опубликованный образ `main` из Docker Hub:
+Raw content:
 
 ```bash
-docker compose up -d
+curl -fsSL 'http://localhost:8000/raw/<paste_id>'
+curl -fsSL 'http://localhost:8000/paste/<paste_id>/raw'
 ```
 
-Локальная сборка из текущего исходного кода выполняется отдельным файлом:
+## CI/CD
 
-```bash
-docker compose -f docker-compose.local.yml up --build -d
-```
+- `ci.yml` — lint + unit tests; optional compose smoke on workflow_dispatch
+- `dockerhub.yml` — publish `nordz0r/nopaste` from `main`
+- `release.yml` — semantic-release (CHANGELOG, tags, versioned images)
 
-Helper-скрипты поддерживают выбор compose-файла через `COMPOSE_FILE`:
+Conventional Commits: `feat:` → minor, `fix:` → patch.
 
-```bash
-COMPOSE_FILE=docker-compose.local.yml ./restart.sh nopaste-app
-COMPOSE_FILE=docker-compose.local.yml ./logs.sh nopaste-app
-COMPOSE_FILE=docker-compose.local.yml ./stop.sh nopaste-app
-```
+## License
 
-По умолчанию локальные данные SQLite сохраняются в volume `/data/pastes.db` внутри контейнера.
-В production (`paste.goldfinches.ru`) pastes хранятся в shared PostgreSQL (tenant `nopaste`) и переживают рестарт pod.
-
-## Конфигурация
-
-Настройки читаются из переменных окружения и `.env`:
-
-- `APP_PORT` — внешний порт приложения, по умолчанию `8000`
-- `DEBUG` — включает debug-режим FastAPI
-- `DATABASE_PATH` — путь к SQLite-базе (local/tests; используется, если Postgres не задан)
-- `DATABASE_URL` — PostgreSQL DSN (`postgresql://...`); приоритетнее `DATABASE_PATH` и `POSTGRES_*`
-- `POSTGRES_HOST` / `POSTGRES_PORT` / `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_SSLMODE` — дискретные credentials для production
-- `COOKIE_SIGNING_SECRET` — секрет подписи cookie со списком recent pastes
-- `MAX_PASTE_SIZE_BYTES` — максимальный размер одного paste в байтах
-- `MAX_RECENT_PASTES` — сколько recent pastes хранить в cookie
-- `SHRINK_URL` — базовый URL Shlink, если нужен короткий URL для paste
-- `SHRINK_TOKEN` — API-ключ Shlink
-- `PUBLIC_BASE_URL` — внешний базовый URL приложения для canonical/Open Graph/Twitter preview-метаданных (например, `https://paste.goldfinches.ru`)
-- `APP_VERSION` — отображаемая версия приложения; release-образ получает её автоматически из `python-semantic-release`, локально используется fallback из `pyproject.toml`
-
-## CI/CD и релизы
-
-GitHub Actions выполняют две независимые задачи:
-
-- `.github/workflows/dockerhub.yml` публикует образ `nordz0r/nopaste` для ветки `main`
-- `.github/workflows/release.yml` выполняет semver-релиз напрямую из `main` через `python-semantic-release`
-
-Release workflow:
-
-- вычисляет следующую версию по conventional commits
-- обновляет `pyproject.toml` и `CHANGELOG.md`
-- создаёт release commit, tag и GitHub Release без промежуточного release PR
-- передаёт вычисленную версию в Docker build через `APP_VERSION`
-- публикует semver-теги и `latest` образа в Docker Hub и GHCR
-
-Релиз использует:
-
-- `CHANGELOG.md`
-- `pyproject.toml`
-- `uv.lock`
-
-Для корректной работы релизов нужны secrets:
-
-- `DOCKERHUB_USERNAME`
-- `DOCKERHUB_TOKEN`
-
-## Коммиты
-
-Репозиторий использует conventional commits. Для релизов это важно:
-
-- `feat:` повышает minor-версию
-- `fix:` повышает patch-версию
-- breaking changes повышают major-версию
-
-Примеры:
-
-```text
-feat: add paste expiration
-fix: validate empty paste content
-ci: update Docker publish workflow
-```
+See repository license / author metadata in `pyproject.toml`.
