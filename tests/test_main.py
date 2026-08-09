@@ -33,6 +33,8 @@ def test_read_root(client):
 
     assert response.status_code == 200
     assert "Nopaste" in response.text
+    assert '<meta name="robots" content="noindex, nofollow">' in response.text
+    assert response.headers.get("x-robots-tag") == "noindex, nofollow"
     assert "<title>Nopaste — create and share text instantly</title>" in response.text
     assert 'src="/static/images/goldfinches_logo.png"' in response.text
     assert 'class="brand-mark"' in response.text
@@ -49,10 +51,20 @@ def test_read_root(client):
     assert "Имя короткой ссылки" not in response.text
 
 
+def test_robots_txt_disallows_indexing(client):
+    response = client.get("/robots.txt")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain")
+    assert response.headers.get("x-robots-tag") == "noindex, nofollow"
+    assert "User-agent: *" in response.text
+    assert "Disallow: /" in response.text
+
+
 def test_nopaste_changelog_page(client):
     response = client.get("/nopaste_changelog")
 
     assert response.status_code == 200
+    assert response.headers.get("x-robots-tag") == "noindex, nofollow"
     assert "Nopaste Changelog" in response.text
     assert 'id="changelog-markdown"' in response.text
     assert "Changelog" in response.text

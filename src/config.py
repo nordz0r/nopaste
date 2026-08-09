@@ -28,13 +28,15 @@ class Settings(BaseSettings):
         default=5432, description="PostgreSQL port for discrete connection settings."
     )
     POSTGRES_DB: str | None = Field(
-        default=None, description="PostgreSQL database name for discrete connection settings."
+        default=None,
+        description="PostgreSQL database name for discrete connection settings.",
     )
     POSTGRES_USER: str | None = Field(
         default=None, description="PostgreSQL user for discrete connection settings."
     )
     POSTGRES_PASSWORD: str | None = Field(
-        default=None, description="PostgreSQL password for discrete connection settings."
+        default=None,
+        description="PostgreSQL password for discrete connection settings.",
     )
     POSTGRES_SSLMODE: str = Field(
         default="disable",

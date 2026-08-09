@@ -1,6 +1,10 @@
 from types import SimpleNamespace
 
-from src.database import Database, build_postgres_conninfo, create_database_from_settings
+from src.database import (
+    Database,
+    build_postgres_conninfo,
+    create_database_from_settings,
+)
 
 
 def test_get_user_pastes_preserves_requested_order_and_ignores_missing_ids(tmp_path):
