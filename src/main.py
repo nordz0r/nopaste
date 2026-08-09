@@ -137,6 +137,14 @@ async def restrict_api_docs(request: Request, call_next):
     return await call_next(request)
 
 
+@app.middleware("http")
+async def add_noindex_header(request: Request, call_next):
+    """Add X-Robots-Tag header to prevent search engine indexing."""
+    response = await call_next(request)
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    return response
+
+
 def load_version_from_pyproject(pyproject_path: Path) -> str | None:
     try:
         pyproject_data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
@@ -477,6 +485,17 @@ def load_changelog_markdown() -> str:
         if path.is_file():
             return path.read_text(encoding="utf-8")
     return "# Changelog\n\nChangelog file is not available in this build.\n"
+
+
+@app.get(
+    "/robots.txt",
+    summary="Robots exclusion protocol",
+    description="Инструкция для поисковых ботов о запрете индексации.",
+    response_class=PlainTextResponse,
+    include_in_schema=False,
+)
+async def robots_txt():
+    return PlainTextResponse("User-agent: *\nDisallow: /\n")
 
 
 @app.get(
