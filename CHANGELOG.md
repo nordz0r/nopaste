@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.12.0 (2026-08-09)
+
+### Chores
+
+- Remove AGENTS.md and compose helper shell scripts
+  ([`1c406fc`](https://github.com/nordz0r/nopaste/commit/1c406fc6fb74e159fc236f91af32143e5494cfa2))
+
+### Features
+
+- Disallow search engine indexing with robots.txt and noindex headers
+  ([`3a391fc`](https://github.com/nordz0r/nopaste/commit/3a391fca2a01b2d52a8a80bb7017be02d99f9cb5))
+
+
 ## v1.11.0 (2026-08-06)
 
 ### Features
