@@ -831,11 +831,15 @@ def test_custom_slug_validation_min_length_and_reserved_names(client, monkeypatc
     assert short_res.status_code == 400
 
     # Reserved slug
-    reserved_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "health"})
+    reserved_res = client.post(
+        f"/paste/{paste_id}/slug", data={"custom_slug": "health"}
+    )
     assert reserved_res.status_code == 400
 
     # Leading/trailing hyphen
-    hyphen_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "-invalid-"})
+    hyphen_res = client.post(
+        f"/paste/{paste_id}/slug", data={"custom_slug": "-invalid-"}
+    )
     assert hyphen_res.status_code == 400
 
     # Valid 5 chars
@@ -844,7 +848,9 @@ def test_custom_slug_validation_min_length_and_reserved_names(client, monkeypatc
     assert valid_5_res.json()["slug"] == "abcde"
 
     # Valid longer slug
-    valid_long_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "my-custom-note-2026"})
+    valid_long_res = client.post(
+        f"/paste/{paste_id}/slug", data={"custom_slug": "my-custom-note-2026"}
+    )
     assert valid_long_res.status_code == 200
     assert valid_long_res.json()["slug"] == "my-custom-note-2026"
 
@@ -893,5 +899,3 @@ def test_openapi_schema_and_docs_endpoints(client):
     assert "paths" in schema
     assert "/paste" in schema["paths"]
     assert "/paste/{paste_id}/slug" in schema["paths"]
-
-
