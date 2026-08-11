@@ -31,6 +31,7 @@ MESSAGES = {
     "errors.slug_taken": "This short name is already taken",
     "errors.shrink_unavailable": "Could not update short URL",
     "errors.shrink_disabled": "Short link service is not configured",
+    "errors.rate_limit_exceeded": "Too many requests. Please try again later.",
     "toast.copied": "Copied!",
     "toast.copy_error": "Copy failed",
     "toast.link_copied": "Link copied!",

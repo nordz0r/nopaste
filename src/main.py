@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import secrets
+import time
 import tomllib
 from datetime import datetime
 from pathlib import Path
@@ -26,9 +27,31 @@ from i18n import client_bundle, resolve_lang, t as i18n_t
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SHORT_PASTE_ID_LENGTH = 6
+SHORT_PASTE_ID_LENGTH = 8
 SHORT_PASTE_ID_ALPHABET = "23456789abcdefghjkmnpqrstuvwxyz"
 MAX_PASTE_ID_GENERATION_ATTEMPTS = 20
+PASTE_ID_PATTERN = re.compile(r"^[a-zA-Z0-9_-]{1,64}$")
+CUSTOM_SLUG_MIN_LENGTH = 5
+CUSTOM_SLUG_MAX_LENGTH = 64
+CUSTOM_SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{3,62}[a-zA-Z0-9]$")
+RESERVED_SLUGS = frozenset(
+    {
+        "api",
+        "docs",
+        "redoc",
+        "openapi.json",
+        "health",
+        "live",
+        "ready",
+        "static",
+        "raw",
+        "paste",
+        "list",
+        "robots.txt",
+        "rest",
+        "admin",
+    }
+)
 APP_NAME = "Nopaste"
 DEFAULT_META_DESCRIPTION = "Share text, logs, notes, and configs with Nopaste."
 BRAND_PREVIEW_IMAGE_PATH = "images/goldfinches_logo.png"
@@ -404,14 +427,84 @@ def build_page_meta(
     }
 
 
-CUSTOM_SLUG_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
+class InMemoryRateLimiter:
+    """Sliding-window in-memory rate limiter per client IP."""
+
+    def __init__(self) -> None:
+        self._requests: dict[str, list[float]] = {}
+        self._last_cleanup: float = time.time()
+
+    def is_allowed(
+        self, key: str, max_requests: int, window_seconds: float = 60.0
+    ) -> bool:
+        if max_requests <= 0:
+            return True
+        now = time.time()
+        if now - self._last_cleanup > 300:
+            self._cleanup(now, window_seconds)
+
+        timestamps = self._requests.setdefault(key, [])
+        cutoff = now - window_seconds
+        while timestamps and timestamps[0] < cutoff:
+            timestamps.pop(0)
+
+        if len(timestamps) >= max_requests:
+            return False
+
+        timestamps.append(now)
+        return True
+
+    def _cleanup(self, now: float, window_seconds: float) -> None:
+        self._last_cleanup = now
+        cutoff = now - window_seconds
+        stale_keys = [
+            k for k, ts in self._requests.items() if not ts or ts[-1] < cutoff
+        ]
+        for k in stale_keys:
+            del self._requests[k]
+
+    def reset(self) -> None:
+        self._requests.clear()
+        self._last_cleanup = time.time()
+
+
+rate_limiter = InMemoryRateLimiter()
+
+
+def get_client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "127.0.0.1"
+
+
+def check_rate_limit(request: Request) -> None:
+    if not settings.RATE_LIMIT_ENABLED:
+        return
+    client_ip = get_client_ip(request)
+    if not rate_limiter.is_allowed(
+        client_ip, settings.RATE_LIMIT_PER_MINUTE, window_seconds=60.0
+    ):
+        lang = request_lang(request)
+        raise HTTPException(
+            status_code=429,
+            detail=i18n_t("errors.rate_limit_exceeded", lang),
+            headers={"Retry-After": "60"},
+        )
 
 
 def normalize_custom_slug(custom_slug: str | None) -> str | None:
     normalized_slug = (custom_slug or "").strip()
     if not normalized_slug:
         return None
-    if not CUSTOM_SLUG_PATTERN.fullmatch(normalized_slug):
+    if (
+        len(normalized_slug) < CUSTOM_SLUG_MIN_LENGTH
+        or len(normalized_slug) > CUSTOM_SLUG_MAX_LENGTH
+        or not CUSTOM_SLUG_PATTERN.fullmatch(normalized_slug)
+        or normalized_slug.lower() in RESERVED_SLUGS
+    ):
         raise HTTPException(status_code=400, detail="Invalid custom short link name")
     return normalized_slug
 
@@ -535,7 +628,7 @@ async def api_changelog():
     "/nopaste_changelog",
     summary="Changelog",
     description="Permanent link — opens the app with the changelog modal.",
-    response_class=None,
+    response_class=RedirectResponse,
 )
 async def nopaste_changelog():
     # Keep the path stable; UI shows changelog as a modal on every page.
@@ -555,6 +648,7 @@ async def create_paste(
     ),
 ):
     lang = request_lang(request)
+    check_rate_limit(request)
     custom_slug = normalize_custom_slug(custom_slug)
     if not content.strip():
         raise HTTPException(
@@ -601,6 +695,8 @@ async def create_paste(
     description="Отображает содержимое указанного nopaste.",
 )
 async def get_paste(request: Request, paste_id: str):
+    if not PASTE_ID_PATTERN.fullmatch(paste_id):
+        return RedirectResponse(url="/", status_code=303)
     paste = db.get_paste(paste_id)
     if not paste:
         return RedirectResponse(url="/", status_code=303)
@@ -648,6 +744,11 @@ async def update_paste_slug(
     custom_slug: str = Form(..., description="Новое имя короткой ссылки"),
 ):
     lang = request_lang(request)
+    check_rate_limit(request)
+    if not PASTE_ID_PATTERN.fullmatch(paste_id):
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
     paste = db.get_paste(paste_id)
     if not paste:
         raise HTTPException(
@@ -703,11 +804,17 @@ async def update_paste_slug(
     response_class=PlainTextResponse,
 )
 async def get_raw_paste(request: Request, paste_id: str):
+    lang = request_lang(request)
+    if not PASTE_ID_PATTERN.fullmatch(paste_id):
+        raise HTTPException(
+            status_code=404,
+            detail=i18n_t("errors.paste_not_found", lang),
+        )
     paste = db.get_paste(paste_id)
     if not paste:
         raise HTTPException(
             status_code=404,
-            detail=i18n_t("errors.paste_not_found", request_lang(request)),
+            detail=i18n_t("errors.paste_not_found", lang),
         )
     logger.info("Retrieved raw paste: id=%s", paste_id)
     return PlainTextResponse(content=paste["content"])

@@ -33,6 +33,7 @@ MESSAGES = {
     "errors.slug_taken": "Это короткое имя уже занято",
     "errors.shrink_unavailable": "Не удалось обновить короткую ссылку",
     "errors.shrink_disabled": "Short link service is not configured",
+    "errors.rate_limit_exceeded": "Слишком много запросов. Пожалуйста, попробуйте позже.",
     "toast.copied": "Скопировано!",
     "toast.copy_error": "Ошибка копирования",
     "toast.link_copied": "Ссылка скопирована!",

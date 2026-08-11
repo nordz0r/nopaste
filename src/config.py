@@ -69,6 +69,14 @@ class Settings(BaseSettings):
         default="default",
         description="Active UI design name under templates/designs/<name>/.",
     )
+    RATE_LIMIT_ENABLED: bool = Field(
+        default=True,
+        description="Enable in-memory rate limiting on mutating endpoints.",
+    )
+    RATE_LIMIT_PER_MINUTE: int = Field(
+        default=60,
+        description="Max requests per minute per IP for mutating endpoints.",
+    )
     DOCS_ALLOWLIST_RAW: str = Field(
         default="",
         description="Raw DOCS_ALLOWLIST value (comma-separated).",

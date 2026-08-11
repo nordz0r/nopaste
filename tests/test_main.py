@@ -15,6 +15,7 @@ from highlighting import build_highlighted_paste
 def client(tmp_path, monkeypatch):
     test_db = Database(str(tmp_path / "test.db"))
     monkeypatch.setattr(main_module, "db", test_db)
+    main_module.rate_limiter.reset()
 
     with TestClient(main_module.app) as test_client:
         yield test_client
@@ -201,8 +202,8 @@ def test_create_paste_rejects_oversized_content(client, monkeypatch):
 
 
 def test_create_paste_retries_short_id_collision(client, monkeypatch):
-    main_module.db.save_paste("abc123", "existing")
-    generated_chars = iter("abc123xyz789")
+    main_module.db.save_paste("abc12345", "existing")
+    generated_chars = iter("abc12345xyz78901")
     monkeypatch.setattr(
         main_module.secrets, "choice", lambda alphabet: next(generated_chars)
     )
@@ -210,7 +211,7 @@ def test_create_paste_retries_short_id_collision(client, monkeypatch):
     response = client.post("/paste", data={"content": "fresh"}, follow_redirects=False)
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/paste/xyz789"
+    assert response.headers["location"] == "/paste/xyz78901"
 
 
 def test_get_paste_renders_line_links_and_copy_content_button(client):
@@ -791,3 +792,106 @@ def test_index_uses_accept_language_for_empty_toast(client):
         "Cannot save an empty paste" in response.text
         or "empty" in response.text.lower()
     )
+
+
+def test_legacy_short_paste_id_and_raw_continue_working(client):
+    # Simulate a legacy paste with a 6-character short ID created previously
+    legacy_id = "abc123"
+    main_module.db.save_paste(legacy_id, "legacy content", "https://gldf.ru/legac")
+
+    view_res = client.get(f"/paste/{legacy_id}")
+    assert view_res.status_code == 200
+    assert "legacy content" in view_res.text
+
+    raw_res = client.get(f"/raw/{legacy_id}")
+    assert raw_res.status_code == 200
+    assert raw_res.text == "legacy content"
+
+    raw_alt_res = client.get(f"/paste/{legacy_id}/raw")
+    assert raw_alt_res.status_code == 200
+    assert raw_alt_res.text == "legacy content"
+
+
+def test_custom_slug_validation_min_length_and_reserved_names(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        return f"https://gldf.ru/{custom_slug}"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    create_response = client.post(
+        "/paste", data={"content": "slug test"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    # Too short (< 5 chars)
+    short_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "abcd"})
+    assert short_res.status_code == 400
+
+    # Reserved slug
+    reserved_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "health"})
+    assert reserved_res.status_code == 400
+
+    # Leading/trailing hyphen
+    hyphen_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "-invalid-"})
+    assert hyphen_res.status_code == 400
+
+    # Valid 5 chars
+    valid_5_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "abcde"})
+    assert valid_5_res.status_code == 200
+    assert valid_5_res.json()["slug"] == "abcde"
+
+    # Valid longer slug
+    valid_long_res = client.post(f"/paste/{paste_id}/slug", data={"custom_slug": "my-custom-note-2026"})
+    assert valid_long_res.status_code == 200
+    assert valid_long_res.json()["slug"] == "my-custom-note-2026"
+
+
+def test_rate_limiting_on_paste_creation(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "RATE_LIMIT_ENABLED", True)
+    monkeypatch.setattr(main_module.settings, "RATE_LIMIT_PER_MINUTE", 3)
+
+    # First 3 requests succeed
+    for i in range(3):
+        res = client.post(
+            "/paste",
+            data={"content": f"paste #{i}"},
+            headers={"X-Forwarded-For": "198.51.100.42"},
+            follow_redirects=False,
+        )
+        assert res.status_code == 303
+
+    # 4th request from same IP is rate limited
+    blocked_res = client.post(
+        "/paste",
+        data={"content": "blocked paste"},
+        headers={"X-Forwarded-For": "198.51.100.42"},
+    )
+    assert blocked_res.status_code == 429
+    assert "Retry-After" in blocked_res.headers
+
+    # Request from different IP succeeds
+    other_ip_res = client.post(
+        "/paste",
+        data={"content": "allowed from other IP"},
+        headers={"X-Forwarded-For": "198.51.100.43"},
+        follow_redirects=False,
+    )
+    assert other_ip_res.status_code == 303
+
+
+def test_openapi_schema_and_docs_endpoints(client):
+    docs_res = client.get("/docs")
+    assert docs_res.status_code == 200
+    assert "swagger-ui" in docs_res.text
+
+    openapi_res = client.get("/openapi.json")
+    assert openapi_res.status_code == 200
+    schema = openapi_res.json()
+    assert "paths" in schema
+    assert "/paste" in schema["paths"]
+    assert "/paste/{paste_id}/slug" in schema["paths"]
+
+
