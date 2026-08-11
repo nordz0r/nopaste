@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.13.0 (2026-08-11)
+
+### Features
+
+- Increase paste id length to 8, add slug validation and in-app rate limit
+  ([`63b03c2`](https://github.com/nordz0r/nopaste/commit/63b03c29765909fa516b033d73ff027f9cc8a3b3))
+
+
 ## v1.12.0 (2026-08-09)
 
 ### Chores
