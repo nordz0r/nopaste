@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.14.0 (2026-08-12)
+
+### Features
+
+- Refresh nopaste UI and production delivery
+  ([`dd9e849`](https://github.com/nordz0r/nopaste/commit/dd9e849f6062feb14f1600338debd5f0b48f811f))
+
+
 ## v1.13.1 (2026-08-12)
 
 ### Bug Fixes
