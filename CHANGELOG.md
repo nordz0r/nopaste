@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.15.0 (2026-08-12)
+
+### Documentation
+
+- Add project documentation and preview
+  ([`7591379`](https://github.com/nordz0r/nopaste/commit/7591379530e60c4f4d10137aa59a5e481fe256c6))
+
+### Features
+
+- Modernize nopaste web interface
+  ([`9c63232`](https://github.com/nordz0r/nopaste/commit/9c6323270c2577ba4d1bfc9fbfc2ced01b158f0b))
+
+
 ## v1.14.0 (2026-08-12)
 
 ### Features
