@@ -105,3 +105,68 @@ def test_highlighted_paste_detects_json_with_urls():
 
     assert highlighted_paste.language == "JSON"
     assert highlighted_paste.is_markdown is False
+
+
+def test_highlighted_paste_detects_yaml_not_markdown():
+    yaml_content = """---
+type: remap
+inputs:
+  - "trf-litellm-set-index-prod"
+  - "trf-litellm-set-index-test"
+source: |
+  metadata = object(.metadata) ?? {}
+
+  # Keep *_json payloads as strings, not structured objects.
+  if exists(.messages_json) { .messages_json = to_string(.messages_json) ?? null }
+"""
+    highlighted_paste = highlighting_module.build_highlighted_paste(yaml_content)
+
+    assert highlighted_paste.language == "YAML"
+    assert highlighted_paste.is_markdown is False
+
+
+def test_highlighted_paste_detects_yaml_without_doc_marker():
+    yaml_content = """apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo
+data:
+  foo: bar
+  list:
+    - one
+    - two
+"""
+    highlighted_paste = highlighting_module.build_highlighted_paste(yaml_content)
+
+    assert highlighted_paste.language == "YAML"
+    assert highlighted_paste.is_markdown is False
+
+
+def test_highlighted_paste_keeps_markdown_with_yaml_front_matter():
+    md_content = """---
+title: Hello
+date: 2024-01-01
+---
+
+# Title
+
+Paragraph with [link](http://example.com)
+"""
+    highlighted_paste = highlighting_module.build_highlighted_paste(md_content)
+
+    assert highlighted_paste.is_markdown is True
+    assert highlighted_paste.language == "Markdown"
+
+
+def test_highlighted_paste_keeps_unified_diff_not_yaml():
+    diff_content = """--- a/file.py
++++ b/file.py
+@@ -1,3 +1,3 @@
+-old
++new
+"""
+    highlighted_paste = highlighting_module.build_highlighted_paste(diff_content)
+
+    assert highlighted_paste.language == "Diff"
+    assert highlighted_paste.is_markdown is False
+

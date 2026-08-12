@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## Unreleased
+
+### Bug Fixes
+
+- **highlighting**: Detect YAML configs (including `---` documents with `#` comments and `-` lists) instead of mislabeling them as Markdown/Diff
+
 ## v1.13.0 (2026-08-11)
 
 ### Features
