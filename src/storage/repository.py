@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from storage.crypto import ContentCrypto
 from storage.models import Paste
@@ -68,6 +68,10 @@ class PasteRepository:
                     "short_url": p.short_url,
                 }
             return [by_id[i] for i in ids if i in by_id]
+
+    def ping(self) -> None:
+        with session_scope() as session:
+            session.execute(text("SELECT 1"))
 
     def close(self) -> None:
         return None

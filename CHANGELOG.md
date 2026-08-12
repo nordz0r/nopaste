@@ -17,12 +17,6 @@ All notable changes to this project will be documented in this file.
   ([`026e357`](https://github.com/nordz0r/nopaste/commit/026e357396ee758bb5ae5241980bf4b4373a5520))
 
 
-## Unreleased
-
-### Bug Fixes
-
-- **highlighting**: Detect YAML configs (including `---` documents with `#` comments and `-` lists) instead of mislabeling them as Markdown/Diff
-
 ## v1.13.0 (2026-08-11)
 
 ### Features

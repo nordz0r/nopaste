@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from contextlib import contextmanager
+from typing import Any
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
@@ -16,7 +17,7 @@ def get_engine(database_url: str, *, echo: bool = False) -> Engine:
     if _engine is not None:
         return _engine
 
-    connect_args: dict = {}
+    connect_args: dict[str, Any] = {}
     if database_url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
 
@@ -30,6 +31,8 @@ def get_engine(database_url: str, *, echo: bool = False) -> Engine:
         def _set_sqlite_pragma(dbapi_connection, connection_record) -> None:  # type: ignore[no-untyped-def]
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.execute("PRAGMA busy_timeout=5000")
             cursor.close()
 
     _SessionLocal = sessionmaker(

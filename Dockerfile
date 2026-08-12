@@ -1,9 +1,7 @@
 # syntax=docker/dockerfile:1.7
-# Multi-stage: uv installs into a venv; slim alpine runtime.
+# Multi-stage: uv builds a venv, alpine runtime stays small.
 
-# ---- base-builder: uv + lockfiles ----
 FROM python:3.12-alpine AS base-builder
-# Pin uv explicitly (COPY --from cannot expand build-args for image refs).
 COPY --from=ghcr.io/astral-sh/uv:0.12.2 /uv /usr/local/bin/uv
 
 ENV UV_COMPILE_BYTECODE=1 \
@@ -15,17 +13,14 @@ ENV UV_COMPILE_BYTECODE=1 \
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
-# ---- prod-builder ----
 FROM base-builder AS prod-builder
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project --compile-bytecode
 
-# ---- test-builder ----
 FROM base-builder AS test-builder
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --extra test --no-install-project --compile-bytecode
 
-# ---- test-runtime ----
 FROM python:3.12-alpine AS test-runtime
 ARG APP_VERSION=""
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -43,32 +38,28 @@ COPY tests ./tests
 
 CMD ["pytest", "-q"]
 
-# ---- prod-runtime ----
 FROM python:3.12-alpine AS runtime
 ARG APP_VERSION=""
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     APP_VERSION="${APP_VERSION}" \
-    TZ=Europe/Moscow \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     PATH="/app/.venv/bin:$PATH"
 
-RUN apk upgrade --clean-protected --no-cache \
-    && apk add --no-cache dumb-init tzdata \
-    && addgroup -g 1001 -S sam \
-    && adduser -u 1001 -S -G sam sam \
+RUN apk add --no-cache dumb-init \
+    && adduser -D -H -u 1000 app \
     && mkdir -p /app /data \
-    && chown sam:sam /app /data
+    && chown app:app /app /data
 
 WORKDIR /app
 
-COPY --from=prod-builder --chown=sam:sam /app/.venv .venv
-COPY --chown=sam:sam pyproject.toml CHANGELOG.md alembic.ini ./
-COPY --chown=sam:sam alembic ./alembic
-COPY --chown=sam:sam src ./
+COPY --from=prod-builder --chown=app:app /app/.venv .venv
+COPY --chown=app:app pyproject.toml CHANGELOG.md alembic.ini ./
+COPY --chown=app:app alembic ./alembic
+COPY --chown=app:app src ./
 
-USER sam
+USER app
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

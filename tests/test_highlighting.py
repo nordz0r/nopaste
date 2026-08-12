@@ -169,4 +169,3 @@ def test_highlighted_paste_keeps_unified_diff_not_yaml():
 
     assert highlighted_paste.language == "Diff"
     assert highlighted_paste.is_markdown is False
-

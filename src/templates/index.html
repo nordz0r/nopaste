@@ -9,12 +9,12 @@
     <div class="form-container">
         <form action="/paste" method="post" id="nopaste-form">
             <label class="sr-only" for="paste-content-input">Paste content</label>
-            <textarea id="paste-content-input" name="content" rows="14" placeholder="{{ t('create.placeholder') }}" autofocus></textarea>
+            <textarea id="paste-content-input" name="content" rows="14" placeholder="{{ t('create.placeholder') }}" enterkeyhint="enter"></textarea>
             <div class="form-actions">
                 <span class="form-hint">{{ t("create.hint") }}</span>
                 <button type="submit" class="btn btn-primary">
                     <span class="icon-badge icon-badge-plain" aria-hidden="true">
-                        <img src="/static/images/save.png" alt="" class="btn-icon-image btn-icon-image-save">
+                        <img src="/static/images/save.png" alt="" class="btn-icon-image btn-icon-image-save" width="18" height="18" decoding="async">
                     </span>
                     <span>{{ t("create.save") }}</span>
                 </button>
@@ -27,6 +27,10 @@
 const nopasteForm = document.getElementById("nopaste-form");
 const textarea = document.getElementById("paste-content-input");
 const emptyMsg = {{ i18n_js["toast.empty_paste"]|tojson }};
+
+if (textarea && window.matchMedia("(min-width: 641px) and (hover: hover)").matches) {
+    textarea.focus();
+}
 
 nopasteForm.addEventListener("submit", function(event) {
     if (!textarea.value.trim()) {

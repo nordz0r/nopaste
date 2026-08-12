@@ -27,6 +27,7 @@ services:
       SHRINK_TOKEN: ${SHRINK_TOKEN:-}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       UI_DESIGN: ${UI_DESIGN:-default}
+      GITHUB_REPO: ${GITHUB_REPO:-nordz0r/nopaste}
     volumes:
       - nopaste_data:/data
     healthcheck:

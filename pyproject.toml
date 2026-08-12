@@ -1,10 +1,13 @@
 [project]
 name = "nopaste"
 version = "1.13.1"
-description = "API для простого nopaste приложения"
+description = "Self-hosted pastebin for text, logs, notes, and configs."
+readme = "README.md"
+license = { text = "MIT" }
 authors = [
     {name = "nordz0r"}
 ]
+keywords = ["pastebin", "paste", "self-hosted", "fastapi", "markdown"]
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.115.5",
@@ -25,6 +28,12 @@ test = [
     "pytest>=8.3.5",
     "pytest-cov>=6.0.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/nordz0r/nopaste"
+Repository = "https://github.com/nordz0r/nopaste"
+Changelog = "https://github.com/nordz0r/nopaste/blob/main/CHANGELOG.md"
+Issues = "https://github.com/nordz0r/nopaste/issues"
 
 [tool.semantic_release]
 tag_format = "v{version}"

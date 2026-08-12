@@ -1,0 +1,31 @@
+name: Feedback
+description: Idea, question, or anything else
+title: "Feedback: "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. The in-app **Feedback** button prefills version and page.
+  - type: textarea
+    id: message
+    attributes:
+      label: What should we know?
+      description: What worked, what didn't, or what you wish Nopaste did.
+      placeholder: I wanted to … / It was surprising that …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Nopaste version
+      placeholder: "1.13.1 / docker tag / commit"
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Idea
+        - Question
+        - UX / copy
+        - Other

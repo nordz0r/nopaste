@@ -28,6 +28,7 @@ YAML_BLOCK_SCALAR = re.compile(
 )
 YAML_LIST_ITEM = re.compile(r"^\s*-\s+\S")
 
+
 @dataclass(frozen=True)
 class HighlightedPaste:
     """Paste content rendered into syntax-highlighted, line-addressable HTML."""
@@ -73,7 +74,9 @@ def _is_json_envelope(trimmed: str) -> bool:
 
 
 def _is_unified_diff_header(first_line: str) -> bool:
-    return bool(UNIFIED_DIFF_FILE_HEADER.match(first_line) or first_line.startswith("+++ "))
+    return bool(
+        UNIFIED_DIFF_FILE_HEADER.match(first_line) or first_line.startswith("+++ ")
+    )
 
 
 def _count_yaml_signals(sample: list[str]) -> tuple[int, int, int, bool]:

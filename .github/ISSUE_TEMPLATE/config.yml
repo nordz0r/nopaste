@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Changelog
+    url: https://github.com/nordz0r/nopaste/blob/main/CHANGELOG.md
+    about: See what already shipped before opening an issue.

@@ -73,6 +73,9 @@ class Database:
     def get_user_pastes(self, ids: list[str]) -> list[dict[str, Any]]:
         return self._repo.get_user_pastes(ids)
 
+    def ping(self) -> None:
+        self._repo.ping()
+
     def close(self) -> None:
         dispose_engine()
 

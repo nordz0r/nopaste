@@ -45,6 +45,14 @@ def test_dependency_installs_use_frozen_uv_lockfile():
     assert "uv sync --frozen --extra test" in ci_workflow
 
 
+def test_runtime_image_uses_neutral_app_user():
+    dockerfile = read_text("Dockerfile")
+
+    assert "USER app" in dockerfile
+    assert "adduser -D -H -u 1000 app" in dockerfile
+    assert " sam " not in f" {dockerfile} "
+
+
 def test_branch_publish_does_not_overwrite_release_latest_tag():
     dockerhub_workflow = read_text(".github/workflows/dockerhub.yml")
 

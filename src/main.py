@@ -1,28 +1,29 @@
-import base64
-import binascii
-import hashlib
-import hmac
-import json
 import logging
-import os
 import re
 import secrets
-import time
-import tomllib
 from datetime import datetime
+from ipaddress import ip_address, ip_network
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
-import httpx
 from fastapi import FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from config import settings
+from cookies import (
+    dump_user_pastes_cookie,
+    load_user_pastes as parse_recent_paste_cookie,
+    order_recent_pastes,
+)
 from database import Database, create_database_from_settings
-from highlighting import build_highlighted_paste
+from highlighting import build_highlighted_paste, normalize_newlines
 from i18n import client_bundle, resolve_lang, t as i18n_t
+from rate_limit import InMemoryRateLimiter
+from shlink import SlugTakenError, shorten_url
+from versioning import load_asset_version as _load_asset_version
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,22 +51,39 @@ RESERVED_SLUGS = frozenset(
         "robots.txt",
         "rest",
         "admin",
+        "changelog",
     }
 )
 APP_NAME = "Nopaste"
 DEFAULT_META_DESCRIPTION = "Share text, logs, notes, and configs with Nopaste."
+GITHUB_REPO_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 BRAND_PREVIEW_IMAGE_PATH = "images/goldfinches_logo.png"
 APP_VERSION_ENV_VAR = "APP_VERSION"
+DEFAULT_COOKIE_SECRET = "local-development-cookie-secret"
+
+BASE_DIR = Path(__file__).parent
+PROJECT_ROOT = BASE_DIR.parent
+
+
+def iter_version_candidate_paths() -> list[Path]:
+    return [
+        PROJECT_ROOT / "pyproject.toml",
+        BASE_DIR / "pyproject.toml",
+    ]
+
+
+def load_asset_version() -> str:
+    return _load_asset_version(iter_version_candidate_paths())
+
+
+APP_VERSION = load_asset_version()
 
 app = FastAPI(
     title=APP_NAME,
-    description="API для простого nopaste приложения",
+    description="Self-hosted pastebin for text, logs, notes, and configs.",
+    version=APP_VERSION,
     debug=settings.DEBUG,
 )
-
-
-class SlugTakenError(Exception):
-    """Raised when Shlink rejects a custom slug as already taken."""
 
 
 def request_lang(request: Request) -> str:
@@ -82,24 +100,32 @@ def template_context(request: Request, **extra: Any) -> dict[str, Any]:
         "t": lambda key, **kwargs: i18n_t(key, lang, **kwargs),
         "i18n_js": client_bundle(lang),
         "shrink_enabled": settings.shrink_enabled,
+        "feedback_url": build_feedback_issue_url(request, lang),
     }
     ctx.update(extra)
     return ctx
 
 
-# Кастомный класс для добавления заголовков кэширования
 class CacheStaticFiles(StaticFiles):
     async def get_response(self, path: str, scope):
         response = await super().get_response(path, scope)
-        response.headers["Cache-Control"] = "public, max-age=31536000"
+        normalized = path.replace("\\", "/").lstrip("/")
+        if normalized == "sw.js":
+            response.headers["Cache-Control"] = "no-cache"
+            response.headers["Service-Worker-Allowed"] = "/static/"
+        else:
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         return response
 
 
 db = create_database_from_settings(settings)
 logger.info("Paste storage backend: %s", db.backend_name)
+if settings.COOKIE_SIGNING_SECRET == DEFAULT_COOKIE_SECRET:
+    logger.warning(
+        "COOKIE_SIGNING_SECRET is the default development value; "
+        "set a unique secret before exposing this instance."
+    )
 
-BASE_DIR = Path(__file__).parent
-PROJECT_ROOT = BASE_DIR.parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount(
     "/static", CacheStaticFiles(directory=str(BASE_DIR / "static")), name="static"
@@ -108,20 +134,19 @@ app.mount(
 
 def _is_ip_in_allowlist(ip: str, allowlist: list[str]) -> bool:
     """Return True if ip matches any entry in allowlist (CIDR or IP).
+
     Empty allowlist → allow everyone.
     """
     if not allowlist:
         return True
-    from ipaddress import ip_address, ip_network
 
-    # Normalize special test client values to localhost
     norm = (ip or "").strip().lower()
     if norm in {"testclient", "testserver", "localhost"}:
         norm = "127.0.0.1"
 
     try:
         client_ip = ip_address(norm)
-    except Exception:
+    except ValueError:
         return False
 
     for entry in allowlist:
@@ -133,86 +158,49 @@ def _is_ip_in_allowlist(ip: str, allowlist: list[str]) -> bool:
     return False
 
 
+def get_client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "127.0.0.1"
+
+
+def _docs_ip_candidates(request: Request) -> list[str]:
+    candidates: list[str] = []
+    if request.client and request.client.host:
+        candidates.append(request.client.host)
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        candidates.append(fwd.split(",")[0].strip())
+    return candidates
+
+
 @app.middleware("http")
 async def restrict_api_docs(request: Request, call_next):
-    """Restrict access to FastAPI automatic documentation endpoints based on DOCS_ALLOWLIST.
-
-    Used in production (see docs_allowlist in Ansible deployment).
-    """
+    """Restrict /docs, /redoc, /openapi.json when DOCS_ALLOWLIST is set."""
     if request.url.path in {"/docs", "/redoc", "/openapi.json"}:
-        # Collect possible real client IPs (TestClient, proxies, etc.)
-        candidates: list[str] = []
-        if request.client and request.client.host:
-            candidates.append(request.client.host)
-        fwd = request.headers.get("x-forwarded-for", "")
-        if fwd:
-            candidates.append(fwd.split(",")[0].strip())
-        # TestClient often reports as "testclient"
-        candidates.append("127.0.0.1")
-
-        for candidate in candidates:
+        for candidate in _docs_ip_candidates(request):
             if _is_ip_in_allowlist(candidate, settings.DOCS_ALLOWLIST):
                 break
         else:
-            # none of the candidates were allowed
             return PlainTextResponse("Forbidden", status_code=403)
 
     return await call_next(request)
 
 
 @app.middleware("http")
-async def add_noindex_header(request: Request, call_next):
-    """Add X-Robots-Tag header to prevent search engine indexing."""
+async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Robots-Tag"] = "noindex, nofollow"
-    return response
-
-
-def load_version_from_pyproject(pyproject_path: Path) -> str | None:
-    try:
-        pyproject_data = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
-    except (FileNotFoundError, OSError, UnicodeDecodeError, tomllib.TOMLDecodeError):
-        return None
-
-    version = pyproject_data.get("project", {}).get("version")
-    if not isinstance(version, str) or not version.strip():
-        return None
-    return version.strip()
-
-
-def load_version_from_environment() -> str | None:
-    version = os.getenv(APP_VERSION_ENV_VAR, "").strip()
-    return version or None
-
-
-def iter_version_candidate_paths() -> list[Path]:
-    return [
-        PROJECT_ROOT / "pyproject.toml",
-        BASE_DIR / "pyproject.toml",
-    ]
-
-
-def load_asset_version() -> str:
-    env_version = load_version_from_environment()
-    if env_version:
-        return env_version
-
-    seen_paths: set[Path] = set()
-
-    for version_path in iter_version_candidate_paths():
-        if version_path in seen_paths:
-            continue
-        seen_paths.add(version_path)
-        version = load_version_from_pyproject(version_path)
-
-        if version:
-            return version
-
-    logger.warning(
-        "Could not load app version from known paths: %s",
-        ", ".join(str(path) for path in seen_paths),
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault(
+        "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
     )
-    return "dev"
+    return response
 
 
 def current_year() -> int:
@@ -220,136 +208,24 @@ def current_year() -> int:
 
 
 def get_active_design_name() -> str:
-    """Return the active UI design name (sanitized, never empty)."""
     design = (settings.UI_DESIGN or "default").strip() or "default"
     return design
 
 
 def get_design_base_template() -> str:
-    """Resolve the active pluggable design base template path.
-
-    Designs are stored under templates/designs/<name>/base.html .
-    Controlled by settings.UI_DESIGN (defaults to "default").
-    """
     return f"designs/{get_active_design_name()}/base.html"
 
 
-def get_shrink_base_url() -> str:
-    if settings.SHRINK_URL:
-        return settings.SHRINK_URL.rstrip("/")
-    return "https://gldf.ru"
-
-
-APP_VERSION = load_asset_version()
 templates.env.globals["asset_version"] = APP_VERSION
 templates.env.globals["app_version"] = APP_VERSION
 templates.env.globals["current_year"] = current_year
-templates.env.globals["shrink_base_url"] = get_shrink_base_url
 
 
 def load_user_pastes(request: Request) -> list[str]:
-    user_pastes_cookie = request.cookies.get("user_pastes")
-    if not user_pastes_cookie:
-        return []
-
-    if "." in user_pastes_cookie:
-        payload = verify_signed_cookie_value(user_pastes_cookie)
-        if payload is None:
-            return []
-        return parse_user_paste_ids(payload)
-
-    return parse_user_paste_ids(user_pastes_cookie)
-
-
-def parse_user_paste_ids(payload: str) -> list[str]:
-    try:
-        loaded_ids = json.loads(payload)
-    except json.JSONDecodeError:
-        return []
-
-    if not isinstance(loaded_ids, list):
-        return []
-
-    return [
-        paste_id for paste_id in loaded_ids if isinstance(paste_id, str) and paste_id
-    ]
-
-
-def order_recent_pastes(paste_ids: list[str]) -> list[str]:
-    ordered_ids: list[str] = []
-    seen: set[str] = set()
-
-    for paste_id in reversed(paste_ids):
-        if paste_id in seen:
-            continue
-        ordered_ids.append(paste_id)
-        seen.add(paste_id)
-
-    return ordered_ids
-
-
-def encode_cookie_payload(payload: str) -> str:
-    encoded = base64.urlsafe_b64encode(payload.encode("utf-8")).decode("ascii")
-    return encoded.rstrip("=")
-
-
-def decode_cookie_payload(payload: str) -> str | None:
-    padding = "=" * (-len(payload) % 4)
-    try:
-        raw_payload = base64.urlsafe_b64decode(f"{payload}{padding}")
-        return raw_payload.decode("utf-8")
-    except (ValueError, UnicodeDecodeError, binascii.Error):
-        return None
-
-
-def sign_cookie_value(value: str) -> str:
-    return hmac.new(
-        settings.COOKIE_SIGNING_SECRET.encode("utf-8"),
-        value.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-
-
-def dump_user_pastes_cookie(paste_ids: list[str]) -> str:
-    normalized_ids = normalize_recent_pastes(paste_ids)
-    payload = json.dumps(normalized_ids, separators=(",", ":"))
-    encoded_payload = encode_cookie_payload(payload)
-    signature = sign_cookie_value(encoded_payload)
-    return f"{encoded_payload}.{signature}"
-
-
-def verify_signed_cookie_value(cookie_value: str) -> str | None:
-    encoded_payload, separator, signature = cookie_value.partition(".")
-    if not separator or not signature:
-        return None
-
-    expected_signature = sign_cookie_value(encoded_payload)
-    if not hmac.compare_digest(signature, expected_signature):
-        return None
-
-    return decode_cookie_payload(encoded_payload)
-
-
-def normalize_recent_pastes(paste_ids: list[str]) -> list[str]:
-    recent_ids = order_recent_pastes(paste_ids)
-    capped_recent_ids = recent_ids[: settings.MAX_RECENT_PASTES]
-    return list(reversed(capped_recent_ids))
-
-
-def normalize_newlines(content: str) -> str:
-    return content.replace("\r\n", "\n").replace("\r", "\n")
-
-
-def build_paste_lines(content: str) -> list[dict[str, Any]]:
-    normalized_content = normalize_newlines(content)
-    return [
-        {"number": line_number, "anchor": f"L{line_number}", "text": line_text}
-        for line_number, line_text in enumerate(normalized_content.split("\n"), start=1)
-    ]
+    return parse_recent_paste_cookie(request.cookies.get("user_pastes"))
 
 
 def short_slug_from_url(short_url: str | None) -> str | None:
-    """Extract the last path segment from a short URL (custom slug)."""
     if not short_url or not isinstance(short_url, str):
         return None
     slug = short_url.rstrip("/").rsplit("/", 1)[-1].strip()
@@ -357,8 +233,15 @@ def short_slug_from_url(short_url: str | None) -> str | None:
 
 
 def paste_display_name(paste_id: str, short_url: str | None = None) -> str:
-    """Human-facing paste name: custom short slug when set, otherwise paste id."""
     return short_slug_from_url(short_url) or str(paste_id)
+
+
+def format_created_at(created_at: Any) -> str:
+    if isinstance(created_at, datetime):
+        return created_at.strftime("%Y-%m-%d %H:%M")
+    if created_at is None:
+        return ""
+    return str(created_at)
 
 
 def build_paste_summary(paste: dict[str, Any]) -> dict[str, Any]:
@@ -386,12 +269,51 @@ def build_paste_summary(paste: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def format_created_at(created_at: Any) -> str:
-    if isinstance(created_at, datetime):
-        return created_at.strftime("%Y-%m-%d %H:%M")
-    if created_at is None:
-        return ""
-    return str(created_at)
+def github_repo_slug() -> str | None:
+    slug = (settings.GITHUB_REPO or "").strip().strip("/")
+    if not slug or not GITHUB_REPO_PATTERN.fullmatch(slug):
+        return None
+    return slug
+
+
+def build_feedback_issue_url(request: Request, lang: str) -> str | None:
+    """Prefilled GitHub new-issue URL for the footer Feedback button."""
+    repo = github_repo_slug()
+    if not repo:
+        return None
+
+    page_path = request.url.path or "/"
+    if lang == "ru":
+        title = "Обратная связь"
+        intro = "Опишите, что можно улучшить или что сломалось."
+        env_heading = "Окружение"
+        page_label = "Страница"
+        lang_label = "Язык"
+    else:
+        title = "Feedback"
+        intro = "Tell us what to improve or what broke."
+        env_heading = "Environment"
+        page_label = "Page"
+        lang_label = "Language"
+
+    body = (
+        f"## {title}\n\n"
+        f"{intro}\n\n"
+        f"<!-- -->\n\n"
+        f"---\n"
+        f"### {env_heading}\n"
+        f"- Nopaste: `{APP_VERSION}`\n"
+        f"- {page_label}: `{page_path}`\n"
+        f"- {lang_label}: `{lang}`\n"
+    )
+    query = urlencode(
+        {
+            "title": title,
+            "labels": "feedback",
+            "body": body,
+        }
+    )
+    return f"https://github.com/{repo}/issues/new?{query}"
 
 
 def resolve_public_base_url(request: Request) -> str:
@@ -427,57 +349,7 @@ def build_page_meta(
     }
 
 
-class InMemoryRateLimiter:
-    """Sliding-window in-memory rate limiter per client IP."""
-
-    def __init__(self) -> None:
-        self._requests: dict[str, list[float]] = {}
-        self._last_cleanup: float = time.time()
-
-    def is_allowed(
-        self, key: str, max_requests: int, window_seconds: float = 60.0
-    ) -> bool:
-        if max_requests <= 0:
-            return True
-        now = time.time()
-        if now - self._last_cleanup > 300:
-            self._cleanup(now, window_seconds)
-
-        timestamps = self._requests.setdefault(key, [])
-        cutoff = now - window_seconds
-        while timestamps and timestamps[0] < cutoff:
-            timestamps.pop(0)
-
-        if len(timestamps) >= max_requests:
-            return False
-
-        timestamps.append(now)
-        return True
-
-    def _cleanup(self, now: float, window_seconds: float) -> None:
-        self._last_cleanup = now
-        cutoff = now - window_seconds
-        stale_keys = [
-            k for k, ts in self._requests.items() if not ts or ts[-1] < cutoff
-        ]
-        for k in stale_keys:
-            del self._requests[k]
-
-    def reset(self) -> None:
-        self._requests.clear()
-        self._last_cleanup = time.time()
-
-
 rate_limiter = InMemoryRateLimiter()
-
-
-def get_client_ip(request: Request) -> str:
-    fwd = request.headers.get("x-forwarded-for", "")
-    if fwd:
-        return fwd.split(",")[0].strip()
-    if request.client and request.client.host:
-        return request.client.host
-    return "127.0.0.1"
 
 
 def check_rate_limit(request: Request) -> None:
@@ -509,52 +381,6 @@ def normalize_custom_slug(custom_slug: str | None) -> str | None:
     return normalized_slug
 
 
-async def shorten_url(long_url: str, custom_slug: str | None = None) -> str | None:
-    """Create a short URL via Shlink. Returns None when shrink is disabled or fails.
-
-    Raises SlugTakenError when custom_slug is already in use (HTTP 400/409 from Shlink).
-    """
-    if not settings.SHRINK_URL or not settings.SHRINK_TOKEN:
-        return None
-    try:
-        payload: dict[str, str] = {"longUrl": long_url}
-        if custom_slug:
-            payload["customSlug"] = custom_slug
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{settings.SHRINK_URL.rstrip('/')}/rest/v3/short-urls",
-                json=payload,
-                headers={"X-Api-Key": settings.SHRINK_TOKEN},
-                timeout=5.0,
-            )
-            status_code = getattr(response, "status_code", None)
-            if status_code in {400, 409} and custom_slug:
-                body_text = (getattr(response, "text", None) or "").lower()
-                # Shlink typically returns 400 with type containing "non-unique-slug"
-                if (
-                    status_code == 409
-                    or "slug" in body_text
-                    or "unique" in body_text
-                    or "already" in body_text
-                ):
-                    raise SlugTakenError(custom_slug)
-            response.raise_for_status()
-            short_url = response.json().get("shortUrl", "")
-            if not isinstance(short_url, str) or not short_url.startswith(
-                ("https://", "http://")
-            ):
-                logger.warning(
-                    "Shlink returned unexpected shortUrl value: %r", short_url
-                )
-                return None
-            return short_url
-    except SlugTakenError:
-        raise
-    except (httpx.HTTPError, KeyError, ValueError):
-        logger.warning("Failed to shorten URL: %s", long_url, exc_info=True)
-        return None
-
-
 def generate_paste_id(database: Database) -> str:
     for _ in range(MAX_PASTE_ID_GENERATION_ATTEMPTS):
         paste_id = "".join(
@@ -568,7 +394,6 @@ def generate_paste_id(database: Database) -> str:
 
 
 def load_changelog_markdown() -> str:
-    """Load CHANGELOG.md from the container root or project root."""
     candidates = (
         BASE_DIR / "CHANGELOG.md",
         PROJECT_ROOT / "CHANGELOG.md",
@@ -583,7 +408,7 @@ def load_changelog_markdown() -> str:
 @app.get(
     "/robots.txt",
     summary="Robots exclusion protocol",
-    description="Инструкция для поисковых ботов о запрете индексации.",
+    description="Tell search crawlers not to index this instance.",
     response_class=PlainTextResponse,
     include_in_schema=False,
 )
@@ -593,8 +418,8 @@ async def robots_txt():
 
 @app.get(
     "/",
-    summary="Главная страница",
-    description="Отображает форму для создания нового nopaste.",
+    summary="Create paste",
+    description="Form for creating a new paste.",
 )
 async def read_root(request: Request):
     return templates.TemplateResponse(
@@ -631,20 +456,19 @@ async def api_changelog():
     response_class=RedirectResponse,
 )
 async def nopaste_changelog():
-    # Keep the path stable; UI shows changelog as a modal on every page.
     return RedirectResponse(url="/#changelog", status_code=303)
 
 
 @app.post(
     "/paste",
-    summary="Создать новый nopaste",
-    response_description="Перенаправление на страницу нового nopaste",
+    summary="Create paste",
+    response_description="Redirect to the new paste",
 )
 async def create_paste(
     request: Request,
-    content: str = Form(..., description="Содержимое nopaste"),
+    content: str = Form(..., description="Paste body"),
     custom_slug: str | None = Form(
-        None, description="Имя короткой ссылки, если настроен Shlink"
+        None, description="Custom short-link name when Shlink is configured"
     ),
 ):
     lang = request_lang(request)
@@ -669,7 +493,6 @@ async def create_paste(
     try:
         short_url = await shorten_url(paste_url, custom_slug)
     except SlugTakenError:
-        # On create, fall back to auto slug (or no short url) rather than fail paste
         short_url = await shorten_url(paste_url, None)
     db.save_paste(paste_id, content, short_url)
     logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
@@ -682,7 +505,7 @@ async def create_paste(
         key="user_pastes",
         value=dump_user_pastes_cookie(user_pastes),
         httponly=True,
-        max_age=31536000,  # 1 year
+        max_age=31536000,
         samesite="lax",
         secure=request.url.scheme == "https",
     )
@@ -691,8 +514,8 @@ async def create_paste(
 
 @app.get(
     "/paste/{paste_id}",
-    summary="Просмотреть nopaste",
-    description="Отображает содержимое указанного nopaste.",
+    summary="View paste",
+    description="Render a paste with syntax highlighting and line anchors.",
 )
 async def get_paste(request: Request, paste_id: str):
     if not PASTE_ID_PATTERN.fullmatch(paste_id):
@@ -735,13 +558,13 @@ async def get_paste(request: Request, paste_id: str):
 
 @app.post(
     "/paste/{paste_id}/slug",
-    summary="Обновить имя короткой ссылки nopaste",
-    description="Создает или обновляет короткую ссылку Shlink для существующего nopaste с новым custom slug.",
+    summary="Update short-link name",
+    description="Create or replace the Shlink custom slug for an existing paste.",
 )
 async def update_paste_slug(
     request: Request,
     paste_id: str,
-    custom_slug: str = Form(..., description="Новое имя короткой ссылки"),
+    custom_slug: str = Form(..., description="New short-link name"),
 ):
     lang = request_lang(request)
     check_rate_limit(request)
@@ -793,14 +616,14 @@ async def update_paste_slug(
 
 @app.get(
     "/raw/{paste_id}",
-    summary="Получить исходный текст nopaste",
-    description="Возвращает содержимое nopaste без HTML-обёртки.",
+    summary="Raw paste",
+    description="Return the paste body as plain text.",
     response_class=PlainTextResponse,
 )
 @app.get(
     "/paste/{paste_id}/raw",
-    summary="Получить исходный текст nopaste",
-    description="Альтернативный URL для получения содержимого nopaste без HTML-обёртки.",
+    summary="Raw paste",
+    description="Alternate URL for the paste body as plain text.",
     response_class=PlainTextResponse,
 )
 async def get_raw_paste(request: Request, paste_id: str):
@@ -817,13 +640,16 @@ async def get_raw_paste(request: Request, paste_id: str):
             detail=i18n_t("errors.paste_not_found", lang),
         )
     logger.info("Retrieved raw paste: id=%s", paste_id)
-    return PlainTextResponse(content=paste["content"])
+    return PlainTextResponse(
+        content=paste["content"],
+        headers={"X-Content-Type-Options": "nosniff"},
+    )
 
 
 @app.get(
     "/list",
-    summary="Список моих nopaste",
-    description="Отображает список nopaste пользователя.",
+    summary="Recent pastes",
+    description="Pastes stored in this browser's signed history cookie.",
 )
 async def list_pastes(request: Request):
     user_pastes = order_recent_pastes(load_user_pastes(request))
@@ -851,6 +677,14 @@ async def liveness():
 
 @app.get("/health/ready", tags=["Health"], include_in_schema=False)
 async def readiness():
+    try:
+        db.ping()
+    except Exception:
+        logger.exception("Readiness check failed")
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "not_ready"},
+        )
     return JSONResponse(status_code=status.HTTP_200_OK, content={"status": "ready"})
 
 

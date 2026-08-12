@@ -1,12 +1,15 @@
 import asyncio
+import json
 from http.cookies import SimpleCookie
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 import re
 
 import pytest
 import src.main as main_module
 from fastapi.testclient import TestClient
 
+from cookies import dump_user_pastes_cookie, verify_signed_cookie_value
 from src.database import Database
 from highlighting import build_highlighted_paste
 
@@ -18,6 +21,7 @@ def client(tmp_path, monkeypatch):
     main_module.rate_limiter.reset()
 
     with TestClient(main_module.app) as test_client:
+        test_client.headers["Accept-Language"] = "en"
         yield test_client
 
     test_db.close()
@@ -30,6 +34,7 @@ def test_read_root(client):
     assert response.status_code == 200
     assert "Nopaste" in response.text
     assert '<meta name="robots" content="noindex, nofollow">' in response.text
+    assert "viewport-fit=cover" in response.text
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
     assert "<title>Nopaste — create and share text instantly</title>" in response.text
     assert 'src="/static/images/goldfinches_logo.png"' in response.text
@@ -40,8 +45,12 @@ def test_read_root(client):
     assert f"/static/css/style.css?v={asset_version}" in response.text
     assert f"Nopaste v{asset_version}" in response.text
     assert 'id="open-changelog-btn"' in response.text
+    assert 'id="footer-feedback"' in response.text
+    assert "github.com/nordz0r/nopaste/issues/new" in response.text
+    assert "labels=feedback" in response.text
     assert 'id="changelog-modal"' in response.text
-    assert "updateFooterVisibility" in response.text
+    assert f"/static/js/app.js?v={asset_version}" in response.text
+    assert "/static/fonts/inter-400.woff2" in response.text
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
     assert "nopasteForm.requestSubmit()" in response.text
@@ -145,10 +154,13 @@ def test_stylesheet_references_local_fonts(client):
     response = client.get("/static/css/style.css")
 
     assert response.status_code == 200
-    assert "/static/fonts/inter-400.ttf" in response.text
-    assert "/static/fonts/inter-500.ttf" in response.text
-    assert "/static/fonts/inter-600.ttf" in response.text
-    assert "/static/fonts/jetbrains-mono-400.ttf" in response.text
+    assert "/static/fonts/inter-400.woff2" in response.text
+    assert "/static/fonts/inter-500.woff2" in response.text
+    assert "/static/fonts/inter-600.woff2" in response.text
+    assert "/static/fonts/jetbrains-mono-400.woff2" in response.text
+    assert "@media (max-width: 640px)" in response.text
+    assert "font-size: 16px" in response.text
+    assert "safe-area-inset-bottom" in response.text
 
 
 def test_create_paste_uses_short_id_and_signed_cookie(client):
@@ -178,11 +190,11 @@ def test_create_paste_sets_verifiable_signed_recent_pastes_cookie(client):
     cookie.load(response.headers["set-cookie"])
     cookie_value = cookie["user_pastes"].value
 
-    payload = main_module.verify_signed_cookie_value(cookie_value)
+    payload = verify_signed_cookie_value(cookie_value)
 
     assert payload is not None
     assert "Test content" not in cookie_value
-    assert main_module.json.loads(payload)
+    assert json.loads(payload)
 
 
 def test_create_paste_rejects_blank_content(client):
@@ -226,6 +238,9 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert 'id="L1"' in response.text
     assert 'href="#L2"' in response.text
     assert 'id="copy-content-btn"' in response.text
+    assert 'id="raw-btn"' in response.text
+    assert f'href="/raw/{paste_id}"' in response.text
+    assert "&lt;/&gt;" in response.text
     assert 'id="paste-raw-content"' in response.text
     assert 'id="copy-btn"' in response.text
     assert 'class="btn-icon-image"' in response.text
@@ -234,6 +249,9 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert 'class="paste-meta-actions"' in response.text
     assert response.text.index('id="copy-btn"') < response.text.index(
         'id="copy-content-btn"'
+    )
+    assert response.text.index('id="copy-content-btn"') < response.text.index(
+        'id="raw-btn"'
     )
     assert "hashchange" in response.text
     assert "Use line numbers" not in response.text
@@ -466,7 +484,7 @@ def test_list_pastes_deduplicates_signed_cookie_entries(client):
     paste_id = create_response.headers["location"].split("/")[-1]
     client.cookies.set(
         "user_pastes",
-        main_module.dump_user_pastes_cookie([paste_id, paste_id, paste_id]),
+        dump_user_pastes_cookie([paste_id, paste_id, paste_id]),
     )
 
     response = client.get("/list")
@@ -485,7 +503,7 @@ def test_list_pastes_accepts_legacy_unsigned_cookie(client):
 
     first_id = first_response.headers["location"].split("/")[-1]
     second_id = second_response.headers["location"].split("/")[-1]
-    client.cookies.set("user_pastes", main_module.json.dumps([first_id, second_id]))
+    client.cookies.set("user_pastes", json.dumps([first_id, second_id]))
 
     response = client.get("/list")
 
@@ -557,9 +575,11 @@ def test_shorten_url_sends_custom_slug(monkeypatch):
             return MockResponse()
 
     calls = []
+    import src.shlink as shlink_module
+
     monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
     monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
-    monkeypatch.setattr(main_module.httpx, "AsyncClient", MockClient)
+    monkeypatch.setattr(shlink_module.httpx, "AsyncClient", MockClient)
 
     result = asyncio.run(
         main_module.shorten_url(
@@ -780,7 +800,10 @@ def test_paste_page_exposes_mutable_share_url_and_ghost_buttons(client, monkeypa
     assert response.status_code == 200
     assert "let shareUrl" in response.text
     assert "btn-ghost" in response.text
-    assert "flashPress" in response.text
+    assert "/static/js/app.js" in response.text
+    assert "function flashPress" in Path("src/static/js/app.js").read_text(
+        encoding="utf-8"
+    )
     assert "shareUrl = data.short_url" in response.text
     assert "response.status === 409" in response.text
 
@@ -899,3 +922,60 @@ def test_openapi_schema_and_docs_endpoints(client):
     assert "paths" in schema
     assert "/paste" in schema["paths"]
     assert "/paste/{paste_id}/slug" in schema["paths"]
+
+
+def test_docs_allowlist_does_not_grant_localhost_to_everyone(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "DOCS_ALLOWLIST_RAW", "10.0.0.0/8")
+
+    response = client.get("/docs")
+
+    assert response.status_code == 403
+    assert response.text == "Forbidden"
+
+
+def test_readiness_pings_database(client):
+    response = client.get("/health/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+    assert response.headers.get("x-content-type-options") == "nosniff"
+
+
+def test_feedback_link_prefills_github_issue(client):
+    response = client.get("/list")
+    assert response.status_code == 200
+    assert 'id="footer-feedback"' in response.text
+
+    href_match = re.search(r'id="footer-feedback" href="([^"]+)"', response.text)
+    assert href_match is not None
+    parsed = urlparse(href_match.group(1).replace("&amp;", "&"))
+    assert parsed.netloc == "github.com"
+    assert parsed.path == "/nordz0r/nopaste/issues/new"
+    query = parse_qs(parsed.query)
+    assert query.get("labels") == ["feedback"]
+    assert query.get("title") == ["Feedback"]
+    body = unquote(query["body"][0])
+    assert "Nopaste:" in body
+    assert "Page: `/list`" in body
+    assert "Language: `en`" in body
+
+
+def test_feedback_button_hidden_when_repo_unset(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "GITHUB_REPO", "")
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'id="footer-feedback"' not in response.text
+    assert "/issues/new" not in response.text
+
+
+def test_static_assets_are_immutably_cached(client):
+    css = client.get("/static/css/style.css")
+    sw = client.get("/static/sw.js")
+
+    assert css.status_code == 200
+    assert "immutable" in css.headers.get("cache-control", "")
+    assert sw.status_code == 200
+    assert "no-cache" in sw.headers.get("cache-control", "")
+    assert "nopaste-static" in sw.text

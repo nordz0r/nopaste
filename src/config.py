@@ -69,6 +69,13 @@ class Settings(BaseSettings):
         default="default",
         description="Active UI design name under templates/designs/<name>/.",
     )
+    GITHUB_REPO: str = Field(
+        default="nordz0r/nopaste",
+        description=(
+            "owner/name used for the footer Feedback button "
+            "(opens a prefilled GitHub issue). Empty disables the button."
+        ),
+    )
     RATE_LIMIT_ENABLED: bool = Field(
         default=True,
         description="Enable in-memory rate limiting on mutating endpoints.",

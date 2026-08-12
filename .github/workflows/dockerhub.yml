@@ -42,7 +42,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: ${{ format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) }}
+  IMAGE_NAME: nordz0r/nopaste
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
@@ -95,6 +95,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Read app version
+        id: ver
+        run: |
+          VERSION="$(python3 -c 'import tomllib, pathlib; print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Generate image metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -113,6 +119,8 @@ jobs:
           file: ./Dockerfile
           target: runtime
           push: true
+          build-args: |
+            APP_VERSION=${{ steps.ver.outputs.version }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

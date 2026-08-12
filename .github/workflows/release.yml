@@ -23,10 +23,10 @@ permissions:
 
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
-  IMAGE_NAME: ${{ format('{0}/{1}', secrets.DOCKERHUB_USERNAME, github.event.repository.name) }}
+  IMAGE_NAME: nordz0r/nopaste
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
@@ -61,6 +61,31 @@ jobs:
           VERSION="${{ steps.semantic-release.outputs.version }}"
           echo "major=${VERSION%%.*}" >> "$GITHUB_OUTPUT"
           echo "minor=$(echo "$VERSION" | cut -d. -f1-2)" >> "$GITHUB_OUTPUT"
+
+      - name: Enrich GitHub Release notes
+        if: ${{ steps.semantic-release.outputs.released == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.semantic-release.outputs.tag }}
+          VERSION: ${{ steps.semantic-release.outputs.version }}
+        run: |
+          body="$(gh release view "$TAG" --json body -q .body)"
+          {
+            echo "$body"
+            echo
+            echo "---"
+            echo
+            echo "## Install"
+            echo
+            echo "```bash"
+            echo "docker pull nordz0r/nopaste:${VERSION}"
+            echo "docker pull ghcr.io/${{ github.repository }}:${VERSION}"
+            echo "docker compose up -d"
+            echo "```"
+            echo
+            echo "Image tags: \`${VERSION}\`, \`${TAG}\`, \`latest\`."
+          } > /tmp/release-body.md
+          gh release edit "$TAG" --notes-file /tmp/release-body.md
 
   publish-release-image:
     needs: release

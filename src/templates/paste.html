@@ -36,7 +36,7 @@
                 title="{{ t('paste.copy_link') }}"
                 aria-label="{{ t('paste.copy_link') }}"
             >
-                <img src="/static/images/favicon.png" alt="" class="btn-icon-image">
+                <img src="/static/images/favicon.png" alt="" class="btn-icon-image" width="18" height="18" decoding="async">
                 <span class="sr-only">{{ t("paste.copy_link") }}</span>
             </button>
             <button
@@ -46,9 +46,19 @@
                 title="{{ t('paste.copy_content') }}"
                 aria-label="{{ t('paste.copy_content') }}"
             >
-                <img src="/static/images/copy.png" alt="" class="btn-icon-image btn-icon-image-copy">
+                <img src="/static/images/copy.png" alt="" class="btn-icon-image btn-icon-image-copy" width="17" height="17" decoding="async">
                 <span class="sr-only">{{ t("paste.copy_content") }}</span>
             </button>
+            <a
+                id="raw-btn"
+                class="btn btn-ghost btn-icon-only btn-raw"
+                href="/raw/{{ paste_id }}"
+                title="{{ t('paste.view_raw') }}"
+                aria-label="{{ t('paste.view_raw') }}"
+            >
+                <span class="raw-btn-label" aria-hidden="true">&lt;/&gt;</span>
+                <span class="sr-only">{{ t("paste.view_raw") }}</span>
+            </a>
         </div>
     </div>
     {% if short_url %}
@@ -101,11 +111,9 @@
 
 <textarea id="paste-raw-content" class="sr-only" aria-hidden="true" readonly>{{ content }}</textarea>
 
-<script src="/static/js/marked.min.js?v={{ asset_version }}"></script>
-<script src="/static/js/mermaid.min.js?v={{ asset_version }}"></script>
-
 <script>
 const i18n = {{ i18n_js|tojson }};
+const assetVersion = (window.NOPASTE && window.NOPASTE.assetVersion) || {{ asset_version|tojson }};
 // Mutable share URL used by the copy-link button (updated after slug edit).
 let shareUrl = {% if short_url %}{{ short_url|tojson }}{% else %}window.location.href{% endif %};
 
@@ -314,15 +322,26 @@ if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
 }
 
 
-// Markdown & Mermaid rendering engine
+// Markdown & Mermaid rendering engine — libraries are loaded on demand.
 let markdownRendered = false;
 
-function renderMarkdownAndMermaid() {
+function pasteNeedsMermaid(rawContent) {
+    return /(^|\n)\s*```\s*mermaid\b/i.test(rawContent);
+}
+
+async function renderMarkdownAndMermaid() {
     const rawContentField = document.getElementById("paste-raw-content");
     const markdownContainer = document.getElementById("markdown-rendered-content");
-    if (!rawContentField || !markdownContainer || !window.marked) return;
+    if (!rawContentField || !markdownContainer || !window.nopasteLoadScript) return;
+
+    await window.nopasteLoadScript(`/static/js/marked.min.js?v=${assetVersion}`);
+    if (!window.marked) return;
 
     const rawContent = rawContentField.value;
+    const needsMermaid = pasteNeedsMermaid(rawContent);
+    if (needsMermaid) {
+        await window.nopasteLoadScript(`/static/js/mermaid.min.js?v=${assetVersion}`);
+    }
 
     const renderer = new marked.Renderer();
     const defaultCodeRenderer = renderer.code.bind(renderer);
@@ -348,17 +367,17 @@ function renderMarkdownAndMermaid() {
 
     markdownContainer.innerHTML = marked.parse(rawContent);
 
-    if (window.mermaid) {
+    if (needsMermaid && window.mermaid) {
         const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
         try {
             window.mermaid.initialize({
                 startOnLoad: false,
-                theme: currentTheme === 'light' ? 'default' : 'dark',
-                securityLevel: 'loose',
-                fontFamily: 'var(--font-sans)',
+                theme: currentTheme === "light" ? "default" : "dark",
+                securityLevel: "strict",
+                fontFamily: "var(--font-sans)",
             });
 
-            const mermaidNodes = markdownContainer.querySelectorAll('.mermaid');
+            const mermaidNodes = markdownContainer.querySelectorAll(".mermaid");
             if (mermaidNodes.length > 0) {
                 window.mermaid.run({ nodes: mermaidNodes });
             }
@@ -381,8 +400,7 @@ if (toggleRawBtn) {
             pasteCodeView.classList.add("is-hidden-view");
             if (badgeText) badgeText.textContent = "Markdown";
             if (!markdownRendered) {
-                renderMarkdownAndMermaid();
-                markdownRendered = true;
+                renderMarkdownAndMermaid().then(() => { markdownRendered = true; });
             }
         } else {
             pasteMarkdownView.classList.add("is-hidden-view");
@@ -395,8 +413,7 @@ if (toggleRawBtn) {
 window.addEventListener("DOMContentLoaded", () => {
     updateActiveLine();
     if (pasteMarkdownView && !pasteMarkdownView.classList.contains("is-hidden-view")) {
-        renderMarkdownAndMermaid();
-        markdownRendered = true;
+        renderMarkdownAndMermaid().then(() => { markdownRendered = true; });
     }
 });
 window.addEventListener("hashchange", updateActiveLine);
