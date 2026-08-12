@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.13.1 (2026-08-12)
+
+### Bug Fixes
+
+- **highlighting**: Detect YAML instead of mislabeling as Markdown
+  ([`12250ac`](https://github.com/nordz0r/nopaste/commit/12250acb4d85d4dfd1c1a6d3e2e975d2f7e09f8d))
+
+### Code Style
+
+- Format test_main with ruff
+  ([`026e357`](https://github.com/nordz0r/nopaste/commit/026e357396ee758bb5ae5241980bf4b4373a5520))
+
+
 ## Unreleased
 
 ### Bug Fixes
