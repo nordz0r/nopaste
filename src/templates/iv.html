@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ meta.title }}</title>
-    <meta name="description" content="{{ meta.description }}">
+    <title>Nopaste — {{ display_name }}</title>
+    <meta name="description" content="{{ content_preview or ('Open paste ' ~ display_name ~ ' in Nopaste.') }}">
     <meta property="og:site_name" content="Nopaste">
     <meta property="og:type" content="article">
-    <meta property="og:title" content="{{ meta.title }}">
-    <meta property="og:description" content="{{ meta.description }}">
-    <meta property="og:url" content="{{ meta.url }}">
-    <meta property="og:image" content="{{ meta.image_url }}">
-    <meta property="og:image:alt" content="{{ meta.image_alt }}">
+    <meta property="og:title" content="Nopaste — {{ display_name }}">
+    <meta property="og:description" content="{{ content_preview or ('Open paste ' ~ display_name ~ ' in Nopaste.') }}">
+    <meta property="og:url" content="{{ request.url }}">
     <meta property="article:published_time" content="{{ created_at }}">
-    <link rel="icon" href="/static/images/favicon.png" type="image/png">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -105,14 +102,7 @@
         <pre>{{ content }}</pre>
     </article>
     <div class="iv-actions">
-        <a href="{{ view_url }}" class="iv-btn iv-btn-primary">
-            <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-            {{ t('iv.view') if t is defined else 'View' }}
-        </a>
-        <a href="{{ view_url }}" class="iv-btn iv-btn-secondary">
-            <svg viewBox="0 0 24 24"><path d="M8.59 16.59L4 12l4.59-4.59L10 8.83 6.83 12 10 15.17l-1.41 1.42zM15.41 16.59L14 15.17 17.17 12 14 8.83l1.41-1.42L20 12l-4.59 4.59z"/></svg>
-            {{ t('iv.view_styled') if t is defined else 'View with syntax highlighting' }}
-        </a>
+        <a href="{{ view_url }}" class="iv-btn iv-btn-primary">{{ t('iv.view') if t is defined else 'View' }}</a>
     </div>
 </body>
 </html>

@@ -72,13 +72,30 @@ def test_api_changelog_returns_markdown(client):
     assert "text/markdown" in response.headers.get("content-type", "")
 
 
+def test_iv_page_is_crawlable_for_telegram(client):
+    create_response = client.post(
+        "/paste", data={"content": "Instant View test content"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    response = client.get(f"/iv/{paste_id}")
+
+    assert response.status_code in {200, 303}
+    if response.status_code == 200:
+        assert response.headers.get("x-robots-tag") == ""
+        assert response.headers.get("x-frame-options") == ""
+        assert '<meta name="description"' in response.text
+        assert 'property="og:image"' not in response.text
+        assert response.text.count("class=\"iv-btn") == 1
+
+
 def test_robots_txt_disallows_indexing(client):
     response = client.get("/robots.txt")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/plain")
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
     assert "User-agent: TelegramBot\nAllow: /" in response.text
-    assert "User-agent: *\nDisallow: /" in response.text
+    assert "Allow: /iv/" in response.text
+    assert "User-agent: *\nAllow: /iv/\nDisallow: /" in response.text
 
 
 def test_load_asset_version_prefers_environment(monkeypatch):

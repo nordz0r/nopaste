@@ -194,10 +194,18 @@ async def restrict_api_docs(request: Request, call_next):
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
-    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    path = request.url.path
+    if path.startswith("/iv/"):
+        # Telegram's Instant View fetcher must be able to process the page.
+        # Starlette's MutableHeaders cannot remove an existing header, so use
+        # an empty value rather than emitting noindex/no-follow for /iv/.
+        response.headers["X-Robots-Tag"] = ""
+        response.headers["X-Frame-Options"] = ""
+    else:
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
-    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     response.headers.setdefault(
         "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
     )
@@ -422,6 +430,7 @@ async def robots_txt():
         "User-agent: facebookexternalhit\n"
         "Allow: /\n\n"
         "User-agent: *\n"
+        "Allow: /iv/\n"
         "Disallow: /\n"
     )
 
