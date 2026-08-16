@@ -1,6 +1,6 @@
 [project]
 name = "nopaste"
-version = "1.16.0"
+version = "1.16.1"
 description = "Self-hosted pastebin for text, logs, notes, and configs."
 readme = "README.md"
 license = { text = "MIT" }

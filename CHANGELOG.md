@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.16.1 (2026-08-16)
+
+### Bug Fixes
+
+- **robots**: Allow TelegramBot and social preview bots in robots.txt
+  ([`2adab60`](https://github.com/nordz0r/nopaste/commit/2adab60f818473b5a3590827fb3d5a5421d8760a))
+
+### Code Style
+
+- Fix ruff formatting
+  ([`7b0dc1c`](https://github.com/nordz0r/nopaste/commit/7b0dc1cb52e26e4fbc3df6145eb4bae43572c408))
+
+
 ## v1.16.0 (2026-08-16)
 
 ### Features
