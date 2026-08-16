@@ -93,6 +93,12 @@ def request_lang(request: Request) -> str:
 
 def template_context(request: Request, **extra: Any) -> dict[str, Any]:
     lang = request_lang(request)
+    user_agent = request.headers.get("user-agent", "").lower()
+    referer = request.headers.get("referer", "").lower()
+    is_instant_view_request = request.url.path.startswith("/iv/") or (
+        request.url.path.startswith("/paste/")
+        and ("telegrambot" in user_agent or "instantview.telegram.org" in referer)
+    )
     ctx: dict[str, Any] = {
         "request": request,
         "base_template": get_design_base_template(),
@@ -102,6 +108,7 @@ def template_context(request: Request, **extra: Any) -> dict[str, Any]:
         "i18n_js": client_bundle(lang),
         "shrink_enabled": settings.shrink_enabled,
         "feedback_url": build_feedback_issue_url(request, lang),
+        "is_instant_view_request": is_instant_view_request,
     }
     ctx.update(extra)
     return ctx
@@ -195,10 +202,16 @@ async def restrict_api_docs(request: Request, call_next):
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     path = request.url.path
-    if path.startswith("/iv/"):
+    user_agent = request.headers.get("user-agent", "").lower()
+    referer = request.headers.get("referer", "").lower()
+    is_instant_view_request = path.startswith("/iv/") or (
+        path.startswith("/paste/")
+        and ("telegrambot" in user_agent or "instantview.telegram.org" in referer)
+    )
+    if is_instant_view_request:
         # Telegram's Instant View fetcher must be able to process the page.
         # Starlette's MutableHeaders cannot remove an existing header, so use
-        # an empty value rather than emitting noindex/no-follow for /iv/.
+        # an empty value rather than emitting noindex/no-follow.
         response.headers["X-Robots-Tag"] = ""
         response.headers["X-Frame-Options"] = ""
     else:

@@ -85,7 +85,23 @@ def test_iv_page_is_crawlable_for_telegram(client):
         assert response.headers.get("x-frame-options") == ""
         assert '<meta name="description"' in response.text
         assert 'property="og:image"' not in response.text
-        assert response.text.count("class=\"iv-btn") == 1
+        assert response.text.count('class="iv-btn') == 1
+
+
+def test_paste_page_exposes_same_url_instant_view_source_for_telegram(client):
+    create_response = client.post(
+        "/paste", data={"content": "same URL IV content"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}", headers={"User-Agent": "TelegramBot"})
+
+    assert response.status_code == 200
+    assert '<meta name="robots"' not in response.text
+    assert '<article id="instant-view-article"' in response.text
+    assert f"http://testserver/paste/{paste_id}" in response.text
+    assert response.headers.get("x-robots-tag") == ""
+    assert response.headers.get("x-frame-options") == ""
 
 
 def test_robots_txt_disallows_indexing(client):
@@ -259,6 +275,10 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert f'href="/raw/{paste_id}"' in response.text
     assert "&lt;/&gt;" in response.text
     assert 'id="paste-raw-content"' in response.text
+    assert '<article id="instant-view-article"' in response.text
+    assert "<h1>Paste " in response.text
+    assert "<pre data-language=" in response.text
+    assert f"http://testserver/paste/{paste_id}" in response.text
     assert 'id="copy-btn"' in response.text
     assert 'class="btn-icon-image"' in response.text
     assert 'src="/static/images/favicon.png"' in response.text

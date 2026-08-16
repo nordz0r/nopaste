@@ -64,7 +64,7 @@
                 class="btn btn-ghost btn-icon-only"
                 title="{{ t('paste.share_telegram') }}"
                 aria-label="{{ t('paste.share_telegram') }}"
-                href="https://t.me/share/url?url={{ request.url_for('get_paste_iv', paste_id=paste_id) }}"
+                href="https://t.me/share/url?url={{ request.url_for('get_paste', paste_id=paste_id) }}"
                 target="_blank"
                 rel="noopener noreferrer"
             >
@@ -122,6 +122,13 @@
 </div>
 
 <textarea id="paste-raw-content" class="sr-only" aria-hidden="true" readonly>{{ content }}</textarea>
+
+<!-- Stable semantic source for the Telegram Instant View template. Keep this
+     subtree limited to elements supported by the IV Article type. -->
+<article id="instant-view-article" class="iv-source">
+    <h1>Paste {{ display_name or paste_id }}</h1>
+    <pre data-language="{{ highlighted_language|default('Plain text') }}">{{ content }}</pre>
+</article>
 
 <script>
 const i18n = {{ i18n_js|tojson }};
@@ -283,8 +290,8 @@ if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
                     // Update Telegram share button URL
                     const tgBtn = document.getElementById("telegram-share-btn");
                     if (tgBtn) {
-                        const ivUrl = window.location.origin + '/iv/' + pasteId;
-                        tgBtn.href = 'https://t.me/share/url?url=' + encodeURIComponent(ivUrl);
+                        const pasteUrl = window.location.origin + '/paste/' + pasteId;
+                        tgBtn.href = 'https://t.me/share/url?url=' + encodeURIComponent(pasteUrl);
                     }
                     // Keep tab title + header label in sync with custom slug.
                     const titleLabel = document.getElementById("paste-title-label");

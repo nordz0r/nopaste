@@ -400,6 +400,11 @@ a { color: inherit; text-decoration: none; }
     height: 18px;
 }
 
+/* Semantic source subtree consumed by the Telegram Instant View template. */
+.iv-source {
+    display: none;
+}
+
 /* Layout */
 .container {
     flex: 1;
