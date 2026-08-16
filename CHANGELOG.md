@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.16.2 (2026-08-16)
+
+### Bug Fixes
+
+- **iv**: Allow crawling and simplify instant view template
+  ([`27eb68f`](https://github.com/nordz0r/nopaste/commit/27eb68f199aed06e953345d9755de4da839c46ce))
+
+
 ## v1.16.1 (2026-08-16)
 
 ### Bug Fixes
