@@ -549,7 +549,8 @@ async def get_paste(request: Request, paste_id: str):
             meta=build_page_meta(
                 request,
                 title=f"Nopaste — {display_name}",
-                description=build_content_preview(content) or (
+                description=build_content_preview(content)
+                or (
                     f"Open paste {display_name} in Nopaste — a clean way to share text, "
                     "logs, notes, and configs."
                 ),
@@ -704,7 +705,9 @@ async def get_paste_iv(request: Request, paste_id: str):
     )
     content_preview = build_content_preview(content)
     normalized_content = normalize_newlines(content)
-    line_count = len(normalized_content.split("\n")) if normalized_content.strip() else 0
+    line_count = (
+        len(normalized_content.split("\n")) if normalized_content.strip() else 0
+    )
     lang = request_lang(request)
     return templates.TemplateResponse(
         request,

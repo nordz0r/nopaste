@@ -359,7 +359,10 @@ def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
     assert response.status_code == 200
     assert '<meta property="og:site_name" content="Nopaste">' in response.text
     assert f'<meta property="og:title" content="Nopaste — {paste_id}">' in response.text
-    assert '<meta property="og:description" content="secret preview content">' in response.text
+    assert (
+        '<meta property="og:description" content="secret preview content">'
+        in response.text
+    )
     assert (
         f'<meta property="og:url" content="http://testserver/paste/{paste_id}">'
         in response.text
