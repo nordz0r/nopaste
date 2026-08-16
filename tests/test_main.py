@@ -72,20 +72,15 @@ def test_api_changelog_returns_markdown(client):
     assert "text/markdown" in response.headers.get("content-type", "")
 
 
-def test_iv_page_is_crawlable_for_telegram(client):
+def test_legacy_iv_url_redirects_to_canonical_paste(client):
     create_response = client.post(
         "/paste", data={"content": "Instant View test content"}, follow_redirects=False
     )
     paste_id = create_response.headers["location"].split("/")[-1]
-    response = client.get(f"/iv/{paste_id}")
+    response = client.get(f"/iv/{paste_id}", follow_redirects=False)
 
-    assert response.status_code in {200, 303}
-    if response.status_code == 200:
-        assert response.headers.get("x-robots-tag") == ""
-        assert response.headers.get("x-frame-options") == ""
-        assert '<meta name="description"' in response.text
-        assert 'property="og:image"' not in response.text
-        assert response.text.count('class="iv-btn') == 1
+    assert response.status_code == 301
+    assert response.headers["location"] == f"/paste/{paste_id}"
 
 
 def test_paste_page_exposes_same_url_instant_view_source_for_telegram(client):
@@ -94,7 +89,7 @@ def test_paste_page_exposes_same_url_instant_view_source_for_telegram(client):
     )
     paste_id = create_response.headers["location"].split("/")[-1]
 
-    response = client.get(f"/paste/{paste_id}", headers={"User-Agent": "TelegramBot"})
+    response = client.get(f"/paste/{paste_id}")
 
     assert response.status_code == 200
     assert '<meta name="robots"' not in response.text
@@ -103,6 +98,12 @@ def test_paste_page_exposes_same_url_instant_view_source_for_telegram(client):
     assert response.headers.get("x-robots-tag") == ""
     assert response.headers.get("x-frame-options") == ""
 
+    head_response = client.head(f"/paste/{paste_id}")
+    assert head_response.status_code == 200
+    assert head_response.headers.get("content-type", "").startswith("text/html")
+    assert head_response.headers.get("x-robots-tag") == ""
+    assert head_response.headers.get("x-frame-options") == ""
+
 
 def test_robots_txt_disallows_indexing(client):
     response = client.get("/robots.txt")
@@ -110,8 +111,8 @@ def test_robots_txt_disallows_indexing(client):
     assert response.headers["content-type"].startswith("text/plain")
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
     assert "User-agent: TelegramBot\nAllow: /" in response.text
-    assert "Allow: /iv/" in response.text
-    assert "User-agent: *\nAllow: /iv/\nDisallow: /" in response.text
+    assert "Allow: /paste/" in response.text
+    assert "User-agent: *\nAllow: /paste/\nDisallow: /" in response.text
 
 
 def test_load_asset_version_prefers_environment(monkeypatch):

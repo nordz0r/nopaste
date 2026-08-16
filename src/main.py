@@ -91,14 +91,13 @@ def request_lang(request: Request) -> str:
     return resolve_lang(accept_language=request.headers.get("accept-language"))
 
 
+def is_instant_view_path(path: str) -> bool:
+    return path.startswith("/paste/")
+
+
 def template_context(request: Request, **extra: Any) -> dict[str, Any]:
     lang = request_lang(request)
-    user_agent = request.headers.get("user-agent", "").lower()
-    referer = request.headers.get("referer", "").lower()
-    is_instant_view_request = request.url.path.startswith("/iv/") or (
-        request.url.path.startswith("/paste/")
-        and ("telegrambot" in user_agent or "instantview.telegram.org" in referer)
-    )
+    is_instant_view_request = is_instant_view_path(request.url.path)
     ctx: dict[str, Any] = {
         "request": request,
         "base_template": get_design_base_template(),
@@ -202,13 +201,7 @@ async def restrict_api_docs(request: Request, call_next):
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     path = request.url.path
-    user_agent = request.headers.get("user-agent", "").lower()
-    referer = request.headers.get("referer", "").lower()
-    is_instant_view_request = path.startswith("/iv/") or (
-        path.startswith("/paste/")
-        and ("telegrambot" in user_agent or "instantview.telegram.org" in referer)
-    )
-    if is_instant_view_request:
+    if is_instant_view_path(path):
         # Telegram's Instant View fetcher must be able to process the page.
         # Starlette's MutableHeaders cannot remove an existing header, so use
         # an empty value rather than emitting noindex/no-follow.
@@ -443,7 +436,7 @@ async def robots_txt():
         "User-agent: facebookexternalhit\n"
         "Allow: /\n\n"
         "User-agent: *\n"
-        "Allow: /iv/\n"
+        "Allow: /paste/\n"
         "Disallow: /\n"
     )
 
@@ -544,10 +537,12 @@ async def create_paste(
     return response
 
 
-@app.get(
+@app.api_route(
     "/paste/{paste_id}",
+    methods=["GET", "HEAD"],
     summary="View paste",
     description="Render a paste with syntax highlighting and line anchors.",
+    include_in_schema=False,
 )
 async def get_paste(request: Request, paste_id: str):
     if not PASTE_ID_PATTERN.fullmatch(paste_id):
@@ -716,52 +711,17 @@ def build_content_preview(content: str, max_length: int = 200) -> str:
     return preview
 
 
-@app.get(
+@app.api_route(
     "/iv/{paste_id}",
-    summary="Telegram Instant View page",
-    description="Lightweight semantic HTML page optimized for Telegram Instant View.",
+    methods=["GET", "HEAD"],
+    summary="Legacy Instant View URL",
+    description="Redirect the old /iv/{id} path to the canonical paste URL.",
     include_in_schema=False,
 )
 async def get_paste_iv(request: Request, paste_id: str):
     if not PASTE_ID_PATTERN.fullmatch(paste_id):
         return RedirectResponse(url="/", status_code=303)
-    paste = db.get_paste(paste_id)
-    if not paste:
-        return RedirectResponse(url="/", status_code=303)
-    content = paste["content"]
-    created_at = format_created_at(paste["created_at"])
-    short_url = paste.get("short_url")
-    display_name = paste_display_name(
-        paste_id, short_url if isinstance(short_url, str) else None
-    )
-    content_preview = build_content_preview(content)
-    normalized_content = normalize_newlines(content)
-    line_count = (
-        len(normalized_content.split("\n")) if normalized_content.strip() else 0
-    )
-    lang = request_lang(request)
-    return templates.TemplateResponse(
-        request,
-        "iv.html",
-        {
-            "request": request,
-            "paste_id": paste_id,
-            "display_name": display_name,
-            "content": content,
-            "created_at": created_at,
-            "line_count": line_count,
-            "content_preview": content_preview,
-            "view_url": build_absolute_app_url(request, f"/paste/{paste_id}"),
-            "lang": lang,
-            "t": lambda key, **kwargs: i18n_t(key, lang, **kwargs),
-            "meta": build_page_meta(
-                request,
-                title=f"Nopaste — {display_name}",
-                description=content_preview or f"Open paste {display_name} in Nopaste.",
-                page_type="article",
-            ),
-        },
-    )
+    return RedirectResponse(url=f"/paste/{paste_id}", status_code=301)
 
 
 @app.get("/health/live", tags=["Health"], include_in_schema=False)
