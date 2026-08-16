@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.1 (2026-08-16)
+
+### Bug Fixes
+
+- **highlighting**: Detect markdown notes that embed yaml snippets
+  ([`2c8166b`](https://github.com/nordz0r/nopaste/commit/2c8166b12626ed2d07cb8a7e06985d60e9aa5ee1))
+
+
 ## v1.17.0 (2026-08-16)
 
 ### Features
