@@ -170,6 +170,27 @@ def _markdown_feature_flags(lines: list[str]) -> tuple[bool, bool, bool, bool, b
     return has_code_fences, has_mermaid, has_headers, has_links, has_lists
 
 
+def _has_dominant_markdown_signals(content: str) -> bool:
+    """Prefer Markdown when a YAML-like paste is actually a Markdown document.
+
+    YAML configs share `# comments` and `- list` items with Markdown, but they
+    almost never use ATX headings of level 2+, fenced code blocks, or
+    `[text](url)` links. Those signals mean the YAML-looking `key: value`
+    lines are examples embedded in a Markdown note.
+    """
+    lines = content.splitlines()
+    has_code_fences, has_mermaid, has_headers, has_links, _has_lists = (
+        _markdown_feature_flags(lines)
+    )
+    has_heading_level_2_plus = any(re.match(r"^#{2,6}\s+\S", line) for line in lines)
+    return (
+        has_code_fences
+        or has_mermaid
+        or has_heading_level_2_plus
+        or (has_headers and has_links)
+    )
+
+
 def is_markdown_content(content: str, language: str) -> bool:
     lang_lower = (language or "").strip().lower()
     if "markdown" in lang_lower or lang_lower == "md":
@@ -180,9 +201,12 @@ def is_markdown_content(content: str, language: str) -> bool:
         return False
 
     # YAML configs often contain "# comments" and "- list" items that look like Markdown.
-    # Only treat YAML-like pastes as Markdown when they are front-matter + Markdown body.
+    # Treat YAML-like pastes as Markdown when they have front matter + a Markdown
+    # body, or when Markdown structure clearly dominates embedded YAML snippets.
     if lang_lower in YAML_LANGUAGES or looks_like_yaml(trimmed):
-        return has_markdown_after_yaml_front_matter(trimmed)
+        return has_markdown_after_yaml_front_matter(
+            trimmed
+        ) or _has_dominant_markdown_signals(trimmed)
 
     lines = trimmed.splitlines()
     has_code_fences, has_mermaid, has_headers, has_links, has_lists = (

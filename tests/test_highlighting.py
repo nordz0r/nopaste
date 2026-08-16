@@ -158,6 +158,45 @@ Paragraph with [link](http://example.com)
     assert highlighted_paste.language == "Markdown"
 
 
+def test_highlighted_paste_detects_markdown_that_embeds_yaml_snippets():
+    md_content = """# Telegram Instant View на том же URL
+
+## Задача
+
+Обычная ссылка пасты:
+
+`https://paste.goldfinches.ru/paste/{paste_id}`
+
+### `src/templates/paste.html`
+
+```html
+<article id="instant-view-article">
+    <h1>Paste</h1>
+</article>
+```
+
+Шаблон Instant View:
+
+```text
+~version: "2.1"
+
+title: //article[@id="instant-view-article"]/h1
+body: //article[@id="instant-view-article"]
+site_name: "Nopaste"
+description: //meta[@name="description"]/@content
+```
+
+## Проверка
+
+- `CI: success`
+- `Release: success`
+"""
+    highlighted_paste = highlighting_module.build_highlighted_paste(md_content)
+
+    assert highlighted_paste.is_markdown is True
+    assert highlighted_paste.language == "Markdown"
+
+
 def test_highlighted_paste_keeps_unified_diff_not_yaml():
     diff_content = """--- a/file.py
 +++ b/file.py
