@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.2 (2026-08-16)
+
+### Bug Fixes
+
+- **iv**: Fetch paste URLs for Telegram Instant View
+  ([`306e46d`](https://github.com/nordz0r/nopaste/commit/306e46d2a9640242f6d05c2195e463fc00ae791b))
+
+
 ## v1.17.1 (2026-08-16)
 
 ### Bug Fixes
