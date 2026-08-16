@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.3 (2026-08-16)
+
+### Bug Fixes
+
+- **iv**: Drop empty crawl headers and open paste robots
+  ([`7b8ae6a`](https://github.com/nordz0r/nopaste/commit/7b8ae6aa4710d610fa2eca86c5ae99b5a440a26c))
+
+
 ## v1.17.2 (2026-08-16)
 
 ### Bug Fixes
