@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.0 (2026-08-16)
+
+### Features
+
+- **iv**: Support instant view on paste URLs
+  ([`34633d4`](https://github.com/nordz0r/nopaste/commit/34633d4e06b99d78410ba03a820f818328bb2e13))
+
+
 ## v1.16.2 (2026-08-16)
 
 ### Bug Fixes
