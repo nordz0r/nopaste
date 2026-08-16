@@ -95,14 +95,14 @@ def test_paste_page_exposes_same_url_instant_view_source_for_telegram(client):
     assert '<meta name="robots"' not in response.text
     assert '<article id="instant-view-article"' in response.text
     assert f"http://testserver/paste/{paste_id}" in response.text
-    assert response.headers.get("x-robots-tag") == ""
-    assert response.headers.get("x-frame-options") == ""
+    assert response.headers.get("x-robots-tag") is None
+    assert response.headers.get("x-frame-options") is None
 
     head_response = client.head(f"/paste/{paste_id}")
     assert head_response.status_code == 200
     assert head_response.headers.get("content-type", "").startswith("text/html")
-    assert head_response.headers.get("x-robots-tag") == ""
-    assert head_response.headers.get("x-frame-options") == ""
+    assert head_response.headers.get("x-robots-tag") is None
+    assert head_response.headers.get("x-frame-options") is None
 
 
 def test_robots_txt_disallows_indexing(client):
@@ -112,7 +112,9 @@ def test_robots_txt_disallows_indexing(client):
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
     assert "User-agent: TelegramBot\nAllow: /" in response.text
     assert "Allow: /paste/" in response.text
-    assert "User-agent: *\nAllow: /paste/\nDisallow: /" in response.text
+    assert "Allow: /static/" in response.text
+    assert "Disallow: /list" in response.text
+    assert "Disallow: /\n" not in response.text
 
 
 def test_load_asset_version_prefers_environment(monkeypatch):

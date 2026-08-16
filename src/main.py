@@ -202,11 +202,11 @@ async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     path = request.url.path
     if is_instant_view_path(path):
-        # Telegram's Instant View fetcher must be able to process the page.
-        # Starlette's MutableHeaders cannot remove an existing header, so use
-        # an empty value rather than emitting noindex/no-follow.
-        response.headers["X-Robots-Tag"] = ""
-        response.headers["X-Frame-Options"] = ""
+        # Telegram Instant View editor iframes the page and the IV bot fetches
+        # it as text/html. Empty header values are invalid; drop the keys.
+        for header_name in ("X-Robots-Tag", "X-Frame-Options"):
+            if header_name in response.headers:
+                del response.headers[header_name]
     else:
         response.headers["X-Robots-Tag"] = "noindex, nofollow"
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
@@ -437,7 +437,12 @@ async def robots_txt():
         "Allow: /\n\n"
         "User-agent: *\n"
         "Allow: /paste/\n"
-        "Disallow: /\n"
+        "Allow: /static/\n"
+        "Allow: /robots.txt\n"
+        "Disallow: /list\n"
+        "Disallow: /docs\n"
+        "Disallow: /redoc\n"
+        "Disallow: /openapi.json\n"
     )
 
 
