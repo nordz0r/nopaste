@@ -49,4 +49,7 @@ MESSAGES = {
     "toast.network_error": "Could not reach the server",
     "toast.empty_paste": "Cannot save an empty paste!",
     "toast.line_link_copied": "Line {n} link copied",
+    "paste.share_telegram": "Share in Telegram",
+    "iv.view": "View",
+    "iv.view_styled": "View with syntax highlighting",
 }

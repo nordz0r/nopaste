@@ -139,7 +139,7 @@ def test_app_assets_only_reference_approved_external_urls():
         *Path("src/templates").rglob("*.html"),
         *Path("src/static/css").glob("*.css"),
     ]
-    approved_external_urls = ("https://cv.goldfinches.ru",)
+    approved_external_urls = ("https://cv.goldfinches.ru", "https://t.me/")
 
     for asset_file in asset_files:
         content = asset_file.read_text(encoding="utf-8")
@@ -359,7 +359,7 @@ def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
     assert response.status_code == 200
     assert '<meta property="og:site_name" content="Nopaste">' in response.text
     assert f'<meta property="og:title" content="Nopaste — {paste_id}">' in response.text
-    assert '<meta property="og:description" content="Open paste ' in response.text
+    assert '<meta property="og:description" content="secret preview content">' in response.text
     assert (
         f'<meta property="og:url" content="http://testserver/paste/{paste_id}">'
         in response.text
@@ -370,12 +370,6 @@ def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
         in response.text
     )
     assert '<meta name="twitter:card" content="summary_large_image">' in response.text
-    description_match = re.search(
-        r'<meta property="og:description" content="([^"]+)">',
-        response.text,
-    )
-    assert description_match is not None
-    assert "secret preview content" not in description_match.group(1)
 
 
 def test_public_base_url_overrides_share_metadata_urls(client, monkeypatch):

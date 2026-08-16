@@ -49,4 +49,7 @@ MESSAGES = {
     "toast.network_error": "Не удалось связаться с сервером",
     "toast.empty_paste": "Нельзя сохранить пустой paste!",
     "toast.line_link_copied": "Ссылка на строку {n} скопирована",
+    "paste.share_telegram": "Поделиться в Telegram",
+    "iv.view": "Просмотр",
+    "iv.view_styled": "Просмотр с подсветкой синтаксиса",
 }

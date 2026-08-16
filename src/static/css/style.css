@@ -395,6 +395,11 @@ a { color: inherit; text-decoration: none; }
     height: 18px;
 }
 
+.btn-icon-image-telegram {
+    width: 18px;
+    height: 18px;
+}
+
 /* Layout */
 .container {
     flex: 1;

@@ -52,6 +52,7 @@ RESERVED_SLUGS = frozenset(
         "rest",
         "admin",
         "changelog",
+        "iv",
     }
 )
 APP_NAME = "Nopaste"
@@ -544,10 +545,11 @@ async def get_paste(request: Request, paste_id: str):
             highlighted_language=highlighted_paste.language,
             is_markdown=highlighted_paste.is_markdown,
             short_url=short_url,
+            content_preview=build_content_preview(content),
             meta=build_page_meta(
                 request,
                 title=f"Nopaste — {display_name}",
-                description=(
+                description=build_content_preview(content) or (
                     f"Open paste {display_name} in Nopaste — a clean way to share text, "
                     "logs, notes, and configs."
                 ),
@@ -667,6 +669,64 @@ async def list_pastes(request: Request):
                 description="Browse the pastes saved in your recent Nopaste history.",
             ),
         ),
+    )
+
+
+def build_content_preview(content: str, max_length: int = 200) -> str:
+    """Extract a short plain-text preview from paste content for OG descriptions."""
+    normalized = normalize_newlines(content).strip()
+    if not normalized:
+        return ""
+    # Take first few lines, collapse whitespace
+    preview = " ".join(normalized.split())
+    if len(preview) > max_length:
+        return f"{preview[:max_length].rstrip()}…"
+    return preview
+
+
+@app.get(
+    "/iv/{paste_id}",
+    summary="Telegram Instant View page",
+    description="Lightweight semantic HTML page optimized for Telegram Instant View.",
+    include_in_schema=False,
+)
+async def get_paste_iv(request: Request, paste_id: str):
+    if not PASTE_ID_PATTERN.fullmatch(paste_id):
+        return RedirectResponse(url="/", status_code=303)
+    paste = db.get_paste(paste_id)
+    if not paste:
+        return RedirectResponse(url="/", status_code=303)
+    content = paste["content"]
+    created_at = format_created_at(paste["created_at"])
+    short_url = paste.get("short_url")
+    display_name = paste_display_name(
+        paste_id, short_url if isinstance(short_url, str) else None
+    )
+    content_preview = build_content_preview(content)
+    normalized_content = normalize_newlines(content)
+    line_count = len(normalized_content.split("\n")) if normalized_content.strip() else 0
+    lang = request_lang(request)
+    return templates.TemplateResponse(
+        request,
+        "iv.html",
+        {
+            "request": request,
+            "paste_id": paste_id,
+            "display_name": display_name,
+            "content": content,
+            "created_at": created_at,
+            "line_count": line_count,
+            "content_preview": content_preview,
+            "view_url": build_absolute_app_url(request, f"/paste/{paste_id}"),
+            "lang": lang,
+            "t": lambda key, **kwargs: i18n_t(key, lang, **kwargs),
+            "meta": build_page_meta(
+                request,
+                title=f"Nopaste — {display_name}",
+                description=content_preview or f"Open paste {display_name} in Nopaste.",
+                page_type="article",
+            ),
+        },
     )
 
 
