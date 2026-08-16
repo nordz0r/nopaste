@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.16.0 (2026-08-16)
+
+### Features
+
+- Add Telegram Instant View page and share button
+  ([`92fe5f3`](https://github.com/nordz0r/nopaste/commit/92fe5f389bfc1991934874021f7990984a2f1539))
+
+
 ## v1.15.0 (2026-08-12)
 
 ### Documentation
