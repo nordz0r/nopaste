@@ -77,8 +77,8 @@ def test_robots_txt_disallows_indexing(client):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/plain")
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
-    assert "User-agent: *" in response.text
-    assert "Disallow: /" in response.text
+    assert "User-agent: TelegramBot\nAllow: /" in response.text
+    assert "User-agent: *\nDisallow: /" in response.text
 
 
 def test_load_asset_version_prefers_environment(monkeypatch):

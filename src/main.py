@@ -414,7 +414,16 @@ def load_changelog_markdown() -> str:
     include_in_schema=False,
 )
 async def robots_txt():
-    return PlainTextResponse("User-agent: *\nDisallow: /\n")
+    return PlainTextResponse(
+        "User-agent: TelegramBot\n"
+        "Allow: /\n\n"
+        "User-agent: Twitterbot\n"
+        "Allow: /\n\n"
+        "User-agent: facebookexternalhit\n"
+        "Allow: /\n\n"
+        "User-agent: *\n"
+        "Disallow: /\n"
+    )
 
 
 @app.get(
