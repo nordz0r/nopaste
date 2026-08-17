@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.4 (2026-08-17)
+
+### Bug Fixes
+
+- **iv**: Allow all Instant View editor requests
+  ([`116b782`](https://github.com/nordz0r/nopaste/commit/116b782f479147f04afc8298bf227d4fbe003dc7))
+
+
 ## v1.17.3 (2026-08-16)
 
 ### Bug Fixes
