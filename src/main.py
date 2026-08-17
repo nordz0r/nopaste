@@ -92,7 +92,7 @@ def request_lang(request: Request) -> str:
 
 
 def is_instant_view_path(path: str) -> bool:
-    return path.startswith("/paste/")
+    return path.startswith("/iv/") or path.startswith("/paste/")
 
 
 def template_context(request: Request, **extra: Any) -> dict[str, Any]:
