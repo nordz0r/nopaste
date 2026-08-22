@@ -352,7 +352,7 @@ def test_get_markdown_paste_exposes_rendered_instant_view_source(client):
     assert "<h1>Telegram preview</h1>" in response.text
     assert "<p>This is <strong>formatted</strong> with" in response.text
     assert '<a href="https://example.com">a link</a>' in response.text
-    assert "<pre data-language=\"Markdown\">" not in response.text
+    assert '<pre data-language="Markdown">' not in response.text
 
 
 @pytest.mark.parametrize(

@@ -79,9 +79,7 @@ def _render_markdown_inline(text: str) -> str:
             elif href is None:
                 rendered.append(label)
             else:
-                rendered.append(
-                    f'<a href="{escape(href, quote=True)}">{label}</a>'
-                )
+                rendered.append(f'<a href="{escape(href, quote=True)}">{label}</a>')
         elif token.startswith("`"):
             rendered.append(f"<code>{escape(token.strip('`'))}</code>")
         elif token.startswith(("**", "__")):
@@ -184,7 +182,9 @@ def render_markdown_for_instant_view(
                     break
                 quote_lines.append(quote_match.group(1))
                 index += 1
-            blocks.append(f"<blockquote>{_render_markdown_inline(' '.join(quote_lines))}</blockquote>")
+            blocks.append(
+                f"<blockquote>{_render_markdown_inline(' '.join(quote_lines))}</blockquote>"
+            )
             continue
 
         list_match = MARKDOWN_LIST.match(line)

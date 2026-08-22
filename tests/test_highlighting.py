@@ -214,9 +214,15 @@ This is **important** and [safe](https://example.com).
     )
 
     assert "<h1>Telegram preview</h1>" not in rendered
-    assert "<p>This is <strong>important</strong> and <a href=\"https://example.com\">safe</a>.</p>" in rendered
+    assert (
+        '<p>This is <strong>important</strong> and <a href="https://example.com">safe</a>.</p>'
+        in rendered
+    )
     assert "<ul><li>one</li><li>two</li></ul>" in rendered
-    assert "<pre data-language=\"python\"><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>" in rendered
+    assert (
+        '<pre data-language="python"><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>'
+        in rendered
+    )
     assert "<script>" not in rendered
 
 
@@ -232,16 +238,21 @@ def test_markdown_instant_view_renderer_rejects_unsafe_links():
 
 def test_extract_markdown_title_returns_plain_text():
     assert (
-        highlighting_module.extract_markdown_title("## **A** [safe](https://example.com)")
+        highlighting_module.extract_markdown_title(
+            "## **A** [safe](https://example.com)"
+        )
         == "A safe"
     )
     assert highlighting_module.extract_markdown_title("plain text") == ""
 
 
 def test_markdown_to_plain_text_removes_preview_syntax():
-    assert highlighting_module.markdown_to_plain_text(
-        "# Title\n\n**Bold** [link](https://example.com)\n\n- item"
-    ) == "Title Bold link item"
+    assert (
+        highlighting_module.markdown_to_plain_text(
+            "# Title\n\n**Bold** [link](https://example.com)\n\n- item"
+        )
+        == "Title Bold link item"
+    )
 
 
 def test_highlighted_paste_keeps_unified_diff_not_yaml():

@@ -604,9 +604,7 @@ async def get_paste(request: Request, paste_id: str):
     )
     highlighted_paste = build_highlighted_paste(content)
     content_preview = build_content_preview(
-        markdown_to_plain_text(content)
-        if highlighted_paste.is_markdown
-        else content
+        markdown_to_plain_text(content) if highlighted_paste.is_markdown else content
     )
     markdown_title = (
         extract_markdown_title(content) if highlighted_paste.is_markdown else ""
