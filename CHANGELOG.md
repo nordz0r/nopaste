@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.5 (2026-08-22)
+
+### Bug Fixes
+
+- **iv**: Secure Telegram previews and raw delivery
+  ([`21e598f`](https://github.com/nordz0r/nopaste/commit/21e598f658df59b121e71b63ec295dd7a4d12fa9))
+
+
 ## v1.17.4 (2026-08-17)
 
 ### Bug Fixes
