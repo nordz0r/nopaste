@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.6 (2026-08-22)
+
+### Bug Fixes
+
+- **iv**: Render Markdown in Telegram source
+  ([`2717d80`](https://github.com/nordz0r/nopaste/commit/2717d80dda53f6a7adb55d9f7e1d4a886e145b6a))
+
+
 ## v1.17.5 (2026-08-22)
 
 ### Bug Fixes
