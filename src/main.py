@@ -68,6 +68,7 @@ BRAND_PREVIEW_IMAGE_PATH = "images/goldfinches_logo.png"
 APP_VERSION_ENV_VAR = "APP_VERSION"
 DEFAULT_COOKIE_SECRET = "local-development-cookie-secret"
 INSTANT_VIEW_EDITOR_HOST = "instantview.telegram.org"
+CURL_USER_AGENT_PATTERN = re.compile(r"(?:^|[\s;/])curl(?:/|[\s;]|$)", re.IGNORECASE)
 
 BASE_DIR = Path(__file__).parent
 PROJECT_ROOT = BASE_DIR.parent
@@ -105,6 +106,11 @@ def is_paste_page_path(path: str) -> bool:
 def is_telegram_bot_request(request: Request) -> bool:
     user_agent = request.headers.get("user-agent", "")
     return bool(re.search(r"\btelegrambot\b", user_agent, re.IGNORECASE))
+
+
+def is_curl_request(request: Request) -> bool:
+    """Return True for curl's default User-Agent without affecting crawlers."""
+    return bool(CURL_USER_AGENT_PATTERN.search(request.headers.get("user-agent", "")))
 
 
 def is_instant_view_editor_request(request: Request) -> bool:
@@ -597,6 +603,12 @@ async def get_paste(request: Request, paste_id: str):
     if not paste:
         return RedirectResponse(url="/", status_code=303)
     content = paste["content"]
+    if is_curl_request(request):
+        logger.info("Retrieved raw paste via curl: id=%s", paste_id)
+        return PlainTextResponse(
+            content=content,
+            headers={"X-Content-Type-Options": "nosniff"},
+        )
     created_at = format_created_at(paste["created_at"])
     short_url = paste.get("short_url")
     display_name = paste_display_name(

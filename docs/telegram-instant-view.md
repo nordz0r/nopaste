@@ -47,11 +47,14 @@ secrets at the start of a paste intended for sharing.
 
 ## Curl
 
-Use the explicit raw endpoint:
+Use the explicit raw endpoint (it is deterministic and recommended for CI):
 
 ```bash
 curl -fsSL "https://paste.goldfinches.ru/raw/<paste_id>"
 ```
 
-No User-Agent based rewrite is required in Traefik. This keeps browser links
-HTML and makes the raw response deterministic for scripts.
+For convenience, the canonical `/paste/<paste_id>` URL also returns the exact
+raw body when requested with curl's standard `curl/<version>` User-Agent. A
+browser or Telegram fetcher still receives HTML. The behavior is implemented
+in the app rather than as a Traefik rewrite, so it does not affect Telegram's
+preview crawler or other clients that need the HTML document.
