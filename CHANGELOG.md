@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.7 (2026-08-22)
+
+### Bug Fixes
+
+- **raw**: Serve canonical paste as raw for curl
+  ([`5a4a5b1`](https://github.com/nordz0r/nopaste/commit/5a4a5b1d011e4a8eef719bf4caf2a8297506466a))
+
+### Code Style
+
+- Format Telegram preview renderer
+  ([`0bfd280`](https://github.com/nordz0r/nopaste/commit/0bfd280486969db5de15dc197660cc15793d6c08))
+
+
 ## v1.17.6 (2026-08-22)
 
 ### Bug Fixes
