@@ -5,7 +5,7 @@ from datetime import datetime
 from ipaddress import ip_address, ip_network
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 from fastapi import FastAPI, Form, HTTPException, Request, status
 from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
@@ -61,6 +61,7 @@ GITHUB_REPO_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 BRAND_PREVIEW_IMAGE_PATH = "images/goldfinches_logo.png"
 APP_VERSION_ENV_VAR = "APP_VERSION"
 DEFAULT_COOKIE_SECRET = "local-development-cookie-secret"
+INSTANT_VIEW_EDITOR_HOST = "instantview.telegram.org"
 
 BASE_DIR = Path(__file__).parent
 PROJECT_ROOT = BASE_DIR.parent
@@ -91,13 +92,35 @@ def request_lang(request: Request) -> str:
     return resolve_lang(accept_language=request.headers.get("accept-language"))
 
 
-def is_instant_view_path(path: str) -> bool:
-    return path.startswith("/iv/") or path.startswith("/paste/")
+def is_paste_page_path(path: str) -> bool:
+    return bool(re.fullmatch(r"/(?:iv|paste)/[^/]+", path))
+
+
+def is_telegram_bot_request(request: Request) -> bool:
+    user_agent = request.headers.get("user-agent", "")
+    return bool(re.search(r"\btelegrambot\b", user_agent, re.IGNORECASE))
+
+
+def is_instant_view_editor_request(request: Request) -> bool:
+    referer = request.headers.get("referer", "")
+    if not referer:
+        return False
+    try:
+        parsed_referer = urlsplit(referer)
+        hostname = parsed_referer.hostname
+    except ValueError:
+        return False
+    return parsed_referer.scheme == "https" and hostname == INSTANT_VIEW_EDITOR_HOST
+
+
+def is_telegram_preview_request(request: Request) -> bool:
+    return is_telegram_bot_request(request) or is_instant_view_editor_request(request)
 
 
 def template_context(request: Request, **extra: Any) -> dict[str, Any]:
     lang = request_lang(request)
-    is_instant_view_request = is_instant_view_path(request.url.path)
+    is_paste_page = is_paste_page_path(request.url.path)
+    is_telegram_preview = is_paste_page and is_telegram_preview_request(request)
     ctx: dict[str, Any] = {
         "request": request,
         "base_template": get_design_base_template(),
@@ -107,7 +130,7 @@ def template_context(request: Request, **extra: Any) -> dict[str, Any]:
         "i18n_js": client_bundle(lang),
         "shrink_enabled": settings.shrink_enabled,
         "feedback_url": build_feedback_issue_url(request, lang),
-        "is_instant_view_request": is_instant_view_request,
+        "is_telegram_preview_request": is_telegram_preview,
     }
     ctx.update(extra)
     return ctx
@@ -201,14 +224,22 @@ async def restrict_api_docs(request: Request, call_next):
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     path = request.url.path
-    if is_instant_view_path(path):
-        # Telegram Instant View editor iframes the page and the IV bot fetches
-        # it as text/html. Empty header values are invalid; drop the keys.
-        for header_name in ("X-Robots-Tag", "X-Frame-Options"):
-            if header_name in response.headers:
-                del response.headers[header_name]
+    is_paste_page = is_paste_page_path(path)
+    if is_paste_page and is_telegram_preview_request(request):
+        # Telegram needs to read the page metadata and semantic article source
+        # to build a link preview/Instant View. Do not send an empty header:
+        # an empty X-Robots-Tag value is invalid, so remove it entirely.
+        if "X-Robots-Tag" in response.headers:
+            del response.headers["X-Robots-Tag"]
     else:
         response.headers["X-Robots-Tag"] = "noindex, nofollow"
+
+    if is_paste_page and is_instant_view_editor_request(request):
+        # The editor embeds the source page from instantview.telegram.org.
+        # Keep the frame exception limited to that exact HTTPS origin.
+        if "X-Frame-Options" in response.headers:
+            del response.headers["X-Frame-Options"]
+    else:
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("Referrer-Policy", "no-referrer")
@@ -430,13 +461,17 @@ def load_changelog_markdown() -> str:
 async def robots_txt():
     return PlainTextResponse(
         "User-agent: TelegramBot\n"
-        "Allow: /\n\n"
+        "Allow: /paste/\n"
+        "Allow: /static/\n\n"
         "User-agent: Twitterbot\n"
-        "Allow: /\n\n"
+        "Allow: /paste/\n"
+        "Allow: /static/\n\n"
         "User-agent: facebookexternalhit\n"
-        "Allow: /\n\n"
+        "Allow: /paste/\n"
+        "Allow: /static/\n\n"
         "User-agent: *\n"
         "Allow: /paste/\n"
+        "Allow: /raw/\n"
         "Allow: /static/\n"
         "Allow: /robots.txt\n"
         "Disallow: /list\n"
@@ -562,6 +597,7 @@ async def get_paste(request: Request, paste_id: str):
         paste_id, short_url if isinstance(short_url, str) else None
     )
     highlighted_paste = build_highlighted_paste(content)
+    content_preview = build_content_preview(content)
     logger.info("Retrieved paste: id=%s", paste_id)
     return templates.TemplateResponse(
         request,
@@ -576,15 +612,16 @@ async def get_paste(request: Request, paste_id: str):
             highlighted_language=highlighted_paste.language,
             is_markdown=highlighted_paste.is_markdown,
             short_url=short_url,
-            content_preview=build_content_preview(content),
+            content_preview=content_preview,
             meta=build_page_meta(
                 request,
                 title=f"Nopaste — {display_name}",
-                description=build_content_preview(content)
+                description=content_preview
                 or (
                     f"Open paste {display_name} in Nopaste — a clean way to share text, "
                     "logs, notes, and configs."
                 ),
+                page_type="article",
             ),
         ),
     )

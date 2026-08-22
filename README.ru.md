@@ -37,6 +37,7 @@ docker compose up -d
 - RU/EN UI по `Accept-Language`
 - **Feedback** в подвале открывает предзаполненный issue в GitHub
 - Без индексации (`robots.txt` + `noindex`)
+- Preview и Instant View для Telegram
 
 ## Быстрый старт
 
@@ -58,6 +59,8 @@ PYTHONPATH=src uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 curl -fsSL "http://localhost:8000/raw/<paste_id>"
 ```
+
+Настройка Telegram preview и Instant View: [docs/telegram-instant-view.md](docs/telegram-instant-view.md).
 
 Образы: `nordz0r/nopaste:latest`, `ghcr.io/nordz0r/nopaste:latest`, rolling `nordz0r/nopaste:main`.
 

@@ -83,7 +83,7 @@ def test_legacy_iv_url_redirects_to_canonical_paste(client):
     assert response.headers["location"] == f"/paste/{paste_id}"
 
 
-def test_paste_page_exposes_same_url_instant_view_source_for_telegram(client):
+def test_paste_page_is_noindex_for_normal_requests(client):
     create_response = client.post(
         "/paste", data={"content": "same URL IV content"}, follow_redirects=False
     )
@@ -92,17 +92,57 @@ def test_paste_page_exposes_same_url_instant_view_source_for_telegram(client):
     response = client.get(f"/paste/{paste_id}")
 
     assert response.status_code == 200
-    assert '<meta name="robots"' not in response.text
+    assert '<meta name="robots" content="noindex, nofollow">' in response.text
     assert '<article id="instant-view-article"' in response.text
     assert f"http://testserver/paste/{paste_id}" in response.text
-    assert response.headers.get("x-robots-tag") is None
-    assert response.headers.get("x-frame-options") is None
+    assert response.headers.get("x-robots-tag") == "noindex, nofollow"
+    assert response.headers.get("x-frame-options") == "SAMEORIGIN"
 
     head_response = client.head(f"/paste/{paste_id}")
     assert head_response.status_code == 200
     assert head_response.headers.get("content-type", "").startswith("text/html")
-    assert head_response.headers.get("x-robots-tag") is None
-    assert head_response.headers.get("x-frame-options") is None
+    assert head_response.headers.get("x-robots-tag") == "noindex, nofollow"
+    assert head_response.headers.get("x-frame-options") == "SAMEORIGIN"
+
+
+def test_paste_page_allows_telegram_preview_bot_without_frame_exception(client):
+    create_response = client.post(
+        "/paste", data={"content": "Telegram preview content"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}", headers={"User-Agent": "TelegramBot"})
+
+    assert response.status_code == 200
+    assert '<meta name="robots"' not in response.text
+    assert response.headers.get("x-robots-tag") is None
+    assert response.headers.get("x-frame-options") == "SAMEORIGIN"
+
+
+def test_paste_page_allows_only_instant_view_editor_to_frame_source(client):
+    create_response = client.post(
+        "/paste",
+        data={"content": "Instant View editor content"},
+        follow_redirects=False,
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(
+        f"/paste/{paste_id}",
+        headers={"Referer": "https://instantview.telegram.org/editor"},
+    )
+
+    assert response.status_code == 200
+    assert '<meta name="robots"' not in response.text
+    assert response.headers.get("x-robots-tag") is None
+    assert response.headers.get("x-frame-options") is None
+
+    attacker_response = client.get(
+        f"/paste/{paste_id}", headers={"Referer": "https://evil.example/editor"}
+    )
+    assert '<meta name="robots" content="noindex, nofollow">' in attacker_response.text
+    assert attacker_response.headers.get("x-robots-tag") == "noindex, nofollow"
+    assert attacker_response.headers.get("x-frame-options") == "SAMEORIGIN"
 
 
 def test_robots_txt_disallows_indexing(client):
@@ -110,9 +150,10 @@ def test_robots_txt_disallows_indexing(client):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/plain")
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
-    assert "User-agent: TelegramBot\nAllow: /" in response.text
-    assert "Allow: /paste/" in response.text
-    assert "Allow: /static/" in response.text
+    assert "User-agent: TelegramBot\nAllow: /paste/\nAllow: /static/" in response.text
+    assert (
+        "User-agent: *\nAllow: /paste/\nAllow: /raw/\nAllow: /static/" in response.text
+    )
     assert "Disallow: /list" in response.text
     assert "Disallow: /\n" not in response.text
 
@@ -312,6 +353,7 @@ def test_get_raw_paste_returns_plain_text(client, raw_path):
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "text/plain; charset=utf-8"
+    assert response.headers.get("x-robots-tag") == "noindex, nofollow"
     assert response.text == content
 
 
@@ -403,6 +445,7 @@ def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
         '<meta property="og:description" content="secret preview content">'
         in response.text
     )
+    assert '<meta property="og:type" content="article">' in response.text
     assert (
         f'<meta property="og:url" content="http://testserver/paste/{paste_id}">'
         in response.text

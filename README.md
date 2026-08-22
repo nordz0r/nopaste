@@ -42,6 +42,7 @@ Most pastebins are either public SaaS or heavy appliances. Nopaste is a single c
 - **RU/EN UI** from `Accept-Language`
 - **Feedback** in the footer opens a prefilled GitHub issue
 - **No search indexing** (`robots.txt` + `noindex`)
+- **Telegram preview / Instant View** support for paste pages
 
 | | Nopaste | PrivateBin | haste-server |
 |---|:---:|:---:|:---:|
@@ -81,6 +82,8 @@ Open http://localhost:8000
 # Raw content
 curl -fsSL "http://localhost:8000/raw/<paste_id>"
 ```
+
+Telegram preview and Instant View setup: [docs/telegram-instant-view.md](docs/telegram-instant-view.md).
 
 Images:
 
