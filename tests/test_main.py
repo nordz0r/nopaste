@@ -338,6 +338,23 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert "Use line numbers" not in response.text
 
 
+def test_get_markdown_paste_exposes_rendered_instant_view_source(client):
+    content = "# Telegram preview\n\nThis is **formatted** with [a link](https://example.com)."
+    create_response = client.post(
+        "/paste", data={"content": content}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}")
+
+    assert response.status_code == 200
+    assert '<article id="instant-view-article"' in response.text
+    assert "<h1>Telegram preview</h1>" in response.text
+    assert "<p>This is <strong>formatted</strong> with" in response.text
+    assert '<a href="https://example.com">a link</a>' in response.text
+    assert "<pre data-language=\"Markdown\">" not in response.text
+
+
 @pytest.mark.parametrize(
     "raw_path",
     ["/raw/{paste_id}", "/paste/{paste_id}/raw"],

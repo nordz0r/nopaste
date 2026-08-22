@@ -19,7 +19,13 @@ from cookies import (
     order_recent_pastes,
 )
 from database import Database, create_database_from_settings
-from highlighting import build_highlighted_paste, normalize_newlines
+from highlighting import (
+    build_highlighted_paste,
+    extract_markdown_title,
+    markdown_to_plain_text,
+    normalize_newlines,
+    render_markdown_for_instant_view,
+)
 from i18n import client_bundle, resolve_lang, t as i18n_t
 from rate_limit import InMemoryRateLimiter
 from shlink import SlugTakenError, shorten_url
@@ -597,7 +603,23 @@ async def get_paste(request: Request, paste_id: str):
         paste_id, short_url if isinstance(short_url, str) else None
     )
     highlighted_paste = build_highlighted_paste(content)
-    content_preview = build_content_preview(content)
+    content_preview = build_content_preview(
+        markdown_to_plain_text(content)
+        if highlighted_paste.is_markdown
+        else content
+    )
+    markdown_title = (
+        extract_markdown_title(content) if highlighted_paste.is_markdown else ""
+    )
+    instant_view_markdown = (
+        render_markdown_for_instant_view(
+            content,
+            omit_first_heading=bool(markdown_title),
+        )
+        if highlighted_paste.is_markdown
+        else ""
+    )
+    instant_view_title = markdown_title or f"Paste {display_name or paste_id}"
     logger.info("Retrieved paste: id=%s", paste_id)
     return templates.TemplateResponse(
         request,
@@ -611,6 +633,8 @@ async def get_paste(request: Request, paste_id: str):
             lines=highlighted_paste.lines,
             highlighted_language=highlighted_paste.language,
             is_markdown=highlighted_paste.is_markdown,
+            instant_view_markdown=instant_view_markdown,
+            instant_view_title=instant_view_title,
             short_url=short_url,
             content_preview=content_preview,
             meta=build_page_meta(

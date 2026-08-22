@@ -2,6 +2,7 @@ import json
 import re
 from dataclasses import dataclass
 from html import escape
+from urllib.parse import urlsplit
 
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
@@ -42,6 +43,181 @@ def normalize_newlines(content: str) -> str:
     return content.replace("\r\n", "\n").replace("\r", "\n")
 
 
+def _safe_markdown_href(href: str) -> str | None:
+    """Return a link target that is safe to expose in generated HTML."""
+    candidate = href.strip()
+    if not candidate:
+        return None
+    try:
+        parsed = urlsplit(candidate)
+    except ValueError:
+        return None
+
+    scheme = parsed.scheme.lower()
+    if scheme and scheme not in {"http", "https", "mailto"}:
+        return None
+    if not scheme and not candidate.startswith(("/", "#", "?")):
+        return None
+    return candidate
+
+
+def _render_markdown_inline(text: str) -> str:
+    """Render a small, safe Markdown inline subset for non-JavaScript consumers."""
+
+    rendered: list[str] = []
+    cursor = 0
+    for match in MARKDOWN_INLINE_TOKEN.finditer(text):
+        rendered.append(escape(text[cursor : match.start()]))
+        token = match.group(0)
+
+        link_match = re.fullmatch(r"(!?)\[([^\]]+)\]\(([^\n]+?)\)", token)
+        if link_match:
+            label = _render_markdown_inline(link_match.group(2))
+            href = _safe_markdown_href(link_match.group(3))
+            if link_match.group(1) == "!":
+                rendered.append(escape(link_match.group(2)))
+            elif href is None:
+                rendered.append(label)
+            else:
+                rendered.append(
+                    f'<a href="{escape(href, quote=True)}">{label}</a>'
+                )
+        elif token.startswith("`"):
+            rendered.append(f"<code>{escape(token.strip('`'))}</code>")
+        elif token.startswith(("**", "__")):
+            rendered.append(f"<strong>{_render_markdown_inline(token[2:-2])}</strong>")
+        elif token.startswith("~~"):
+            rendered.append(f"<del>{_render_markdown_inline(token[2:-2])}</del>")
+        else:
+            rendered.append(f"<em>{_render_markdown_inline(token[1:-1])}</em>")
+        cursor = match.end()
+
+    rendered.append(escape(text[cursor:]))
+    return "".join(rendered)
+
+
+def extract_markdown_title(content: str) -> str:
+    """Return the first Markdown heading as plain text, if one exists."""
+    for line in normalize_newlines(content).split("\n"):
+        match = MARKDOWN_HEADING.match(line)
+        if not match:
+            continue
+        title = match.group(2)
+        title = re.sub(r"!?\[([^\]]+)\]\([^\n]+?\)", r"\1", title)
+        title = re.sub(r"[`*_~]", "", title)
+        return " ".join(title.split())
+    return ""
+
+
+def markdown_to_plain_text(content: str) -> str:
+    """Remove common Markdown syntax while keeping readable preview text."""
+    text = normalize_newlines(content)
+    text = re.sub(r"!?\[([^\]]+)\]\([^\n]+?\)", r"\1", text)
+    text = re.sub(r"^\s{0,3}#{1,6}\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s{0,3}(?:[-*+]|\d+[.)])\s+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s{0,3}>\s?", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^\s{0,3}(?:`{3,}|~{3,}).*$", "", text, flags=re.MULTILINE)
+    text = re.sub(r"[`*_~]", "", text)
+    return " ".join(text.split())
+
+
+def render_markdown_for_instant_view(
+    content: str, *, omit_first_heading: bool = False
+) -> str:
+    """Render paste Markdown to safe semantic HTML for Telegram's IV parser.
+
+    The browser view uses the client-side Markdown renderer, but Telegram's
+    crawler does not execute page JavaScript. Keep this renderer intentionally
+    small and escape all source text so untrusted pastes cannot inject HTML.
+    """
+    lines = normalize_newlines(content).split("\n")
+    blocks: list[str] = []
+    index = 0
+    first_heading_seen = False
+
+    while index < len(lines):
+        line = lines[index]
+        if not line.strip():
+            index += 1
+            continue
+
+        fence_match = MARKDOWN_FENCE.match(line)
+        if fence_match:
+            fence = fence_match.group(1)
+            language = fence_match.group(2).strip()
+            index += 1
+            code_lines: list[str] = []
+            while index < len(lines) and not re.match(
+                rf"^\s{{0,3}}{re.escape(fence[0])}{{{len(fence)},}}\s*$", lines[index]
+            ):
+                code_lines.append(lines[index])
+                index += 1
+            if index < len(lines):
+                index += 1
+            language_attr = (
+                f' data-language="{escape(language, quote=True)}"' if language else ""
+            )
+            blocks.append(
+                f"<pre{language_attr}><code>{escape(chr(10).join(code_lines))}</code></pre>"
+            )
+            continue
+
+        heading_match = MARKDOWN_HEADING.match(line)
+        if heading_match:
+            if omit_first_heading and not first_heading_seen:
+                first_heading_seen = True
+                index += 1
+                continue
+            first_heading_seen = True
+            level = len(heading_match.group(1))
+            blocks.append(
+                f"<h{level}>{_render_markdown_inline(heading_match.group(2))}</h{level}>"
+            )
+            index += 1
+            continue
+
+        if MARKDOWN_BLOCKQUOTE.match(line):
+            quote_lines: list[str] = []
+            while index < len(lines):
+                quote_match = MARKDOWN_BLOCKQUOTE.match(lines[index])
+                if not quote_match:
+                    break
+                quote_lines.append(quote_match.group(1))
+                index += 1
+            blocks.append(f"<blockquote>{_render_markdown_inline(' '.join(quote_lines))}</blockquote>")
+            continue
+
+        list_match = MARKDOWN_LIST.match(line)
+        if list_match:
+            ordered = list_match.group(1)[0].isdigit()
+            tag = "ol" if ordered else "ul"
+            items: list[str] = []
+            while index < len(lines):
+                item_match = MARKDOWN_LIST.match(lines[index])
+                if not item_match or item_match.group(1)[0].isdigit() != ordered:
+                    break
+                items.append(f"<li>{_render_markdown_inline(item_match.group(2))}</li>")
+                index += 1
+            blocks.append(f"<{tag}>{''.join(items)}</{tag}>")
+            continue
+
+        paragraph_lines = [line.strip()]
+        index += 1
+        while index < len(lines) and lines[index].strip():
+            if (
+                MARKDOWN_FENCE.match(lines[index])
+                or MARKDOWN_HEADING.match(lines[index])
+                or MARKDOWN_BLOCKQUOTE.match(lines[index])
+                or MARKDOWN_LIST.match(lines[index])
+            ):
+                break
+            paragraph_lines.append(lines[index].strip())
+            index += 1
+        blocks.append(f"<p>{_render_markdown_inline(' '.join(paragraph_lines))}</p>")
+
+    return "\n".join(blocks)
+
+
 CODE_LINE_PATTERNS = (
     re.compile(r"^\s*[\w.-]+\s*\([^)]*\)\s*\{"),
     re.compile(r"^\s*(?:def|class|function)\s+[\w$.-]+\b", re.IGNORECASE),
@@ -61,6 +237,14 @@ MARKDOWN_HEADER = re.compile(r"^\s{0,3}#{1,6}\s+\S")
 MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\([^\)]+\)")
 MARKDOWN_LIST_ITEM = re.compile(r"^\s{0,3}(?:[-*+]|\d+[.)])\s+\S")
 UNIFIED_DIFF_FILE_HEADER = re.compile(r"^---\s+\S")
+
+MARKDOWN_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})\s*([^ ]*)\s*$")
+MARKDOWN_HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
+MARKDOWN_LIST = re.compile(r"^\s{0,3}([-*+]|\d+[.)])\s+(.+?)\s*$")
+MARKDOWN_BLOCKQUOTE = re.compile(r"^\s{0,3}>\s?(.*)$")
+MARKDOWN_INLINE_TOKEN = re.compile(
+    r"(!?\[[^\]]+\]\([^\n]+?\)|`+[^`\n]+?`+|\*\*[^*\n]+?\*\*|__[^_\n]+?__|~~[^~\n]+?~~|\*[^*\n]+?\*|_[^_\n]+?_)"
+)
 
 
 def _non_empty_lines(content: str) -> list[str]:

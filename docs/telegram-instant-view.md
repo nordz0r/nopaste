@@ -3,7 +3,9 @@
 Nopaste exposes two different representations of a paste:
 
 - `/paste/<id>` is an HTML page with Open Graph metadata and a stable semantic
-  `article#instant-view-article` source for Telegram.
+  `article#instant-view-article` source for Telegram. Markdown pastes are
+  rendered into escaped semantic HTML in that source; Telegram does not need
+  to execute the browser's JavaScript Markdown renderer.
 - `/raw/<id>` (and `/paste/<id>/raw`) is the exact paste body as
   `text/plain`, intended for curl, CI, and editors.
 
@@ -22,6 +24,7 @@ title: //article[@id="instant-view-article"]/h1
 body: //article[@id="instant-view-article"]
 description: //meta[@property="og:description"]/@content
 image_url: //meta[@property="og:image"]/@content
+document_url: //meta[@property="og:url"]/@content
 site_name: //meta[@property="og:site_name"]/@content
 ```
 
