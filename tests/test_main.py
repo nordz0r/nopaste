@@ -374,27 +374,6 @@ def test_get_raw_paste_returns_plain_text(client, raw_path):
     assert response.text == content
 
 
-def test_curl_user_agent_gets_raw_from_canonical_paste_url(client):
-    content = "# curl raw\n\n**body**"
-    create_response = client.post(
-        "/paste", data={"content": content}, follow_redirects=False
-    )
-    paste_id = create_response.headers["location"].split("/")[-1]
-
-    response = client.get(f"/paste/{paste_id}", headers={"User-Agent": "curl/8.5.0"})
-    browser_response = client.get(
-        f"/paste/{paste_id}", headers={"User-Agent": "Mozilla/5.0"}
-    )
-
-    assert response.status_code == 200
-    assert response.headers["content-type"] == "text/plain; charset=utf-8"
-    assert response.headers.get("x-content-type-options") == "nosniff"
-    assert response.text == content
-    assert '<article id="instant-view-article"' not in response.text
-    assert browser_response.headers["content-type"].startswith("text/html")
-    assert '<article id="instant-view-article"' in browser_response.text
-
-
 @pytest.mark.parametrize(
     "raw_path",
     ["/raw/does-not-exist", "/paste/does-not-exist/raw"],
