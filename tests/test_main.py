@@ -97,6 +97,8 @@ def test_paste_page_is_noindex_for_normal_requests(client):
     assert f"http://testserver/paste/{paste_id}" in response.text
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
     assert response.headers.get("x-frame-options") == "SAMEORIGIN"
+    assert response.headers.get("cache-control") == "private, no-store, max-age=0"
+    assert response.headers.get("cdn-cache-control") == "no-store"
 
     head_response = client.head(f"/paste/{paste_id}")
     assert head_response.status_code == 200
@@ -117,6 +119,27 @@ def test_paste_page_allows_telegram_preview_bot_without_frame_exception(client):
     assert '<meta name="robots"' not in response.text
     assert response.headers.get("x-robots-tag") is None
     assert response.headers.get("x-frame-options") == "SAMEORIGIN"
+    assert response.headers.get("cache-control") == "private, no-store, max-age=0"
+
+
+def test_telegram_preview_uses_minimal_complete_document(client):
+    create_response = client.post(
+        "/paste",
+        data={"content": "# Telegram preview\n\nPreview body"},
+        follow_redirects=False,
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}", headers={"User-Agent": "TelegramBot"})
+
+    assert response.status_code == 200
+    assert response.text.endswith("</body>\n</html>")
+    assert '<article id="instant-view-article"' in response.text
+    assert "<h1>Telegram preview</h1>" in response.text
+    assert "<p>Preview body</p>" in response.text
+    assert "site-header" not in response.text
+    assert "/static/css/style.css" not in response.text
+    assert "/static/js/app.js" not in response.text
 
 
 def test_paste_page_allows_only_instant_view_editor_to_frame_source(client):
@@ -371,6 +394,8 @@ def test_get_raw_paste_returns_plain_text(client, raw_path):
     assert response.status_code == 200
     assert response.headers["content-type"] == "text/plain; charset=utf-8"
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
+    assert response.headers.get("cache-control") == "private, no-store, max-age=0"
+    assert response.headers.get("cdn-cache-control") == "no-store"
     assert response.text == content
 
 

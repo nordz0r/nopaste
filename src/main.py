@@ -102,6 +102,14 @@ def is_paste_page_path(path: str) -> bool:
     return bool(re.fullmatch(r"/(?:iv|paste)/[^/]+", path))
 
 
+def is_raw_paste_path(path: str) -> bool:
+    return bool(re.fullmatch(r"/(?:raw/[^/]+|paste/[^/]+/raw)", path))
+
+
+def is_paste_content_path(path: str) -> bool:
+    return is_paste_page_path(path) or is_raw_paste_path(path)
+
+
 def is_telegram_bot_request(request: Request) -> bool:
     user_agent = request.headers.get("user-agent", "")
     return bool(re.search(r"\btelegrambot\b", user_agent, re.IGNORECASE))
@@ -231,6 +239,14 @@ async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
     path = request.url.path
     is_paste_page = is_paste_page_path(path)
+    is_paste_content = is_paste_content_path(path)
+    if is_paste_content:
+        # Paste bodies are user content and may vary by crawler/user-agent.
+        # Keep the origin and any CDN from serving one request's headers/body
+        # to another client. This is also required when the hostname is behind
+        # a cache-enabled reverse proxy such as Cloudflare.
+        response.headers["Cache-Control"] = "private, no-store, max-age=0"
+        response.headers["CDN-Cache-Control"] = "no-store"
     if is_paste_page and is_telegram_preview_request(request):
         # Telegram needs to read the page metadata and semantic article source
         # to build a link preview/Instant View. Do not send an empty header:
@@ -619,9 +635,12 @@ async def get_paste(request: Request, paste_id: str):
     )
     instant_view_title = markdown_title or f"Paste {display_name or paste_id}"
     logger.info("Retrieved paste: id=%s", paste_id)
+    template_name = (
+        "paste_preview.html" if is_telegram_preview_request(request) else "paste.html"
+    )
     return templates.TemplateResponse(
         request,
-        "paste.html",
+        template_name,
         template_context(
             request,
             paste_id=paste_id,

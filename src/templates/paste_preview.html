@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="{{ lang|default('ru') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ meta.title if meta else "Nopaste" }}</title>
+    <meta name="description" content="{{ meta.description if meta else 'Share text, logs, notes, and configs with Nopaste.' }}">
+    <meta property="og:site_name" content="{{ meta.site_name if meta else 'Nopaste' }}">
+    <meta property="og:type" content="{{ meta.type if meta else 'article' }}">
+    <meta property="og:title" content="{{ meta.title if meta else 'Nopaste' }}">
+    <meta property="og:description" content="{{ meta.description if meta else 'Share text, logs, notes, and configs with Nopaste.' }}">
+    <meta property="og:url" content="{{ meta.url if meta else request.url }}">
+    <meta property="og:image" content="{{ meta.image_url if meta else request.url_for('static', path='images/goldfinches_logo.png') }}">
+    <link rel="canonical" href="{{ meta.url if meta else request.url }}">
+</head>
+<body>
+    <article id="instant-view-article" class="iv-source">
+        <h1>{{ instant_view_title or ('Paste ' ~ (display_name or paste_id)) }}</h1>
+        {% if is_markdown and instant_view_markdown %}
+        {{ instant_view_markdown|safe }}
+        {% else %}
+        <pre data-language="{{ highlighted_language|default('Plain text') }}">{{ content }}</pre>
+        {% endif %}
+    </article>
+</body>
+</html>
