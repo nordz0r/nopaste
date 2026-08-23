@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.8 (2026-08-23)
+
+### Bug Fixes
+
+- **iv**: Remove curl content negotiation
+  ([`bbc618f`](https://github.com/nordz0r/nopaste/commit/bbc618f01117a01dfa5f73f4bd96739d05def2bd))
+
+
 ## v1.17.7 (2026-08-22)
 
 ### Bug Fixes
