@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.17.9 (2026-08-23)
+
+### Bug Fixes
+
+- **iv**: Serve compact telegram preview
+  ([`7b49a55`](https://github.com/nordz0r/nopaste/commit/7b49a558ffee04a22d44ff2f44ecaa6040df5423))
+
+
 ## v1.17.8 (2026-08-23)
 
 ### Bug Fixes
