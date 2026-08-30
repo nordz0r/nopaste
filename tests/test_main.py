@@ -58,6 +58,62 @@ def test_read_root(client):
     assert "Имя короткой ссылки" not in response.text
 
 
+def test_header_places_icon_login_to_the_right_of_my_list(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_ID", "nopaste")
+    monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_SECRET", "secret")
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'id="login-btn"' in response.text
+    assert 'class="icon-svg auth-icon"' in response.text
+    assert response.text.index('id="my-list-btn"') < response.text.index(
+        'id="login-btn"'
+    )
+
+
+def test_oidc_login_callback_creates_session(client, monkeypatch):
+    monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_ID", "nopaste")
+    monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_SECRET", "secret")
+
+    async def mock_discovery():
+        return {"authorization_endpoint": "https://cloud.example/authorize"}
+
+    async def mock_exchange_code(code: str, verifier: str, redirect_uri: str):
+        assert code == "authorization-code"
+        assert verifier
+        assert redirect_uri == "http://testserver/auth/callback"
+        return {"access_token": "access-token"}
+
+    async def mock_userinfo(access_token: str):
+        assert access_token == "access-token"
+        return {
+            "sub": "user-123",
+            "preferred_username": "andre",
+            "email": "andre@example.com",
+            "name": "Andre",
+        }
+
+    monkeypatch.setattr(main_module, "discovery", mock_discovery)
+    monkeypatch.setattr(main_module, "exchange_code", mock_exchange_code)
+    monkeypatch.setattr(main_module, "userinfo", mock_userinfo)
+
+    login_response = client.get("/auth/login?next=/list", follow_redirects=False)
+    assert login_response.status_code in {302, 307}
+    state = parse_qs(urlparse(login_response.headers["location"]).query)["state"][0]
+
+    callback_response = client.get(
+        "/auth/callback",
+        params={"code": "authorization-code", "state": state},
+        follow_redirects=False,
+    )
+
+    assert callback_response.status_code == 303
+    assert callback_response.headers["location"] == "/list"
+    assert "nopaste_session=" in callback_response.headers["set-cookie"]
+    assert client.get("/api/auth/me").json()["sub"] == "user-123"
+
+
 def test_nopaste_changelog_redirects_to_hash(client):
     response = client.get("/nopaste_changelog", follow_redirects=False)
 
@@ -356,6 +412,13 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     )
     assert response.text.index('id="copy-content-btn"') < response.text.index(
         'id="raw-btn"'
+    )
+    assert response.text.count('id="favorite-btn"') == 1
+    assert response.text.index('id="raw-btn"') < response.text.index(
+        'id="favorite-btn"'
+    )
+    assert response.text.index('id="favorite-btn"') < response.text.index(
+        'id="telegram-share-btn"'
     )
     assert "hashchange" in response.text
     assert "Use line numbers" not in response.text

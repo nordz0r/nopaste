@@ -31,15 +31,32 @@ from rate_limit import InMemoryRateLimiter
 from shlink import SlugTakenError, shorten_url
 from versioning import load_asset_version as _load_asset_version
 
-from auth import authorization_url, discovery, exchange_code, load_session, make_session, make_state, oidc_enabled, pkce_challenge, pkce_verifier, userinfo
+from auth import (
+    authorization_url,
+    discovery,
+    exchange_code,
+    load_session,
+    load_state,
+    make_session,
+    make_state,
+    oidc_enabled,
+    pkce_challenge,
+    pkce_verifier,
+    userinfo,
+)
 
 SESSION_STATE_COOKIE = "nopaste_oidc_state"
+
 
 def current_user(request: Request) -> dict[str, Any] | None:
     return load_session(request.cookies.get(settings.SESSION_COOKIE_NAME))
 
+
 def redirect_uri(request: Request) -> str:
-    return settings.OIDC_REDIRECT_URI or build_absolute_app_url(request, "/auth/callback")
+    return settings.OIDC_REDIRECT_URI or build_absolute_app_url(
+        request, "/auth/callback"
+    )
+
 
 def canonical_paste_url(request: Request, paste_id: str) -> str:
     return build_absolute_app_url(request, f"/paste/{paste_id}")
@@ -115,17 +132,33 @@ async def auth_login(request: Request):
     verifier = pkce_verifier()
     state = make_state(request.query_params.get("next", "/"), verifier)
     metadata = await discovery()
-    response = RedirectResponse(authorization_url(metadata, state, pkce_challenge(verifier), redirect_uri(request)))
-    response.set_cookie(SESSION_STATE_COOKIE, state, max_age=600, httponly=True, secure=request.url.scheme == "https", samesite="lax")
+    response = RedirectResponse(
+        authorization_url(
+            metadata, state, pkce_challenge(verifier), redirect_uri(request)
+        )
+    )
+    response.set_cookie(
+        SESSION_STATE_COOKIE,
+        state,
+        max_age=600,
+        httponly=True,
+        secure=request.url.scheme == "https",
+        samesite="lax",
+    )
     return response
 
 
 @app.get("/auth/callback", include_in_schema=False)
-async def auth_callback(request: Request, code: str | None = None, state: str | None = None, error: str | None = None):
+async def auth_callback(
+    request: Request,
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+):
     if error or not code or not state or not oidc_enabled():
         raise HTTPException(status_code=400, detail="Authentication failed")
     expected = request.cookies.get(SESSION_STATE_COOKIE)
-    state_data = load_session(state)
+    state_data = load_state(state)
     if not expected or not secrets.compare_digest(expected, state) or not state_data:
         raise HTTPException(status_code=400, detail="Invalid authentication state")
     tokens = await exchange_code(code, state_data["verifier"], redirect_uri(request))
@@ -133,9 +166,21 @@ async def auth_callback(request: Request, code: str | None = None, state: str | 
     user_id = str(claims.get("sub") or claims.get("preferred_username") or "")
     if not user_id:
         raise HTTPException(status_code=400, detail="Identity missing")
-    user = db.upsert_user(user_id, str(claims.get("preferred_username") or user_id), claims.get("email"), claims.get("name"))
+    user = db.upsert_user(
+        user_id,
+        str(claims.get("preferred_username") or user_id),
+        claims.get("email"),
+        claims.get("name"),
+    )
     response = RedirectResponse(state_data.get("return_to") or "/", status_code=303)
-    response.set_cookie(settings.SESSION_COOKIE_NAME, make_session({"sub": user_id, **user}), max_age=settings.SESSION_MAX_AGE_SECONDS, httponly=True, secure=request.url.scheme == "https", samesite="lax")
+    response.set_cookie(
+        settings.SESSION_COOKIE_NAME,
+        make_session({"sub": user_id, **user}),
+        max_age=settings.SESSION_MAX_AGE_SECONDS,
+        httponly=True,
+        secure=request.url.scheme == "https",
+        samesite="lax",
+    )
     response.delete_cookie(SESSION_STATE_COOKIE)
     return response
 
@@ -168,8 +213,6 @@ async def import_bookmarks(request: Request):
 @app.get("/api/auth/me", include_in_schema=False)
 async def auth_me(request: Request):
     return current_user(request) or {"authenticated": False}
-
-
 
 
 def request_lang(request: Request) -> str:
@@ -727,7 +770,9 @@ async def get_paste(request: Request, paste_id: str):
     )
     instant_view_title = markdown_title or f"Paste {display_name or paste_id}"
     canonical_url = canonical_paste_url(request, paste_id)
-    is_bookmarked = bool((user := current_user(request)) and db.is_bookmarked(user["sub"], paste_id))
+    is_bookmarked = bool(
+        (user := current_user(request)) and db.is_bookmarked(user["sub"], paste_id)
+    )
     logger.info("Retrieved paste: id=%s", paste_id)
     template_name = (
         "paste_preview.html" if is_telegram_preview_request(request) else "paste.html"
@@ -865,7 +910,9 @@ async def list_pastes(request: Request):
     user_pastes = order_recent_pastes(load_user_pastes(request))
     if user:
         owned = [build_paste_summary(p) for p in db.get_created_pastes(user["sub"])]
-        bookmarks = [build_paste_summary(p) for p in db.get_bookmarked_pastes(user["sub"])]
+        bookmarks = [
+            build_paste_summary(p) for p in db.get_bookmarked_pastes(user["sub"])
+        ]
         paste_records = db.get_user_pastes(user_pastes)
         pastes = [build_paste_summary(p) for p in paste_records]
     else:

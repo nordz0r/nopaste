@@ -60,12 +60,21 @@ class Database:
         self.database_url = url
 
     def save_paste(
-        self, paste_id: str, content: str, short_url: str | None = None,
+        self,
+        paste_id: str,
+        content: str,
+        short_url: str | None = None,
         author_id: str | None = None,
     ) -> None:
         self._repo.save_paste(paste_id, content, short_url, author_id)
 
-    def upsert_user(self, user_id: str, username: str, email: str | None = None, display_name: str | None = None) -> dict[str, Any]:
+    def upsert_user(
+        self,
+        user_id: str,
+        username: str,
+        email: str | None = None,
+        display_name: str | None = None,
+    ) -> dict[str, Any]:
         return self._repo.upsert_user(user_id, username, email, display_name)
 
     def add_bookmark(self, user_id: str, paste_id: str) -> bool:
@@ -84,7 +93,9 @@ class Database:
         return self._repo.get_bookmarked_pastes(user_id)
 
     def get_paste_ids_for_user(self, user_id: str) -> set[str]:
-        return {p["id"] for p in self.get_created_pastes(user_id)} | {p["id"] for p in self.get_bookmarked_pastes(user_id)}
+        return {p["id"] for p in self.get_created_pastes(user_id)} | {
+            p["id"] for p in self.get_bookmarked_pastes(user_id)
+        }
 
     def get_user(self, user_id: str) -> dict[str, Any] | None:
         return self._repo.get_user(user_id)

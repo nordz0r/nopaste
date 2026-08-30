@@ -41,20 +41,6 @@
             </button>
             <button
                 type="button"
-                id="favorite-btn"
-                class="btn btn-ghost btn-icon-only {% if is_bookmarked %}is-favorited{% endif %}"
-                aria-label="Add to favorites"
-                title="Add to favorites"
-            >★<span class="sr-only">Add to favorites</span></button>
-            <button
-                type="button"
-                id="favorite-btn"
-                class="btn btn-ghost btn-icon-only {% if is_bookmarked %}is-favorited{% endif %}"
-                title="{{ t('paste.favorite') }}"
-                aria-label="{{ t('paste.favorite') }}"
-            >★<span class="sr-only">{{ t('paste.favorite') }}</span></button>
-            <button
-                type="button"
                 id="copy-content-btn"
                 class="btn btn-ghost btn-icon-only"
                 title="{{ t('paste.copy_content') }}"
@@ -73,6 +59,13 @@
                 <span class="raw-btn-label" aria-hidden="true">&lt;/&gt;</span>
                 <span class="sr-only">{{ t("paste.view_raw") }}</span>
             </a>
+            <button
+                type="button"
+                id="favorite-btn"
+                class="btn btn-ghost btn-icon-only {% if is_bookmarked %}is-favorited{% endif %}"
+                title="{{ t('paste.favorite') }}"
+                aria-label="{{ t('paste.favorite') }}"
+            >★<span class="sr-only">{{ t('paste.favorite') }}</span></button>
             <a
                 id="telegram-share-btn"
                 class="btn btn-ghost btn-icon-only"

@@ -21,7 +21,9 @@ class Paste(Base):
         nullable=False,
     )
     short_url: Mapped[str | None] = mapped_column(Text, nullable=True)
-    author_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    author_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
 
 
 class User(Base):
