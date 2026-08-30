@@ -1571,6 +1571,14 @@ textarea::placeholder {
 .code-copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; z-index: 1; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; padding: 0.25rem 0.45rem; border-radius: 0.35rem; }
 .code-copy-btn.is-pressed { transform: scale(0.96); }
 .btn.is-favorited { color: var(--accent); }
+
+.btn-icon-star {
+    font-size: 1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
 .user-badge { color: var(--text-muted); font-size: 0.8rem; }
 
 .markdown-body pre code {

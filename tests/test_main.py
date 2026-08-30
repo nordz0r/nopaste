@@ -39,7 +39,7 @@ def test_read_root(client):
     assert "<title>Nopaste — create and share text instantly</title>" in response.text
     assert 'src="/static/images/goldfinches_logo.png"' in response.text
     assert 'class="brand-mark"' in response.text
-    assert 'src="/static/images/list.png"' in response.text
+    assert 'class="btn-icon-star"' in response.text
     assert 'src="/static/images/save.png"' in response.text
     assert 'rel="icon" href="/static/images/favicon.png"' in response.text
     assert f"/static/css/style.css?v={asset_version}" in response.text

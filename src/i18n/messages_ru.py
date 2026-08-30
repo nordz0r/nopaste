@@ -5,7 +5,7 @@ MESSAGES = {
     "create.placeholder": "Вставьте текст, логи, заметки или конфиг…",
     "create.hint": "Ctrl + Enter — сохранить",
     "create.save": "Сохранить",
-    "nav.my_list": "Мои paste",
+    "nav.my_list": "Favorites",
     "nav.theme": "Переключить тему",
     "nav.theme_to_light": "Включить светлую тему",
     "nav.theme_to_dark": "Включить тёмную тему",

@@ -5,7 +5,7 @@ MESSAGES = {
     "create.placeholder": "Paste your text, logs, notes, or config here...",
     "create.hint": "Ctrl + Enter to save",
     "create.save": "Save Paste",
-    "nav.my_list": "My List",
+    "nav.my_list": "Favorites",
     "nav.theme": "Toggle theme",
     "nav.theme_to_light": "Switch to light theme",
     "nav.theme_to_dark": "Switch to dark theme",
