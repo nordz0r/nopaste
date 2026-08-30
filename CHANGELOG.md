@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.18.0 (2026-08-30)
+
+### Features
+
+- Add OIDC bookmarks and paste sharing improvements
+  ([`0a84ccd`](https://github.com/nordz0r/nopaste/commit/0a84ccdad21a74208eeedc0a92b0bd7b21c4e7ff))
+
+
 ## v1.17.9 (2026-08-23)
 
 ### Bug Fixes
