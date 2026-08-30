@@ -65,8 +65,18 @@ class Database:
         content: str,
         short_url: str | None = None,
         author_id: str | None = None,
+        created_at: Any | None = None,
     ) -> None:
-        self._repo.save_paste(paste_id, content, short_url, author_id)
+        self._repo.save_paste(
+            paste_id,
+            content,
+            short_url,
+            author_id,
+            created_at=created_at,
+        )
+
+    def delete_paste(self, paste_id: str) -> bool:
+        return self._repo.delete_paste(paste_id)
 
     def upsert_user(
         self,
@@ -141,6 +151,9 @@ class Database:
 
     def update_paste_short_url(self, paste_id: str, short_url: str) -> None:
         self._repo.update_paste_short_url(paste_id, short_url)
+
+    def update_paste_content(self, paste_id: str, content: str) -> bool:
+        return self._repo.update_paste_content(paste_id, content)
 
     def get_paste(self, paste_id: str) -> dict[str, Any] | None:
         return self._repo.get_paste(paste_id)

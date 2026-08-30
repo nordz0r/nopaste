@@ -20,6 +20,55 @@ def test_get_user_pastes_preserves_requested_order_and_ignores_missing_ids(tmp_p
     database.close()
 
 
+def test_delete_paste_removes_row_and_bookmarks(tmp_path):
+    database = Database(str(tmp_path / "delete.db"))
+    database.save_paste("gone1", "bye")
+    database.upsert_user("user-1", "alice")
+    assert database.add_bookmark("user-1", "gone1")
+    assert database.is_bookmarked("user-1", "gone1")
+
+    assert database.delete_paste("gone1") is True
+    assert database.get_paste("gone1") is None
+    assert database.is_bookmarked("user-1", "gone1") is False
+    assert database.delete_paste("gone1") is False
+    database.close()
+
+
+def test_save_paste_honors_created_at(tmp_path):
+    from datetime import UTC, datetime
+
+    database = Database(str(tmp_path / "created.db"))
+    created = datetime(2026, 8, 23, 12, 0, tzinfo=UTC)
+    database.save_paste("old1", "stamped", created_at=created)
+    row = database.get_paste("old1")
+    assert row is not None
+    assert row["created_at"].year == 2026
+    assert row["created_at"].month == 8
+    assert row["created_at"].day == 23
+    database.close()
+
+
+def test_update_paste_content_preserves_short_url_and_created_at(tmp_path):
+    from datetime import UTC, datetime
+
+    database = Database(str(tmp_path / "edit.db"))
+    created = datetime(2026, 8, 20, 9, 0, tzinfo=UTC)
+    database.save_paste(
+        "edit1",
+        "before",
+        short_url="https://gldf.ru/edit1",
+        created_at=created,
+    )
+    assert database.update_paste_content("edit1", "after") is True
+    row = database.get_paste("edit1")
+    assert row is not None
+    assert row["content"] == "after"
+    assert row["short_url"] == "https://gldf.ru/edit1"
+    assert row["created_at"].day == 20
+    assert database.update_paste_content("missing", "nope") is False
+    database.close()
+
+
 def test_save_and_update_short_url_roundtrip(tmp_path):
     database = Database(str(tmp_path / "short.db"))
     database.save_paste("abc123", "hello")

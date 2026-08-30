@@ -1,0 +1,50 @@
+{% extends base_template %}
+
+{% block content %}
+<div class="editor-card">
+    <div class="editor-card-header">
+        <h2>{{ t("edit.title") }}</h2>
+        <p>{{ t("edit.subtitle") }}</p>
+    </div>
+    <div class="form-container">
+        <form action="/paste/{{ paste_id }}/edit" method="post" id="nopaste-form">
+            <label class="sr-only" for="paste-content-input">Paste content</label>
+            <textarea id="paste-content-input" name="content" rows="14" placeholder="{{ t('create.placeholder') }}" enterkeyhint="enter">{{ content }}</textarea>
+            <div class="form-actions">
+                <span class="form-hint">{{ t("create.hint") }}</span>
+                <a href="/paste/{{ paste_id }}" class="btn btn-secondary">{{ t("edit.cancel") }}</a>
+                <button type="submit" class="btn btn-primary">
+                    <span class="icon-badge icon-badge-plain" aria-hidden="true">
+                        <img src="/static/images/save.png" alt="" class="btn-icon-image btn-icon-image-save" width="18" height="18" decoding="async">
+                    </span>
+                    <span>{{ t("edit.save") }}</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const nopasteForm = document.getElementById("nopaste-form");
+const textarea = document.getElementById("paste-content-input");
+const emptyMsg = {{ i18n_js["toast.empty_paste"]|tojson }};
+
+if (textarea && window.matchMedia("(min-width: 641px) and (hover: hover)").matches) {
+    textarea.focus();
+}
+
+nopasteForm.addEventListener("submit", function(event) {
+    if (!textarea.value.trim()) {
+        event.preventDefault();
+        showNotification(emptyMsg);
+    }
+});
+
+textarea.addEventListener("keydown", function(event) {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        nopasteForm.requestSubmit();
+    }
+});
+</script>
+{% endblock %}

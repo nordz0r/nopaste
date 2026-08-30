@@ -130,6 +130,44 @@
     window.copyToClipboard = copyToClipboard;
     window.flashPress = flashPress;
 
+    function burstConfetti(originEl) {
+        const fire = window.confetti;
+        if (typeof fire !== "function") return;
+        let origin = { y: 0.7 };
+        if (originEl && typeof originEl.getBoundingClientRect === "function") {
+            const rect = originEl.getBoundingClientRect();
+            const vw = Math.max(window.innerWidth || 1, 1);
+            const vh = Math.max(window.innerHeight || 1, 1);
+            origin = {
+                x: (rect.left + rect.width / 2) / vw,
+                y: (rect.top + rect.height / 2) / vh,
+            };
+        }
+        fire({
+            particleCount: 90,
+            spread: 70,
+            startVelocity: 38,
+            origin,
+            disableForReducedMotion: true,
+        });
+    }
+    window.nopasteBurstConfetti = burstConfetti;
+
+    window.nopasteFavoriteIcons = {
+        heart: "/static/images/heart.png",
+        broken: "/static/images/heart_broken.png",
+    };
+
+    function showBrokenThenGrayHeart(img, button) {
+        if (button) button.classList.add("is-breaking");
+        if (img) img.src = window.nopasteFavoriteIcons.broken;
+        window.setTimeout(function () {
+            if (button) button.classList.remove("is-breaking");
+            if (img) img.src = window.nopasteFavoriteIcons.heart;
+        }, 600);
+    }
+    window.showBrokenThenGrayHeart = showBrokenThenGrayHeart;
+
     const copyBtn = document.getElementById("copy-btn");
     if (copyBtn) {
         copyBtn.addEventListener("click", () => {

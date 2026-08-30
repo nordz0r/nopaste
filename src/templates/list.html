@@ -5,36 +5,75 @@
     <div class="paste-meta">
         <div class="paste-meta-item">
             <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-            <h2>{{ t("list.title") }}</h2>
+            <h2>{{ t(list_title_key|default('list.title')) }}</h2>
         </div>
-        <span class="paste-meta-item" style="color: var(--text-muted);">{{ t("list.total", n=pastes|length) }}</span>
+        <span class="paste-meta-item" style="color: var(--text-muted);">{{ t("list.total", n=list_total_count) }}</span>
     </div>
 </div>
 
-{% macro paste_cards(items) %}
-<div class="paste-list">
-    {% for paste in items %}<a class="paste-card" href="/paste/{{ paste.id }}"><div class="paste-card-header"><span class="paste-card-title">{{ paste.display_name or paste.id }}</span><span class="paste-card-time">{{ paste.created_at_display or t("list.unknown_date") }}</span></div><pre class="paste-card-preview">{{ paste.preview or t("list.empty") }}</pre></a>{% endfor %}
+{% if day_groups or list_has_prev or list_has_next %}
+<div
+    class="paste-list-page"
+    data-page="{{ list_page }}"
+    data-total-pages="{{ list_total_pages }}"
+    data-window-start="{{ list_window_start or '' }}"
+    data-window-end="{{ list_window_end or '' }}"
+>
+{% for group in day_groups %}
+    <h3 class="paste-day-heading" data-day="{{ group.day }}">{{ group.day or t("list.unknown_date") }}</h3>
+    <div class="paste-list">
+        {% for paste in group.pastes %}
+        <article class="paste-card" data-paste-id="{{ paste.id }}">
+            <a class="paste-card-main" href="/paste/{{ paste.id }}">
+                <div class="paste-card-header">
+                    <span class="paste-card-title">{{ paste.display_name or paste.id }}</span>
+                    <span class="paste-card-time">{{ paste.created_at_display or t("list.unknown_date") }}</span>
+                </div>
+                <pre class="paste-card-preview">{{ paste.preview or t("list.empty") }}</pre>
+            </a>
+            <div class="paste-card-footer">
+                <span>{{ t("paste.lines", n=paste.line_count) }}</span>
+                {% if current_user and paste.gldf_url %}
+                <a class="paste-card-short-url" href="{{ paste.gldf_url }}" target="_blank" rel="noopener noreferrer">{{ paste.gldf_url }}</a>
+                {% endif %}
+                {% if current_user %}
+                <div class="paste-card-actions">
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-icon-only unfavorite-btn is-favorited"
+                        data-paste-id="{{ paste.id }}"
+                        title="{{ t('paste.unfavorite') }}"
+                        aria-label="{{ t('paste.unfavorite') }}"
+                    >
+                        <img src="/static/images/heart.png" alt="" class="favorite-heart" width="18" height="18" decoding="async">
+                    </button>
+                    <button
+                        type="button"
+                        class="btn btn-ghost btn-icon-only delete-paste-btn"
+                        data-paste-id="{{ paste.id }}"
+                        title="{{ t('paste.delete') }}"
+                        aria-label="{{ t('paste.delete') }}"
+                    >
+                        <img src="/static/images/delete.png" alt="" class="btn-icon-image" width="18" height="18" decoding="async">
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+{% endfor %}
 </div>
-{% endmacro %}
-
-{% if current_user and owned_pastes %}<h3>{{ t("list.created") }}</h3>{{ paste_cards(owned_pastes) }}{% endif %}
-{% if current_user and bookmarked_pastes %}<h3>{{ t("list.bookmarks") }}</h3>{{ paste_cards(bookmarked_pastes) }}{% endif %}
-
-{% if pastes %}
-<div class="paste-list">
-    {% for paste in pastes %}
-    <a class="paste-card" href="/paste/{{ paste.id }}">
-        <div class="paste-card-header">
-            <span class="paste-card-title">{{ paste.display_name or paste.id }}</span>
-            <span class="paste-card-time">{{ paste.created_at_display or t("list.unknown_date") }}</span>
-        </div>
-        <pre class="paste-card-preview">{{ paste.preview or t("list.empty") }}</pre>
-        <div class="paste-meta" style="margin-top: var(--space-2); font-size: 0.75rem;">
-            <span>{{ t("paste.lines", n=paste.line_count) }}</span>
-        </div>
-    </a>
-    {% endfor %}
-</div>
+{% if list_has_prev or list_has_next %}
+<nav class="list-pagination" aria-label="List pagination">
+    {% if list_has_prev %}
+    <a class="btn btn-secondary" href="/list?page={{ list_page - 1 }}" rel="prev">{{ t("list.previous") }}</a>
+    {% endif %}
+    {% if list_has_next %}
+    <a class="btn btn-secondary" href="/list?page={{ list_page + 1 }}" rel="next">{{ t("list.next") }}</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% else %}
 <div class="editor-card" style="text-align: center; padding: var(--space-12);">
     <div style="color: var(--text-muted); margin-bottom: var(--space-4);">
@@ -44,5 +83,81 @@
     <p style="color: var(--text-muted);">{{ t("list.empty") }}</p>
     <a href="/" class="btn btn-primary" style="margin-top: var(--space-4);">{{ t("list.create_first") }}</a>
 </div>
+{% endif %}
+
+{% if current_user %}
+<script>
+(function () {
+    const i18n = {{ i18n_js|tojson }};
+    document.querySelectorAll(".unfavorite-btn").forEach((btn) => {
+        btn.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const pasteId = btn.getAttribute("data-paste-id");
+            const img = btn.querySelector(".favorite-heart");
+            const response = await fetch(`/paste/${pasteId}/bookmark`, {method: "POST"});
+            if (response.status === 401) {
+                showNotification(i18n["toast.auth_required"] || "Please log in first");
+                return;
+            }
+            if (!response.ok) return;
+            const data = await response.json();
+            if (data.is_bookmarked) {
+                btn.classList.add("is-favorited");
+                btn.classList.remove("is-breaking");
+                if (img) img.src = "/static/images/heart.png";
+                return;
+            }
+            btn.classList.remove("is-favorited");
+            if (typeof showBrokenThenGrayHeart === "function") {
+                showBrokenThenGrayHeart(img, btn);
+            } else if (img) {
+                img.src = "/static/images/heart_broken.png";
+            }
+            window.setTimeout(() => {
+                const card = btn.closest(".paste-card");
+                const list = card && card.parentElement;
+                if (card) card.remove();
+                if (list && !list.querySelector(".paste-card")) {
+                    const heading = list.previousElementSibling;
+                    if (heading && heading.classList.contains("paste-day-heading")) {
+                        heading.remove();
+                    }
+                    list.remove();
+                }
+            }, 600);
+        });
+    });
+    document.querySelectorAll(".delete-paste-btn").forEach((btn) => {
+        btn.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const message = i18n["paste.delete_confirm"] || "Delete this paste permanently?";
+            if (!window.confirm(message)) return;
+            const pasteId = btn.getAttribute("data-paste-id");
+            const response = await fetch(`/paste/${pasteId}/delete`, {method: "POST"});
+            if (response.status === 401) {
+                showNotification(i18n["toast.auth_required"] || "Please log in first");
+                return;
+            }
+            if (!response.ok) {
+                showNotification(i18n["toast.paste_delete_error"] || "Could not delete paste");
+                return;
+            }
+            const card = btn.closest(".paste-card");
+            const list = card && card.parentElement;
+            if (card) card.remove();
+            if (list && !list.querySelector(".paste-card")) {
+                const heading = list.previousElementSibling;
+                if (heading && heading.classList.contains("paste-day-heading")) {
+                    heading.remove();
+                }
+                list.remove();
+            }
+            showNotification(i18n["toast.paste_deleted"] || "Paste deleted");
+        });
+    });
+})();
+</script>
 {% endif %}
 {% endblock %}

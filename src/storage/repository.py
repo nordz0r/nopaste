@@ -22,31 +22,53 @@ class PasteRepository:
         content: str,
         short_url: str | None = None,
         author_id: str | None = None,
+        created_at: datetime | None = None,
     ) -> None:
         stored = self._crypto.encrypt(content)
         with session_scope() as session:
             paste = session.get(Paste, paste_id)
             if paste is None:
-                session.add(
-                    Paste(
-                        id=paste_id,
-                        content=stored,
-                        short_url=short_url,
-                        author_id=author_id,
-                    )
+                row = Paste(
+                    id=paste_id,
+                    content=stored,
+                    short_url=short_url,
+                    author_id=author_id,
                 )
+                if created_at is not None:
+                    row.created_at = created_at
+                session.add(row)
             else:
                 paste.content, paste.short_url, paste.author_id = (
                     stored,
                     short_url,
                     author_id,
                 )
+                if created_at is not None:
+                    paste.created_at = created_at
 
     def update_paste_short_url(self, paste_id: str, short_url: str) -> None:
         with session_scope() as session:
             paste = session.get(Paste, paste_id)
             if paste is not None:
                 paste.short_url = short_url
+
+    def update_paste_content(self, paste_id: str, content: str) -> bool:
+        stored = self._crypto.encrypt(content)
+        with session_scope() as session:
+            paste = session.get(Paste, paste_id)
+            if paste is None:
+                return False
+            paste.content = stored
+            return True
+
+    def delete_paste(self, paste_id: str) -> bool:
+        with session_scope() as session:
+            paste = session.get(Paste, paste_id)
+            if paste is None:
+                return False
+            session.execute(delete(Bookmark).where(Bookmark.paste_id == paste_id))
+            session.delete(paste)
+            return True
 
     def upsert_user(
         self,

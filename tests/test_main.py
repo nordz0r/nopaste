@@ -39,7 +39,8 @@ def test_read_root(client):
     assert "<title>Nopaste — create and share text instantly</title>" in response.text
     assert 'src="/static/images/goldfinches_logo.png"' in response.text
     assert 'class="brand-mark"' in response.text
-    assert 'class="btn-icon-star"' in response.text
+    assert 'class="btn-icon-image header-icon-mono"' in response.text
+    assert 'src="/static/images/list.png"' in response.text
     assert 'src="/static/images/save.png"' in response.text
     assert 'rel="icon" href="/static/images/favicon.png"' in response.text
     assert f"/static/css/style.css?v={asset_version}" in response.text
@@ -50,6 +51,10 @@ def test_read_root(client):
     assert "labels=feedback" in response.text
     assert 'id="changelog-modal"' in response.text
     assert f"/static/js/app.js?v={asset_version}" in response.text
+    assert f"/static/js/canvas-confetti.min.js?v={asset_version}" in response.text
+    assert "nopasteBurstConfetti" in response.text
+    assert 'id="save-paste-btn"' in response.text
+    assert "btn-ghost btn-icon-only" in response.text
     assert "/static/fonts/inter-400.woff2" in response.text
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
@@ -413,11 +418,9 @@ def test_get_paste_renders_line_links_and_copy_content_button(client):
     assert response.text.index('id="copy-content-btn"') < response.text.index(
         'id="raw-btn"'
     )
-    assert response.text.count('id="favorite-btn"') == 1
+    assert 'id="favorite-btn"' not in response.text
+    assert 'id="delete-paste-btn"' not in response.text
     assert response.text.index('id="raw-btn"') < response.text.index(
-        'id="favorite-btn"'
-    )
-    assert response.text.index('id="favorite-btn"') < response.text.index(
         'id="telegram-share-btn"'
     )
     assert "hashchange" in response.text
@@ -599,7 +602,9 @@ def test_list_pastes_shows_newest_first_with_preview_and_line_count(client):
     response = client.get("/list")
 
     assert response.status_code == 200
-    assert "My Pastes" in response.text
+    assert "Pastes" in response.text
+    assert "<h2>Pastes</h2>" in response.text
+    assert "<h2>Favorites</h2>" not in response.text
     assert response.text.index(second_id) < response.text.index(first_id)
     assert "first line" in response.text
     assert "2 lines" in response.text

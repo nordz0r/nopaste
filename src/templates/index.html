@@ -12,11 +12,15 @@
             <textarea id="paste-content-input" name="content" rows="14" placeholder="{{ t('create.placeholder') }}" enterkeyhint="enter"></textarea>
             <div class="form-actions">
                 <span class="form-hint">{{ t("create.hint") }}</span>
-                <button type="submit" class="btn btn-primary">
-                    <span class="icon-badge icon-badge-plain" aria-hidden="true">
-                        <img src="/static/images/save.png" alt="" class="btn-icon-image btn-icon-image-save" width="18" height="18" decoding="async">
-                    </span>
-                    <span>{{ t("create.save") }}</span>
+                <button
+                    type="submit"
+                    id="save-paste-btn"
+                    class="btn btn-ghost btn-icon-only"
+                    title="{{ t('create.save') }}"
+                    aria-label="{{ t('create.save') }}"
+                >
+                    <img src="/static/images/save.png" alt="" class="btn-icon-image btn-icon-image-save" width="18" height="18" decoding="async">
+                    <span class="sr-only">{{ t("create.save") }}</span>
                 </button>
             </div>
         </form>
@@ -32,10 +36,23 @@ if (textarea && window.matchMedia("(min-width: 641px) and (hover: hover)").match
     textarea.focus();
 }
 
+let saveConfettiPlayed = false;
 nopasteForm.addEventListener("submit", function(event) {
     if (!textarea.value.trim()) {
         event.preventDefault();
         showNotification(emptyMsg);
+        return;
+    }
+    const saveBtn = document.getElementById("save-paste-btn");
+    if (typeof flashPress === "function") flashPress(saveBtn);
+    if (
+        !saveConfettiPlayed &&
+        typeof window.nopasteBurstConfetti === "function"
+    ) {
+        event.preventDefault();
+        saveConfettiPlayed = true;
+        window.nopasteBurstConfetti(saveBtn);
+        window.setTimeout(() => nopasteForm.requestSubmit(), 420);
     }
 });
 

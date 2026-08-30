@@ -294,6 +294,17 @@ a { color: inherit; text-decoration: none; }
     flex-shrink: 0;
 }
 
+.site-header .header-icon-mono {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    filter: grayscale(1);
+}
+
+.site-header .icon-svg {
+    fill: currentColor;
+}
+
 /* Buttons */
 .btn {
     display: inline-flex;
@@ -1044,6 +1055,12 @@ textarea::placeholder {
     transition: all 0.2s;
 }
 
+.paste-card-main {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+}
+
 .paste-card:hover {
     border-color: var(--accent);
     background: var(--bg-surface-alt);
@@ -1085,6 +1102,70 @@ textarea::placeholder {
     text-overflow: ellipsis;
     margin: var(--space-2) 0;
     border: 1px solid var(--border);
+}
+
+.paste-day-heading {
+    margin: var(--space-6) 0 var(--space-3);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.paste-list-page > .paste-day-heading:first-child {
+    margin-top: 0;
+}
+
+.paste-card-footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.paste-card-short-url {
+    color: var(--accent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.paste-card-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-left: auto;
+}
+
+.list-pagination {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+.short-url-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.favorite-heart {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    filter: grayscale(1);
+}
+
+#favorite-btn.is-favorited .favorite-heart,
+#favorite-btn.is-breaking .favorite-heart,
+.unfavorite-btn.is-favorited .favorite-heart,
+.unfavorite-btn.is-breaking .favorite-heart {
+    filter: none;
 }
 
 /* Notification */
@@ -1181,9 +1262,10 @@ textarea::placeholder {
         display: none; /* Ctrl+Enter is a desktop shortcut */
     }
     .form-actions .btn {
-        flex: 1 1 auto;
+        flex: 0 0 auto;
+        width: 44px;
         height: 44px;
-        padding: 0 var(--space-4);
+        padding: 0;
     }
 
     .paste-list {
@@ -1571,14 +1653,6 @@ textarea::placeholder {
 .code-copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; z-index: 1; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; padding: 0.25rem 0.45rem; border-radius: 0.35rem; }
 .code-copy-btn.is-pressed { transform: scale(0.96); }
 .btn.is-favorited { color: var(--accent); }
-
-.btn-icon-star {
-    font-size: 1rem;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
 .user-badge { color: var(--text-muted); font-size: 0.8rem; }
 
 .markdown-body pre code {

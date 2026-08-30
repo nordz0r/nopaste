@@ -27,6 +27,7 @@ from highlighting import (
     render_markdown_for_instant_view,
 )
 from i18n import client_bundle, resolve_lang, t as i18n_t
+from list_paging import paginate_pastes_by_day_window
 from rate_limit import InMemoryRateLimiter
 from shlink import SlugTakenError, shorten_url
 from versioning import load_asset_version as _load_asset_version
@@ -416,6 +417,51 @@ def load_user_pastes(request: Request) -> list[str]:
     return parse_recent_paste_cookie(request.cookies.get("user_pastes"))
 
 
+def cookie_owns_paste(request: Request, paste_id: str) -> bool:
+    return paste_id in load_user_pastes(request)
+
+
+def user_may_edit_slug(request: Request, paste_id: str) -> bool:
+    """Cookie owner of this paste, or any authenticated user."""
+    if current_user(request):
+        return True
+    return cookie_owns_paste(request, paste_id)
+
+
+def user_may_edit_content(request: Request) -> bool:
+    """Paste body edits are limited to authenticated users."""
+    return current_user(request) is not None
+
+
+def require_paste_content(content: str, lang: str) -> str:
+    if not content.strip():
+        raise HTTPException(
+            status_code=400, detail=i18n_t("errors.empty_content", lang)
+        )
+    if len(content.encode("utf-8")) > settings.MAX_PASTE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=i18n_t(
+                "errors.content_too_large",
+                lang,
+                limit=settings.MAX_PASTE_SIZE_BYTES,
+            ),
+        )
+    return content
+
+
+def gldf_short_url(short_url: str | None) -> str | None:
+    if not short_url or not isinstance(short_url, str):
+        return None
+    try:
+        host = (urlsplit(short_url).hostname or "").lower()
+    except ValueError:
+        return None
+    if host == "gldf.ru" or host.endswith(".gldf.ru"):
+        return short_url
+    return None
+
+
 def short_slug_from_url(short_url: str | None) -> str | None:
     if not short_url or not isinstance(short_url, str):
         return None
@@ -449,6 +495,7 @@ def build_paste_summary(paste: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": paste_id,
         "short_url": short_url,
+        "gldf_url": gldf_short_url(short_url if isinstance(short_url, str) else None),
         "slug": slug,
         "display_name": paste_display_name(
             paste_id, short_url if isinstance(short_url, str) else None
@@ -693,19 +740,7 @@ async def create_paste(
     lang = request_lang(request)
     check_rate_limit(request)
     custom_slug = normalize_custom_slug(custom_slug)
-    if not content.strip():
-        raise HTTPException(
-            status_code=400, detail=i18n_t("errors.empty_content", lang)
-        )
-    if len(content.encode("utf-8")) > settings.MAX_PASTE_SIZE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=i18n_t(
-                "errors.content_too_large",
-                lang,
-                limit=settings.MAX_PASTE_SIZE_BYTES,
-            ),
-        )
+    content = require_paste_content(content, lang)
 
     paste_id = generate_paste_id(db)
     paste_url = str(request.url_for("get_paste", paste_id=paste_id))
@@ -746,7 +781,10 @@ async def get_paste(request: Request, paste_id: str):
         return RedirectResponse(url="/", status_code=303)
     paste = db.get_paste(paste_id)
     if not paste:
-        return RedirectResponse(url="/", status_code=303)
+        raise HTTPException(
+            status_code=404,
+            detail=i18n_t("errors.paste_not_found", request_lang(request)),
+        )
     content = paste["content"]
     created_at = format_created_at(paste["created_at"])
     short_url = paste.get("short_url")
@@ -770,9 +808,11 @@ async def get_paste(request: Request, paste_id: str):
     )
     instant_view_title = markdown_title or f"Paste {display_name or paste_id}"
     canonical_url = canonical_paste_url(request, paste_id)
-    is_bookmarked = bool(
-        (user := current_user(request)) and db.is_bookmarked(user["sub"], paste_id)
-    )
+    user = current_user(request)
+    is_bookmarked = bool(user and db.is_bookmarked(user["sub"], paste_id))
+    can_edit_slug = user_may_edit_slug(request, paste_id)
+    can_edit_content = user_may_edit_content(request)
+    can_delete = bool(user)
     logger.info("Retrieved paste: id=%s", paste_id)
     template_name = (
         "paste_preview.html" if is_telegram_preview_request(request) else "paste.html"
@@ -794,6 +834,9 @@ async def get_paste(request: Request, paste_id: str):
             short_url=short_url,
             canonical_url=canonical_url,
             is_bookmarked=is_bookmarked,
+            can_edit_slug=can_edit_slug,
+            can_edit_content=can_edit_content,
+            can_delete=can_delete,
             meta_extra=None,
             content_preview=content_preview,
             meta=build_page_meta(
@@ -831,6 +874,10 @@ async def update_paste_slug(
         raise HTTPException(
             status_code=404, detail=i18n_t("errors.paste_not_found", lang)
         )
+    if not user_may_edit_slug(request, paste_id):
+        raise HTTPException(
+            status_code=403, detail=i18n_t("errors.slug_forbidden", lang)
+        )
 
     if not settings.shrink_enabled:
         raise HTTPException(
@@ -866,6 +913,89 @@ async def update_paste_slug(
     return JSONResponse(
         content={"status": "ok", "short_url": short_url, "slug": normalized_slug}
     )
+
+
+@app.post("/paste/{paste_id}/delete", include_in_schema=False)
+async def delete_paste(request: Request, paste_id: str):
+    lang = request_lang(request)
+    user = current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail=i18n_t("toast.auth_required", lang))
+    check_rate_limit(request)
+    if not PASTE_ID_PATTERN.fullmatch(paste_id):
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
+    if not db.get_paste(paste_id):
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
+    db.delete_paste(paste_id)
+    logger.info("Deleted paste: id=%s user=%s", paste_id, user["sub"])
+    return JSONResponse(content={"status": "ok", "deleted": True})
+
+
+@app.get("/paste/{paste_id}/edit", include_in_schema=False)
+async def edit_paste_form(request: Request, paste_id: str):
+    lang = request_lang(request)
+    if not user_may_edit_content(request):
+        raise HTTPException(status_code=401, detail=i18n_t("toast.auth_required", lang))
+    if not PASTE_ID_PATTERN.fullmatch(paste_id):
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
+    paste = db.get_paste(paste_id)
+    if not paste:
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
+    display_name = paste_display_name(
+        paste_id,
+        paste.get("short_url") if isinstance(paste.get("short_url"), str) else None,
+    )
+    return templates.TemplateResponse(
+        request,
+        "edit.html",
+        template_context(
+            request,
+            paste_id=paste_id,
+            content=paste["content"],
+            display_name=display_name,
+            meta=build_page_meta(
+                request,
+                title=f"Nopaste — edit {display_name}",
+                description="Edit an existing Nopaste document.",
+            ),
+        ),
+    )
+
+
+@app.post("/paste/{paste_id}/edit", include_in_schema=False)
+async def edit_paste(
+    request: Request,
+    paste_id: str,
+    content: str = Form(..., description="Updated paste body"),
+):
+    lang = request_lang(request)
+    if not user_may_edit_content(request):
+        raise HTTPException(status_code=401, detail=i18n_t("toast.auth_required", lang))
+    check_rate_limit(request)
+    if not PASTE_ID_PATTERN.fullmatch(paste_id):
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
+    paste = db.get_paste(paste_id)
+    if not paste:
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
+    content = require_paste_content(content, lang)
+    if not db.update_paste_content(paste_id, content):
+        raise HTTPException(
+            status_code=404, detail=i18n_t("errors.paste_not_found", lang)
+        )
+    logger.info("Updated paste content: id=%s length=%s", paste_id, len(content))
+    return RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
 
 
 @app.get(
@@ -905,33 +1035,44 @@ async def get_raw_paste(request: Request, paste_id: str):
     summary="Recent pastes",
     description="Pastes stored in this browser's signed history cookie.",
 )
-async def list_pastes(request: Request):
+async def list_pastes(request: Request, page: int = 1):
     user = current_user(request)
-    user_pastes = order_recent_pastes(load_user_pastes(request))
     if user:
-        owned = [build_paste_summary(p) for p in db.get_created_pastes(user["sub"])]
-        bookmarks = [
-            build_paste_summary(p) for p in db.get_bookmarked_pastes(user["sub"])
-        ]
-        paste_records = db.get_user_pastes(user_pastes)
-        pastes = [build_paste_summary(p) for p in paste_records]
+        source_records = db.get_bookmarked_pastes(user["sub"])
+        list_title_key = "list.title_favorites"
+        meta_title = "Nopaste — Favorites"
+        meta_description = "Browse the pastes saved in your Nopaste favorites."
     else:
-        owned, bookmarks = [], []
-        paste_records = db.get_user_pastes(user_pastes)
-        pastes = [build_paste_summary(paste) for paste in paste_records]
+        user_pastes = order_recent_pastes(load_user_pastes(request))
+        source_records = db.get_user_pastes(user_pastes)
+        list_title_key = "list.title"
+        meta_title = "Nopaste — your recent pastes"
+        meta_description = "Browse the pastes saved in your recent Nopaste history."
+    pastes = [build_paste_summary(record) for record in source_records]
+    paging = paginate_pastes_by_day_window(pastes, page)
+    page_pastes = [item for group in paging["groups"] for item in group["pastes"]]
     return templates.TemplateResponse(
         request,
         "list.html",
         template_context(
             request,
-            pastes=pastes,
-            owned_pastes=owned,
-            bookmarked_pastes=bookmarks,
+            pastes=page_pastes,
+            day_groups=paging["groups"],
+            list_page=paging["page"],
+            list_total_pages=paging["total_pages"],
+            list_has_next=paging["has_next"],
+            list_has_prev=paging["has_prev"],
+            list_total_count=paging["total_count"],
+            list_window_start=paging["window_start"],
+            list_window_end=paging["window_end"],
+            list_title_key=list_title_key,
+            owned_pastes=[],
+            bookmarked_pastes=[],
             current_user=user,
             meta=build_page_meta(
                 request,
-                title="Nopaste — your recent pastes",
-                description="Browse the pastes saved in your recent Nopaste history.",
+                title=meta_title,
+                description=meta_description,
             ),
         ),
     )
