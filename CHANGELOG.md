@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.19.1 (2026-08-30)
+
+### Bug Fixes
+
+- **ui**: Restyle Save as a secondary button and drop icon backgrounds
+  ([`7ceed1c`](https://github.com/nordz0r/nopaste/commit/7ceed1c7229fca2f23fa1d2940f77228370a851f))
+
+
 ## v1.19.0 (2026-08-30)
 
 ### Features
