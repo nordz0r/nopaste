@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.18.2 (2026-08-30)
+
+### Bug Fixes
+
+- **nav**: Replace my list with favorites and star icon
+  ([`207ffcc`](https://github.com/nordz0r/nopaste/commit/207ffccaf936403f54cece743dc466a537537d42))
+
+
 ## v1.18.1 (2026-08-30)
 
 ### Bug Fixes
