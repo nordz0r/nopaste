@@ -31,6 +31,20 @@ from rate_limit import InMemoryRateLimiter
 from shlink import SlugTakenError, shorten_url
 from versioning import load_asset_version as _load_asset_version
 
+from auth import authorization_url, discovery, exchange_code, load_session, make_session, make_state, oidc_enabled, pkce_challenge, pkce_verifier, userinfo
+
+SESSION_STATE_COOKIE = "nopaste_oidc_state"
+
+def current_user(request: Request) -> dict[str, Any] | None:
+    return load_session(request.cookies.get(settings.SESSION_COOKIE_NAME))
+
+def redirect_uri(request: Request) -> str:
+    return settings.OIDC_REDIRECT_URI or build_absolute_app_url(request, "/auth/callback")
+
+def canonical_paste_url(request: Request, paste_id: str) -> str:
+    return build_absolute_app_url(request, f"/paste/{paste_id}")
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -94,6 +108,70 @@ app = FastAPI(
 )
 
 
+@app.get("/auth/login", include_in_schema=False)
+async def auth_login(request: Request):
+    if not oidc_enabled():
+        raise HTTPException(status_code=404, detail="Authentication is not configured")
+    verifier = pkce_verifier()
+    state = make_state(request.query_params.get("next", "/"), verifier)
+    metadata = await discovery()
+    response = RedirectResponse(authorization_url(metadata, state, pkce_challenge(verifier), redirect_uri(request)))
+    response.set_cookie(SESSION_STATE_COOKIE, state, max_age=600, httponly=True, secure=request.url.scheme == "https", samesite="lax")
+    return response
+
+
+@app.get("/auth/callback", include_in_schema=False)
+async def auth_callback(request: Request, code: str | None = None, state: str | None = None, error: str | None = None):
+    if error or not code or not state or not oidc_enabled():
+        raise HTTPException(status_code=400, detail="Authentication failed")
+    expected = request.cookies.get(SESSION_STATE_COOKIE)
+    state_data = load_session(state)
+    if not expected or not secrets.compare_digest(expected, state) or not state_data:
+        raise HTTPException(status_code=400, detail="Invalid authentication state")
+    tokens = await exchange_code(code, state_data["verifier"], redirect_uri(request))
+    claims = await userinfo(tokens["access_token"])
+    user_id = str(claims.get("sub") or claims.get("preferred_username") or "")
+    if not user_id:
+        raise HTTPException(status_code=400, detail="Identity missing")
+    user = db.upsert_user(user_id, str(claims.get("preferred_username") or user_id), claims.get("email"), claims.get("name"))
+    response = RedirectResponse(state_data.get("return_to") or "/", status_code=303)
+    response.set_cookie(settings.SESSION_COOKIE_NAME, make_session({"sub": user_id, **user}), max_age=settings.SESSION_MAX_AGE_SECONDS, httponly=True, secure=request.url.scheme == "https", samesite="lax")
+    response.delete_cookie(SESSION_STATE_COOKIE)
+    return response
+
+
+@app.get("/auth/logout", include_in_schema=False)
+async def auth_logout(request: Request):
+    response = RedirectResponse("/", status_code=303)
+    response.delete_cookie(settings.SESSION_COOKIE_NAME)
+    return response
+
+
+@app.post("/paste/{paste_id}/bookmark", include_in_schema=False)
+async def toggle_bookmark(request: Request, paste_id: str):
+    user = current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not db.get_paste(paste_id):
+        raise HTTPException(status_code=404, detail="Paste not found")
+    return {"is_bookmarked": db.toggle_bookmark(user["sub"], paste_id)}
+
+
+@app.post("/api/bookmarks/import", include_in_schema=False)
+async def import_bookmarks(request: Request):
+    user = current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return {"imported": db.import_bookmarks(user["sub"], load_user_pastes(request))}
+
+
+@app.get("/api/auth/me", include_in_schema=False)
+async def auth_me(request: Request):
+    return current_user(request) or {"authenticated": False}
+
+
+
+
 def request_lang(request: Request) -> str:
     return resolve_lang(accept_language=request.headers.get("accept-language"))
 
@@ -145,6 +223,8 @@ def template_context(request: Request, **extra: Any) -> dict[str, Any]:
         "shrink_enabled": settings.shrink_enabled,
         "feedback_url": build_feedback_issue_url(request, lang),
         "is_telegram_preview_request": is_telegram_preview,
+        "current_user": current_user(request),
+        "oidc_enabled": settings.oidc_enabled,
     }
     ctx.update(extra)
     return ctx
@@ -385,9 +465,18 @@ def build_feedback_issue_url(request: Request, lang: str) -> str | None:
 
 
 def resolve_public_base_url(request: Request) -> str:
-    if settings.PUBLIC_BASE_URL:
-        return settings.PUBLIC_BASE_URL.rstrip("/")
-    return str(request.base_url).rstrip("/")
+    configured = settings.PUBLIC_BASE_URL
+    # The local .env uses 0.0.0.0 as a bind address, not a public URL. Treat
+    # it as unset so test clients and forwarded requests retain their host.
+    if configured and urlsplit(configured).hostname not in {"0.0.0.0", "::"}:
+        return configured.rstrip("/")
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("host") or request.url.netloc
+    # Starlette's test transport may expose 0.0.0.0 in request.url while
+    # preserving the public Host header used to address the application.
+    if host.startswith("0.0.0.0") and request.headers.get("host"):
+        host = request.headers["host"]
+    return f"{scheme}://{host}".rstrip("/")
 
 
 def build_absolute_app_url(request: Request, path: str, query: str = "") -> str:
@@ -581,7 +670,10 @@ async def create_paste(
         short_url = await shorten_url(paste_url, custom_slug)
     except SlugTakenError:
         short_url = await shorten_url(paste_url, None)
-    db.save_paste(paste_id, content, short_url)
+    user = current_user(request)
+    db.save_paste(paste_id, content, short_url, user["sub"] if user else None)
+    if user:
+        db.add_bookmark(user["sub"], paste_id)
     logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
 
     user_pastes = load_user_pastes(request)
@@ -634,6 +726,8 @@ async def get_paste(request: Request, paste_id: str):
         else ""
     )
     instant_view_title = markdown_title or f"Paste {display_name or paste_id}"
+    canonical_url = canonical_paste_url(request, paste_id)
+    is_bookmarked = bool((user := current_user(request)) and db.is_bookmarked(user["sub"], paste_id))
     logger.info("Retrieved paste: id=%s", paste_id)
     template_name = (
         "paste_preview.html" if is_telegram_preview_request(request) else "paste.html"
@@ -653,6 +747,9 @@ async def get_paste(request: Request, paste_id: str):
             instant_view_markdown=instant_view_markdown,
             instant_view_title=instant_view_title,
             short_url=short_url,
+            canonical_url=canonical_url,
+            is_bookmarked=is_bookmarked,
+            meta_extra=None,
             content_preview=content_preview,
             meta=build_page_meta(
                 request,
@@ -764,15 +861,26 @@ async def get_raw_paste(request: Request, paste_id: str):
     description="Pastes stored in this browser's signed history cookie.",
 )
 async def list_pastes(request: Request):
+    user = current_user(request)
     user_pastes = order_recent_pastes(load_user_pastes(request))
-    paste_records = db.get_user_pastes(user_pastes)
-    pastes = [build_paste_summary(paste) for paste in paste_records]
+    if user:
+        owned = [build_paste_summary(p) for p in db.get_created_pastes(user["sub"])]
+        bookmarks = [build_paste_summary(p) for p in db.get_bookmarked_pastes(user["sub"])]
+        paste_records = db.get_user_pastes(user_pastes)
+        pastes = [build_paste_summary(p) for p in paste_records]
+    else:
+        owned, bookmarks = [], []
+        paste_records = db.get_user_pastes(user_pastes)
+        pastes = [build_paste_summary(paste) for paste in paste_records]
     return templates.TemplateResponse(
         request,
         "list.html",
         template_context(
             request,
             pastes=pastes,
+            owned_pastes=owned,
+            bookmarked_pastes=bookmarks,
+            current_user=user,
             meta=build_page_meta(
                 request,
                 title="Nopaste — your recent pastes",

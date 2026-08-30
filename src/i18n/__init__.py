@@ -57,5 +57,17 @@ def client_bundle(lang: str) -> dict[str, str]:
         "toast.network_error",
         "toast.empty_paste",
         "toast.line_link_copied",
+        "toast.code_copied",
+        "paste.copy_code",
+        "paste.favorite",
+        "nav.login",
+        "nav.logout",
+        "toast.favorite_added",
+        "toast.favorite_removed",
+        "toast.auth_required",
+        "toast.imported",
+        "list.bookmarks",
+        "list.created",
+        "list.import_history",
     ]
     return {k: t(k, lang) for k in keys}

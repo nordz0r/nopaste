@@ -11,6 +11,15 @@
     </div>
 </div>
 
+{% macro paste_cards(items) %}
+<div class="paste-list">
+    {% for paste in items %}<a class="paste-card" href="/paste/{{ paste.id }}"><div class="paste-card-header"><span class="paste-card-title">{{ paste.display_name or paste.id }}</span><span class="paste-card-time">{{ paste.created_at_display or t("list.unknown_date") }}</span></div><pre class="paste-card-preview">{{ paste.preview or t("list.empty") }}</pre></a>{% endfor %}
+</div>
+{% endmacro %}
+
+{% if current_user and owned_pastes %}<h3>{{ t("list.created") }}</h3>{{ paste_cards(owned_pastes) }}{% endif %}
+{% if current_user and bookmarked_pastes %}<h3>{{ t("list.bookmarks") }}</h3>{{ paste_cards(bookmarked_pastes) }}{% endif %}
+
 {% if pastes %}
 <div class="paste-list">
     {% for paste in pastes %}

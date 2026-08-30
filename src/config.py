@@ -65,6 +65,24 @@ class Settings(BaseSettings):
         default=None,
         description="Public base URL for canonical/Open Graph metadata.",
     )
+    OIDC_DISCOVERY_URL: str = Field(default="https://cloud.goldfinches.ru/index.php/.well-known/openid-configuration")
+    OIDC_CLIENT_ID: str | None = Field(default=None)
+    OIDC_CLIENT_SECRET: str | None = Field(default=None)
+    OIDC_SCOPES: str = Field(default="openid profile email")
+    OIDC_REDIRECT_URI: str | None = Field(default=None)
+    SESSION_SECRET_KEY: str | None = Field(default=None)
+    SESSION_COOKIE_NAME: str = Field(default="nopaste_session")
+    SESSION_MAX_AGE_SECONDS: int = Field(default=2_592_000)
+
+    @computed_field
+    @property
+    def oidc_enabled(self) -> bool:
+        return bool(self.OIDC_CLIENT_ID and self.OIDC_CLIENT_SECRET)
+
+    @computed_field
+    @property
+    def session_secret(self) -> str:
+        return self.SESSION_SECRET_KEY or self.COOKIE_SIGNING_SECRET
     UI_DESIGN: str = Field(
         default="default",
         description="Active UI design name under templates/designs/<name>/.",

@@ -41,6 +41,20 @@
             </button>
             <button
                 type="button"
+                id="favorite-btn"
+                class="btn btn-ghost btn-icon-only {% if is_bookmarked %}is-favorited{% endif %}"
+                aria-label="Add to favorites"
+                title="Add to favorites"
+            >★<span class="sr-only">Add to favorites</span></button>
+            <button
+                type="button"
+                id="favorite-btn"
+                class="btn btn-ghost btn-icon-only {% if is_bookmarked %}is-favorited{% endif %}"
+                title="{{ t('paste.favorite') }}"
+                aria-label="{{ t('paste.favorite') }}"
+            >★<span class="sr-only">{{ t('paste.favorite') }}</span></button>
+            <button
+                type="button"
                 id="copy-content-btn"
                 class="btn btn-ghost btn-icon-only"
                 title="{{ t('paste.copy_content') }}"
@@ -64,7 +78,7 @@
                 class="btn btn-ghost btn-icon-only"
                 title="{{ t('paste.share_telegram') }}"
                 aria-label="{{ t('paste.share_telegram') }}"
-                href="https://t.me/share/url?url={{ request.url_for('get_paste', paste_id=paste_id) }}"
+                href="https://t.me/share/url?url={{ (canonical_url or meta.url)|urlencode }}"
                 target="_blank"
                 rel="noopener noreferrer"
             >
@@ -125,7 +139,8 @@
 
 <!-- Stable semantic source for the Telegram Instant View template. Keep this
      subtree limited to elements supported by the IV Article type. -->
-<article id="instant-view-article" class="iv-source">
+<article id="instant-view-article" class="iv-source" data-canonical-url="{{ canonical_url }}">
+    <!-- canonical: {{ canonical_url }} -->
     <h1>{{ instant_view_title or ('Paste ' ~ (display_name or paste_id)) }}</h1>
     {% if is_markdown and instant_view_markdown %}
     {{ instant_view_markdown|safe }}
@@ -179,6 +194,18 @@ document.querySelectorAll(".paste-line-number").forEach(link => {
         copyLineUrl(anchor, lineNumber);
     });
 });
+
+const favoriteBtn = document.getElementById("favorite-btn");
+if (favoriteBtn) {
+    favoriteBtn.addEventListener("click", async () => {
+        const response = await fetch(`/paste/{{ paste_id }}/bookmark`, {method: "POST"});
+        if (response.status === 401) { showNotification(i18n["toast.auth_required"] || "Please log in first"); return; }
+        if (!response.ok) return;
+        const data = await response.json();
+        favoriteBtn.classList.toggle("is-favorited", Boolean(data.is_bookmarked));
+        showNotification(i18n[data.is_bookmarked ? "toast.favorite_added" : "toast.favorite_removed"] || "Updated");
+    });
+}
 
 const rawContentField = document.getElementById("paste-raw-content");
 const copyContentBtn = document.getElementById("copy-content-btn");
@@ -294,8 +321,7 @@ if (shortUrlLink && shortUrlEditWrap && shortUrlSlug) {
                     // Update Telegram share button URL
                     const tgBtn = document.getElementById("telegram-share-btn");
                     if (tgBtn) {
-                        const pasteUrl = window.location.origin + '/paste/' + pasteId;
-                        tgBtn.href = 'https://t.me/share/url?url=' + encodeURIComponent(pasteUrl);
+                        tgBtn.href = 'https://t.me/share/url?url=' + encodeURIComponent({{ canonical_url|tojson }});
                     }
                     // Keep tab title + header label in sync with custom slug.
                     const titleLabel = document.getElementById("paste-title-label");
@@ -382,11 +408,20 @@ async function renderMarkdownAndMermaid() {
         if (lang === "mermaid") {
             return `<div class="mermaid-wrap"><pre class="mermaid">${codeText}</pre></div>`;
         }
-        if (typeof code === "object") {
-            return defaultCodeRenderer(code);
-        }
-        return defaultCodeRenderer(codeText, langStr, isEscaped);
+        const rendered = typeof code === "object"
+            ? defaultCodeRenderer(code)
+            : defaultCodeRenderer(codeText, langStr, isEscaped);
+        return `<div class="code-block-wrap"><button type="button" class="code-copy-btn" aria-label="Copy code" title="Copy code">⧉</button>${rendered}</div>`;
     };
+
+    markdownContainer.addEventListener("click", (event) => {
+        const button = event.target.closest(".code-copy-btn");
+        if (!button) return;
+        const code = button.parentElement.querySelector("pre code");
+        if (!code) return;
+        flashPress(button);
+        copyToClipboard(code.textContent, i18n["toast.code_copied"] || "Code copied!");
+    });
 
     marked.setOptions({
         renderer: renderer,
