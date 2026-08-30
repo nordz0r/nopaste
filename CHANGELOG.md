@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.18.1 (2026-08-30)
+
+### Bug Fixes
+
+- Repair OIDC login and action layout
+  ([`45e3c91`](https://github.com/nordz0r/nopaste/commit/45e3c916a10cbbb4fc828022f63214fb05d0816b))
+
+
 ## v1.18.0 (2026-08-30)
 
 ### Features
