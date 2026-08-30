@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.18.3 (2026-08-30)
+
+### Bug Fixes
+
+- **nav**: Display user name inside logout button
+  ([`2eece93`](https://github.com/nordz0r/nopaste/commit/2eece937ab5322fba2c919c9664485c4ec7c8f45))
+
+
 ## v1.18.2 (2026-08-30)
 
 ### Bug Fixes
