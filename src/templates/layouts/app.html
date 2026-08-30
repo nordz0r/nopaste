@@ -56,10 +56,9 @@
                         <span>{{ t('nav.my_list') if t is defined else 'Favorites' }}</span>
                     </a>
                     {% if current_user|default(None) %}
-                    <span class="user-badge">{{ current_user.display_name or current_user.username }}</span>
                     <a id="logout-btn" href="/auth/logout" class="btn btn-secondary" title="{{ t('nav.logout') }}" aria-label="{{ t('nav.logout') }}">
                         <svg class="icon-svg auth-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.09 15.59 11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3h-6v2h6v14h-6v2h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-                        <span>{{ t('nav.logout') }}</span>
+                        <span>{{ current_user.display_name or current_user.username }} | {{ t('nav.logout') }}</span>
                     </a>
                     {% elif oidc_enabled|default(false) %}
                     <a id="login-btn" href="/auth/login?next={{ request.url.path|urlencode }}" class="btn btn-secondary" title="{{ t('nav.login') }}" aria-label="{{ t('nav.login') }}">
