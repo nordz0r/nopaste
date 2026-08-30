@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.19.0 (2026-08-30)
+
+### Features
+
+- Add favorites actions, 7-day list paging, and paste edit
+  ([`db38aad`](https://github.com/nordz0r/nopaste/commit/db38aadbdff5086d796c80d9c5556cec1449664f))
+
+
 ## v1.18.3 (2026-08-30)
 
 ### Bug Fixes
