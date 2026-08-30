@@ -365,6 +365,9 @@ def test_shipped_heart_link_icons_css_and_unfavorite_js_sequence(tmp_path, monke
             assert response.status_code == 200, name
             assert response.content.startswith(b"\x89PNG\r\n\x1a\n")
             assert (static / "images" / name).is_file()
+            # Color type 6 = RGBA so the white preview square is not baked in.
+            assert response.content[12:16] == b"IHDR"
+            assert response.content[25] == 6, name
 
         created = client.post(
             "/paste", data={"content": "icon paste"}, follow_redirects=False

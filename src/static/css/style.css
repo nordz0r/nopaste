@@ -1263,9 +1263,9 @@ textarea::placeholder {
     }
     .form-actions .btn {
         flex: 0 0 auto;
-        width: 44px;
+        width: auto;
         height: 44px;
-        padding: 0;
+        padding: 0 var(--space-4);
     }
 
     .paste-list {

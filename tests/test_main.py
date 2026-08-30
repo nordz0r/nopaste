@@ -54,7 +54,13 @@ def test_read_root(client):
     assert f"/static/js/canvas-confetti.min.js?v={asset_version}" in response.text
     assert "nopasteBurstConfetti" in response.text
     assert 'id="save-paste-btn"' in response.text
-    assert "btn-ghost btn-icon-only" in response.text
+    save_start = response.text.index('id="save-paste-btn"')
+    save_html = response.text[save_start : response.text.index("</button>", save_start)]
+    assert "btn-secondary" in save_html
+    assert "btn-icon-only" not in save_html
+    assert "btn-ghost" not in save_html
+    assert "Save Paste" in save_html
+    assert 'src="/static/images/save.png"' in save_html
     assert "/static/fonts/inter-400.woff2" in response.text
     assert "Ctrl + Enter to save" in response.text
     assert "event.ctrlKey || event.metaKey" in response.text
