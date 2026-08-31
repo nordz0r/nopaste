@@ -155,17 +155,41 @@
 
     window.nopasteFavoriteIcons = {
         heart: "/static/images/heart.png",
+        gray: "/static/images/heart_gray.png",
         broken: "/static/images/heart_broken.png",
     };
 
-    function showBrokenThenGrayHeart(img, button) {
-        if (button) button.classList.add("is-breaking");
-        if (img) img.src = window.nopasteFavoriteIcons.broken;
-        window.setTimeout(function () {
-            if (button) button.classList.remove("is-breaking");
-            if (img) img.src = window.nopasteFavoriteIcons.heart;
-        }, 600);
+    function setFavoriteHeartVisual(button, state) {
+        const icons = window.nopasteFavoriteIcons;
+        const img = button
+            ? button.querySelector(".favorite-heart")
+            : null;
+        if (button) {
+            button.classList.toggle("is-favorited", state === "on");
+            button.classList.toggle("is-breaking", state === "breaking");
+        }
+        if (!img) return;
+        if (state === "on") img.src = icons.heart;
+        else if (state === "breaking") img.src = icons.broken;
+        else img.src = icons.gray;
     }
+
+    function showBrokenThenGrayHeart(img, button) {
+        if (button && button._heartTimer) {
+            window.clearTimeout(button._heartTimer);
+            button._heartTimer = null;
+        }
+        setFavoriteHeartVisual(button, "breaking");
+        if (!button) {
+            if (img) img.src = window.nopasteFavoriteIcons.broken;
+            return;
+        }
+        button._heartTimer = window.setTimeout(function () {
+            button._heartTimer = null;
+            setFavoriteHeartVisual(button, "off");
+        }, 700);
+    }
+    window.setFavoriteHeartVisual = setFavoriteHeartVisual;
     window.showBrokenThenGrayHeart = showBrokenThenGrayHeart;
 
     const copyBtn = document.getElementById("copy-btn");

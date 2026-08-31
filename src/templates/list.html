@@ -103,15 +103,18 @@
             if (!response.ok) return;
             const data = await response.json();
             if (data.is_bookmarked) {
-                btn.classList.add("is-favorited");
-                btn.classList.remove("is-breaking");
-                if (img) img.src = "/static/images/heart.png";
+                if (typeof setFavoriteHeartVisual === "function") {
+                    setFavoriteHeartVisual(btn, "on");
+                } else if (img) {
+                    btn.classList.add("is-favorited");
+                    img.src = "/static/images/heart.png";
+                }
                 return;
             }
-            btn.classList.remove("is-favorited");
             if (typeof showBrokenThenGrayHeart === "function") {
                 showBrokenThenGrayHeart(img, btn);
             } else if (img) {
+                btn.classList.remove("is-favorited");
                 img.src = "/static/images/heart_broken.png";
             }
             window.setTimeout(() => {

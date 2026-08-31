@@ -61,7 +61,7 @@ def test_guest_paste_and_nav_are_pastes_without_favorite_control(tmp_path, monke
         assert 'id="favorite-btn"' not in paste_page.text
         assert 'id="delete-paste-btn"' not in paste_page.text
         assert 'id="edit-paste-btn"' not in paste_page.text
-        assert "/static/images/heart.png" not in paste_page.text
+        assert 'src="/static/images/heart.png"' in paste_page.text
         guest_nav = nav_html(paste_page.text)
         assert "Pastes" in guest_nav
         assert "Favorites" not in guest_nav
@@ -72,7 +72,7 @@ def test_guest_paste_and_nav_are_pastes_without_favorite_control(tmp_path, monke
         assert "Pastes" in nav_html(home.text)
         assert "Favorites" not in nav_html(home.text)
         assert "header-icon-mono" in home.text
-        assert 'src="/static/images/list.png"' in home.text
+        assert 'src="/static/images/heart.png"' in home.text
     db.close()
 
 
@@ -360,7 +360,7 @@ def test_shipped_heart_link_icons_css_and_unfavorite_js_sequence(tmp_path, monke
 
     with TestClient(main_module.app) as client:
         client.headers["Accept-Language"] = "en"
-        for name in ("heart.png", "heart_broken.png", "link.png", "delete.png"):
+        for name in ("heart.png", "heart_gray.png", "heart_broken.png", "link.png", "delete.png"):
             response = client.get(f"/static/images/{name}")
             assert response.status_code == 200, name
             assert response.content.startswith(b"\x89PNG\r\n\x1a\n")
@@ -383,19 +383,23 @@ def test_shipped_heart_link_icons_css_and_unfavorite_js_sequence(tmp_path, monke
         authenticate(client)
         authed_page = client.get(f"/paste/{paste_id}")
         assert "/static/images/heart.png" in authed_page.text
+        assert "/static/images/heart_gray.png" in authed_page.text
+        assert 'src="/static/images/heart_gray.png"' in authed_page.text
         assert "d1nhio0ox7pgb.cloudfront.net" not in authed_page.text
 
     assert ".favorite-heart" in css
-    assert "grayscale(1)" in css
-    assert "#favorite-btn.is-favorited .favorite-heart" in css
-    assert "filter: none" in css
     assert ".site-header .header-icon-mono" in css
+    assert "grayscale(1)" in css
     assert ".site-header .icon-svg" in css
     assert "function showBrokenThenGrayHeart" in js
+    assert "function setFavoriteHeartVisual" in js
     assert "heart_broken.png" in js
-    assert "nopasteFavoriteIcons.broken" in js
-    assert "nopasteFavoriteIcons.heart" in js
-    assert "is-breaking" in js
+    assert "heart_gray.png" in js
+    assert 'heart: "/static/images/heart.png"' in js
+    assert 'gray: "/static/images/heart_gray.png"' in js
+    assert 'broken: "/static/images/heart_broken.png"' in js
+    assert 'state === "breaking"' in js
+    assert 'setFavoriteHeartVisual(button, "off")' in js
     assert "setTimeout" in js
     assert "function burstConfetti" in js
     assert "window.nopasteBurstConfetti" in js

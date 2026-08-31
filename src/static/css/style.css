@@ -1158,13 +1158,6 @@ textarea::placeholder {
     width: 18px;
     height: 18px;
     object-fit: contain;
-    filter: grayscale(1);
-}
-
-#favorite-btn.is-favorited .favorite-heart,
-#favorite-btn.is-breaking .favorite-heart,
-.unfavorite-btn.is-favorited .favorite-heart,
-.unfavorite-btn.is-breaking .favorite-heart {
     filter: none;
 }
 

@@ -67,7 +67,7 @@
                 title="{{ t('paste.unfavorite') if is_bookmarked else t('paste.favorite') }}"
                 aria-label="{{ t('paste.unfavorite') if is_bookmarked else t('paste.favorite') }}"
             >
-                <img src="/static/images/heart.png" alt="" class="favorite-heart" width="18" height="18" decoding="async">
+                <img src="{% if is_bookmarked %}/static/images/heart.png{% else %}/static/images/heart_gray.png{% endif %}" alt="" class="favorite-heart" width="18" height="18" decoding="async">
                 <span class="sr-only">{{ t('paste.unfavorite') if is_bookmarked else t('paste.favorite') }}</span>
             </button>
             {% if can_edit_content %}
@@ -230,16 +230,25 @@ if (favoriteBtn) {
         if (!response.ok) return;
         const data = await response.json();
         const img = favoriteBtn.querySelector(".favorite-heart");
+        if (favoriteBtn._heartTimer) {
+            window.clearTimeout(favoriteBtn._heartTimer);
+            favoriteBtn._heartTimer = null;
+        }
         if (data.is_bookmarked) {
-            favoriteBtn.classList.add("is-favorited");
-            favoriteBtn.classList.remove("is-breaking");
-            if (img) img.src = "/static/images/heart.png";
+            if (typeof setFavoriteHeartVisual === "function") {
+                setFavoriteHeartVisual(favoriteBtn, "on");
+            } else if (img) {
+                favoriteBtn.classList.add("is-favorited");
+                img.src = "/static/images/heart.png";
+            }
             favoriteBtn.setAttribute("title", i18n["paste.unfavorite"] || "Remove from favorites");
             favoriteBtn.setAttribute("aria-label", i18n["paste.unfavorite"] || "Remove from favorites");
         } else {
-            favoriteBtn.classList.remove("is-favorited");
             if (typeof showBrokenThenGrayHeart === "function") {
                 showBrokenThenGrayHeart(img, favoriteBtn);
+            } else if (img) {
+                favoriteBtn.classList.remove("is-favorited");
+                img.src = "/static/images/heart_broken.png";
             }
             favoriteBtn.setAttribute("title", i18n["paste.favorite"] || "Add to favorites");
             favoriteBtn.setAttribute("aria-label", i18n["paste.favorite"] || "Add to favorites");
