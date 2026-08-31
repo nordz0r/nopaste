@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.19.2 (2026-08-31)
+
+### Bug Fixes
+
+- **ui**: Use gray/red/broken heart states for favorites
+  ([`7a3c020`](https://github.com/nordz0r/nopaste/commit/7a3c020f1a290adffc1cbd57f99ef3798522c227))
+
+
 ## v1.19.1 (2026-08-30)
 
 ### Bug Fixes
