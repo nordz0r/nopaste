@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.20.0 (2026-09-01)
+
+### Features
+
+- **analytics**: Add Yandex.Metrika counter and WebMCP tools
+  ([`86bbca1`](https://github.com/nordz0r/nopaste/commit/86bbca166e70374c32d31c27f0c81f0b81131d71))
+
+
 ## v1.19.2 (2026-08-31)
 
 ### Bug Fixes
