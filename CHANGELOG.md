@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.20.1 (2026-09-01)
+
+### Bug Fixes
+
+- **assets**: Allow WebMCP CDN and Yandex.Metrika in external URL whitelist
+  ([`7ecbc68`](https://github.com/nordz0r/nopaste/commit/7ecbc68f223e8059e8f7d4150fc8ee95c3c2f27c))
+
+
 ## v1.20.0 (2026-09-01)
 
 ### Features
