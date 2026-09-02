@@ -338,6 +338,15 @@ def test_stylesheet_references_local_fonts(client):
     assert "safe-area-inset-bottom" in response.text
 
 
+def test_stylesheet_wraps_paste_lines(client):
+    response = client.get("/static/css/style.css")
+
+    assert response.status_code == 200
+    assert "white-space: pre-wrap;" in response.text
+    assert "word-break: break-word;" in response.text
+    assert "overflow-wrap: anywhere;" in response.text
+
+
 def test_create_paste_uses_short_id_and_signed_cookie(client):
     response = client.post(
         "/paste", data={"content": "Test content"}, follow_redirects=False

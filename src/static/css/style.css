@@ -684,6 +684,9 @@ textarea {
     resize: vertical;
     outline: none;
     transition: border-color 0.2s;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 textarea:focus {
@@ -889,6 +892,7 @@ textarea::placeholder {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     overflow: auto;
+    width: 100%;
     max-width: 100%;
     box-shadow: var(--shadow-sm);
 }
@@ -896,7 +900,8 @@ textarea::placeholder {
 .paste-line {
     display: grid;
     grid-template-columns: 60px 1fr;
-    min-width: fit-content;
+    min-width: 0;
+    width: 100%;
 }
 
 .paste-line:hover {
@@ -925,7 +930,9 @@ textarea::placeholder {
     font-family: var(--font-mono);
     font-size: 0.9375rem;
     line-height: 1.6;
-    white-space: pre;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
     color: var(--text-code-main);
 }
 
@@ -1640,6 +1647,9 @@ textarea::placeholder {
     border-radius: var(--radius-md);
     overflow-x: auto;
     margin-bottom: 1em;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .code-block-wrap { position: relative; }
