@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.21.0 (2026-09-02)
+
+### Chores
+
+- Sync uv.lock project version with pyproject
+  ([`fe1c357`](https://github.com/nordz0r/nopaste/commit/fe1c357c270a0620cfeeb939e2a40a33dc521122))
+
+- **tests**: Satisfy ruff formatting
+  ([`a5b2e41`](https://github.com/nordz0r/nopaste/commit/a5b2e418f5f24ffb449e8735151f0cc0cabb5522))
+
+### Documentation
+
+- Sync README and .env.example with current features
+  ([`600a190`](https://github.com/nordz0r/nopaste/commit/600a19056cc34d792864687896dc59241f2ebd9d))
+
+### Features
+
+- **config**: Make analytics, OIDC discovery, and shortener host configurable
+  ([`a5e7be4`](https://github.com/nordz0r/nopaste/commit/a5e7be476960f22c5a536f477becc724d53ff1b8))
+
+
 ## v1.20.3 (2026-09-02)
 
 ### Bug Fixes
