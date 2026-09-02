@@ -1582,9 +1582,14 @@ textarea::placeholder {
 }
 
 .markdown-body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     font-family: var(--font-sans);
     line-height: 1.7;
     color: var(--text-main);
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .markdown-body h1,

@@ -342,6 +342,10 @@ def test_stylesheet_wraps_paste_lines(client):
     response = client.get("/static/css/style.css")
 
     assert response.status_code == 200
+    assert ".markdown-body {" in response.text
+    assert "width: 100%;" in response.text
+    assert "max-width: 100%;" in response.text
+    assert "min-width: 0;" in response.text
     assert "white-space: pre-wrap;" in response.text
     assert "word-break: break-word;" in response.text
     assert "overflow-wrap: anywhere;" in response.text
