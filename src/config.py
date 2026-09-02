@@ -66,7 +66,12 @@ class Settings(BaseSettings):
         description="Public base URL for canonical/Open Graph metadata.",
     )
     OIDC_DISCOVERY_URL: str = Field(
-        default="https://cloud.goldfinches.ru/index.php/.well-known/openid-configuration"
+        default="",
+        description=(
+            "OpenID Connect discovery document URL "
+            "(e.g. https://sso.example.com/.well-known/openid-configuration). "
+            "Required to enable login."
+        ),
     )
     OIDC_CLIENT_ID: str | None = Field(default=None)
     OIDC_CLIENT_SECRET: str | None = Field(default=None)
@@ -75,11 +80,22 @@ class Settings(BaseSettings):
     SESSION_SECRET_KEY: str | None = Field(default=None)
     SESSION_COOKIE_NAME: str = Field(default="nopaste_session")
     SESSION_MAX_AGE_SECONDS: int = Field(default=2_592_000)
+    YANDEX_METRIKA_ID: str = Field(
+        default="",
+        description=(
+            "Yandex.Metrika counter ID. When empty, the analytics tag is not "
+            "rendered. Set this only on your own deployment."
+        ),
+    )
 
     @computed_field
     @property
     def oidc_enabled(self) -> bool:
-        return bool(self.OIDC_CLIENT_ID and self.OIDC_CLIENT_SECRET)
+        return bool(
+            self.OIDC_CLIENT_ID
+            and self.OIDC_CLIENT_SECRET
+            and (self.OIDC_DISCOVERY_URL or "").strip()
+        )
 
     @computed_field
     @property

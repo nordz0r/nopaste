@@ -72,6 +72,11 @@ def test_read_root(client):
 def test_header_places_icon_login_to_the_right_of_my_list(client, monkeypatch):
     monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_ID", "nopaste")
     monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_SECRET", "secret")
+    monkeypatch.setattr(
+        main_module.settings,
+        "OIDC_DISCOVERY_URL",
+        "https://sso.example.com/.well-known/openid-configuration",
+    )
 
     response = client.get("/")
 
@@ -86,6 +91,11 @@ def test_header_places_icon_login_to_the_right_of_my_list(client, monkeypatch):
 def test_oidc_login_callback_creates_session(client, monkeypatch):
     monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_ID", "nopaste")
     monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_SECRET", "secret")
+    monkeypatch.setattr(
+        main_module.settings,
+        "OIDC_DISCOVERY_URL",
+        "https://sso.example.com/.well-known/openid-configuration",
+    )
 
     async def mock_discovery():
         return {"authorization_endpoint": "https://cloud.example/authorize"}

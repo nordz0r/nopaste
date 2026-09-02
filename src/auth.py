@@ -98,7 +98,7 @@ def _is_expired(payload: dict[str, Any]) -> bool:
 
 
 def oidc_enabled() -> bool:
-    return bool(settings.OIDC_CLIENT_ID and settings.OIDC_CLIENT_SECRET)
+    return settings.oidc_enabled
 
 
 async def discovery() -> dict[str, Any]:

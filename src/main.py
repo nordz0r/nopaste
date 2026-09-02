@@ -269,6 +269,7 @@ def template_context(request: Request, **extra: Any) -> dict[str, Any]:
         "is_telegram_preview_request": is_telegram_preview,
         "current_user": current_user(request),
         "oidc_enabled": settings.oidc_enabled,
+        "yandex_metrika_id": (settings.YANDEX_METRIKA_ID or "").strip(),
     }
     ctx.update(extra)
     return ctx
@@ -450,14 +451,33 @@ def require_paste_content(content: str, lang: str) -> str:
     return content
 
 
+def shortener_host() -> str | None:
+    """Hostname of the configured Shlink shortener, used to trust short URLs."""
+    base = (settings.SHRINK_URL or "").strip()
+    if not base:
+        return None
+    try:
+        return (urlsplit(base).hostname or "").lower() or None
+    except ValueError:
+        return None
+
+
 def gldf_short_url(short_url: str | None) -> str | None:
+    """Return the short URL only when it belongs to the configured shortener host.
+
+    Guards the list/paste UI against rendering arbitrary externally-supplied
+    URLs. The trusted host is derived from ``SHRINK_URL`` rather than hardcoded.
+    """
     if not short_url or not isinstance(short_url, str):
+        return None
+    trusted = shortener_host()
+    if not trusted:
         return None
     try:
         host = (urlsplit(short_url).hostname or "").lower()
     except ValueError:
         return None
-    if host == "gldf.ru" or host.endswith(".gldf.ru"):
+    if host == trusted or host.endswith(f".{trusted}"):
         return short_url
     return None
 
