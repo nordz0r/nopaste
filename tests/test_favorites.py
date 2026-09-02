@@ -360,7 +360,13 @@ def test_shipped_heart_link_icons_css_and_unfavorite_js_sequence(tmp_path, monke
 
     with TestClient(main_module.app) as client:
         client.headers["Accept-Language"] = "en"
-        for name in ("heart.png", "heart_gray.png", "heart_broken.png", "link.png", "delete.png"):
+        for name in (
+            "heart.png",
+            "heart_gray.png",
+            "heart_broken.png",
+            "link.png",
+            "delete.png",
+        ):
             response = client.get(f"/static/images/{name}")
             assert response.status_code == 200, name
             assert response.content.startswith(b"\x89PNG\r\n\x1a\n")
