@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.20.3 (2026-09-02)
+
+### Bug Fixes
+
+- **markdown**: Constrain rendered content width
+  ([`4d32d1e`](https://github.com/nordz0r/nopaste/commit/4d32d1eb929e8cba6eb17c7fda3a7bb247d79242))
+
+
 ## v1.20.2 (2026-09-02)
 
 ### Bug Fixes
