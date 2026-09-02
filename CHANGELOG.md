@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.20.2 (2026-09-02)
+
+### Bug Fixes
+
+- **paste**: Wrap long text lines in paste view
+  ([`d092582`](https://github.com/nordz0r/nopaste/commit/d092582dba88bb0ab27f9fa5395cb04616748762))
+
+
 ## v1.20.1 (2026-09-01)
 
 ### Bug Fixes
