@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Self-hosted pastebin for text, logs, notes, and configs.</strong><br>
-  Fast. Private. No accounts. One container.
+  Fast. Private. Anonymous by default. One container.
 </p>
 
 <p align="center">
@@ -33,12 +33,16 @@ If Nopaste is useful, [star the repo](https://github.com/nordz0r/nopaste) — it
 
 Most pastebins are either public SaaS or heavy appliances. Nopaste is a single container you can run at home, on a VPS, or behind your reverse proxy.
 
+- **Anonymous by default** — no sign-up needed to create or read a paste
 - **Share by ID** or an optional Shlink short URL
 - **Line anchors** (`#L12`, `#L12-L20`) and one-click copy
 - **RAW** view (`/raw/<id>`) for curl, CI, and editors
 - **Syntax highlighting** plus Markdown / Mermaid
 - **SQLite by default**, PostgreSQL when you need it
 - **Optional at-rest encryption** (`PASTE_ENCRYPTION_KEY`)
+- **Optional accounts via OIDC** — personal bookmarks, edit/delete any paste
+- **Bookmarks / favorites** and a 7-day paginated paste list
+- **WebMCP tools** so AI agents can create and read pastes on the page
 - **RU/EN UI** from `Accept-Language`
 - **Feedback** in the footer opens a prefilled GitHub issue
 - **No search indexing** (`robots.txt` + `noindex`)
@@ -51,7 +55,8 @@ Most pastebins are either public SaaS or heavy appliances. Nopaste is a single c
 | Optional server-side encryption | ✓ | — | — |
 | Markdown + Mermaid | ✓ | — | — |
 | Line anchors `#L12-L20` | ✓ | — | — |
-| SQLite *or* Postgres | ✓ | ✓ | file store |
+| SQLite *or* Postgres | ✓ | ✓ | ✓ |
+| Optional accounts (OIDC) | ✓ | — | — |
 | Shlink short URLs | ✓ | — | — |
 | RU / EN UI | ✓ | — | — |
 
@@ -100,6 +105,8 @@ Images:
 | Editor | Ctrl/⌘+Enter to save, signed recent-pastes cookie |
 | Viewer | Highlighted lines, Markdown toggle, `</>` RAW button |
 | Links | Copy page URL or Shlink slug; click a line number to copy `#Ln` |
+| Accounts | Optional OIDC login · bookmarks · edit/delete · 7-day list paging |
+| Agents | WebMCP tools (`document.modelContext`) to create and read pastes |
 | Storage | SQLAlchemy + Alembic · SQLite or PostgreSQL |
 | Ops | `/health/live`, `/health/ready`, in-memory rate limit, docs allowlist |
 
@@ -137,6 +144,12 @@ Settings load from the environment / `.env` (see `.env.example`).
 | `GITHUB_REPO` | `owner/name` for the footer Feedback button (empty hides it) |
 | `DOCS_ALLOWLIST` | CIDR/IP list for `/docs` (empty = open) |
 | `APP_VERSION` | Display version (release images set this) |
+| `OIDC_DISCOVERY_URL` | **Optional.** OIDC discovery document URL — enables login |
+| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | OIDC client credentials (both required for login) |
+| `OIDC_SCOPES` / `OIDC_REDIRECT_URI` | Requested scopes and the registered callback URL |
+| `SESSION_SECRET_KEY` | Session cookie signing secret (falls back to `COOKIE_SIGNING_SECRET`) |
+| `SESSION_COOKIE_NAME` / `SESSION_MAX_AGE_SECONDS` | Session cookie name and lifetime |
+| `YANDEX_METRIKA_ID` | **Optional.** Your Yandex.Metrika counter ID (empty = no analytics tag) |
 
 ### Encryption (optional)
 
@@ -147,6 +160,22 @@ Settings load from the environment / `.env` (see `.env.example`).
 ```bash
 python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 ```
+
+### Accounts (optional)
+
+Nopaste is fully usable **anonymously** — no login is required to create or read
+a paste. Accounts are optional and off by default.
+
+Set `OIDC_DISCOVERY_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` to enable
+login with any standard OpenID Connect provider (Keycloak, Authentik, Nextcloud,
+Google, …). When enabled, signed-in users get:
+
+- **Bookmarks / favorites** — a personal list of saved pastes
+- **Edit and delete** any paste (staff capability)
+- A **7-day paginated list** of recent pastes
+
+Anonymous ownership of freshly created pastes still works through the signed
+`user_pastes` cookie, independent of accounts.
 
 ## Releases
 
@@ -171,11 +200,14 @@ See [CHANGELOG.md](./CHANGELOG.md) or the in-app footer changelog.
 src/
   main.py           FastAPI routes
   config.py         pydantic-settings
+  auth.py           OIDC login + session helpers
+  cookies.py        signed cookie encode/decode
   storage/          models, repository, crypto, engine
   i18n/             en/ru catalogs
   highlighting.py   syntax / markdown
+  list_paging.py    7-day calendar paging
   templates/        Jinja2 designs
-  static/           CSS, fonts, images, JS
+  static/           CSS, fonts, images, JS (app.js, webmcp.js, sw.js)
 alembic/            migrations
 tests/              pytest
 .github/workflows/  CI, Docker, semantic-release

@@ -13,7 +13,7 @@
 
 </p>
 
-Self-hosted pastebin для текста, логов, заметок и конфигов. Быстро, без аккаунтов.
+Self-hosted pastebin для текста, логов, заметок и конфигов. Быстро, анонимно по умолчанию.
 
 Если Nopaste полезен — [поставьте звезду](https://github.com/nordz0r/nopaste). Это лучший способ помочь проекту.
 
@@ -28,12 +28,16 @@ docker compose up -d
 
 Публичные pastebin — чужой SaaS. Nopaste — один контейнер: дома, на VPS или за своим прокси.
 
+- Анонимно по умолчанию — регистрация не нужна для создания и чтения
 - Шаринг по ID или короткой ссылке Shlink
 - Якоря строк (`#L12`, `#L12-L20`) и кнопки копирования
 - **RAW** (`/raw/<id>`) для curl, CI и редакторов
 - Подсветка синтаксиса + Markdown / Mermaid
 - SQLite по умолчанию, PostgreSQL при необходимости
 - Опциональное шифрование at-rest (`PASTE_ENCRYPTION_KEY`)
+- Опциональные аккаунты через OIDC — закладки, редактирование/удаление паст
+- Закладки/избранное и список паст с постраничной навигацией по дням
+- WebMCP-инструменты: AI-агенты могут создавать и читать пасты на странице
 - RU/EN UI по `Accept-Language`
 - **Feedback** в подвале открывает предзаполненный issue в GitHub
 - Без индексации (`robots.txt` + `noindex`)
@@ -83,8 +87,24 @@ curl -fsSL "http://localhost:8000/raw/<paste_id>"
 | `SHRINK_URL` / `SHRINK_TOKEN` | Shlink (нужны оба) |
 | `PUBLIC_BASE_URL` | Базовый URL для OG/canonical |
 | `UI_DESIGN` | Дизайн в `templates/designs/<name>/` |
+| `GITHUB_REPO` | `owner/name` для кнопки Feedback (пусто — скрыта) |
 | `DOCS_ALLOWLIST` | CIDR/IP для `/docs` |
 | `APP_VERSION` | Версия в UI |
+| `OIDC_DISCOVERY_URL` | **Опционально.** URL discovery-документа OIDC — включает вход |
+| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | Учётные данные OIDC-клиента (нужны оба) |
+| `OIDC_SCOPES` / `OIDC_REDIRECT_URI` | Запрашиваемые scope и адрес callback |
+| `SESSION_SECRET_KEY` | Секрет подписи сессии (fallback — `COOKIE_SIGNING_SECRET`) |
+| `SESSION_COOKIE_NAME` / `SESSION_MAX_AGE_SECONDS` | Имя и время жизни cookie сессии |
+| `YANDEX_METRIKA_ID` | **Опционально.** ID счётчика Яндекс.Метрики (пусто — тег не рендерится) |
+
+### Аккаунты (опционально)
+
+Nopaste полностью работает **анонимно** — вход не требуется. Аккаунты
+опциональны и по умолчанию выключены. Задайте `OIDC_DISCOVERY_URL`,
+`OIDC_CLIENT_ID` и `OIDC_CLIENT_SECRET`, чтобы включить вход через любой
+стандартный OpenID Connect провайдер (Keycloak, Authentik, Nextcloud, Google …).
+Вошедшие пользователи получают закладки/избранное, редактирование и удаление
+любой пасты, а также список паст с постраничной навигацией по дням.
 
 ## Релизы
 
