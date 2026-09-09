@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.22.0 (2026-09-09)
+
+### Features
+
+- **paste**: Require available custom slug and expose short URL to WebMCP
+  ([`6f139d9`](https://github.com/nordz0r/nopaste/commit/6f139d9fcb71f5c7675ea4104fa0b27fb885d158))
+
+
 ## v1.21.0 (2026-09-02)
 
 ### Chores
