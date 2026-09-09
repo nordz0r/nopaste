@@ -828,6 +828,8 @@ def test_create_paste_passes_custom_slug_to_shrink(client, monkeypatch):
         received["custom_slug"] = custom_slug
         return "https://gldf.ru/my-note"
 
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
     monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
     response = client.post(
         "/paste",
@@ -846,6 +848,125 @@ def test_create_paste_rejects_invalid_custom_slug(client):
 
     assert response.status_code == 400
     assert response.json() == {"detail": "Invalid custom short link name"}
+
+
+def _count_pastes() -> int:
+    from storage.models import Paste
+    from storage.session import session_scope
+
+    with session_scope() as session:
+        return len(session.query(Paste).all())
+
+
+def test_create_paste_slug_taken_returns_409_and_creates_nothing(client, monkeypatch):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        raise main_module.SlugTakenError(custom_slug)
+
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    initial_count = _count_pastes()
+    response = client.post(
+        "/paste",
+        data={"content": "taken slug", "custom_slug": "my-note"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"]  # localized message present
+    assert _count_pastes() == initial_count
+
+
+def test_create_paste_custom_slug_with_shrink_disabled_returns_503(client):
+    initial_count = _count_pastes()
+    response = client.post(
+        "/paste",
+        data={"content": "no shrink", "custom_slug": "my-note"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 503
+    assert _count_pastes() == initial_count
+
+
+def test_create_paste_custom_slug_with_shrink_unavailable_returns_503(
+    client, monkeypatch
+):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str | None:
+        return None
+
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    initial_count = _count_pastes()
+    response = client.post(
+        "/paste",
+        data={"content": "shrink down", "custom_slug": "my-note"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 503
+    assert _count_pastes() == initial_count
+
+
+def test_create_paste_without_slug_still_created_when_shrink_unavailable(
+    client, monkeypatch
+):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str | None:
+        return None
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    response = client.post(
+        "/paste", data={"content": "soft fail"}, follow_redirects=False
+    )
+
+    assert response.status_code == 303
+    paste_id = response.headers["location"].split("/")[-1]
+    assert main_module.db.get_paste(paste_id) is not None
+
+
+def test_create_paste_json_response_includes_short_url(client, monkeypatch):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        return "https://gldf.ru/my-note"
+
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    response = client.post(
+        "/paste",
+        data={"content": "json create", "custom_slug": "my-note"},
+        headers={"Accept": "application/json"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["paste_id"]
+    assert payload["url"].endswith(f"/paste/{payload['paste_id']}")
+    assert payload["short_url"] == "https://gldf.ru/my-note"
+    assert payload["share_url"] == "https://gldf.ru/my-note"
+    # Same creation side effects as the HTML flow
+    assert response.headers["set-cookie"].startswith("user_pastes=")
+    assert main_module.db.get_paste(payload["paste_id"]) is not None
+
+
+def test_create_paste_json_response_without_shortener_shares_paste_url(client):
+    response = client.post(
+        "/paste",
+        data={"content": "json create no shrink"},
+        headers={"Accept": "application/json"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["short_url"] is None
+    assert payload["share_url"].endswith(f"/paste/{payload['paste_id']}")
 
 
 def test_create_paste_with_shrink_shows_short_url_in_view(client, monkeypatch):

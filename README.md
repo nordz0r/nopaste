@@ -106,7 +106,7 @@ Images:
 | Viewer | Highlighted lines, Markdown toggle, `</>` RAW button |
 | Links | Copy page URL or Shlink slug; click a line number to copy `#Ln` |
 | Accounts | Optional OIDC login · bookmarks · edit/delete · 7-day list paging |
-| Agents | WebMCP tools (`document.modelContext`) to create and read pastes |
+| Agents | WebMCP tools (`document.modelContext`): create with strict vanity slug, inspect short/share URLs, read pastes |
 | Storage | SQLAlchemy + Alembic · SQLite or PostgreSQL |
 | Ops | `/health/live`, `/health/ready`, in-memory rate limit, docs allowlist |
 

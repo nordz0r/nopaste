@@ -761,13 +761,27 @@ async def create_paste(
     check_rate_limit(request)
     custom_slug = normalize_custom_slug(custom_slug)
     content = require_paste_content(content, lang)
+    if custom_slug and not settings.shrink_enabled:
+        raise HTTPException(
+            status_code=503, detail=i18n_t("errors.shrink_disabled", lang)
+        )
 
     paste_id = generate_paste_id(db)
     paste_url = str(request.url_for("get_paste", paste_id=paste_id))
     try:
         short_url = await shorten_url(paste_url, custom_slug)
     except SlugTakenError:
-        short_url = await shorten_url(paste_url, None)
+        if custom_slug:
+            # Strict contract: an explicitly requested slug must not be
+            # silently replaced — fail before the paste is stored.
+            raise HTTPException(
+                status_code=409, detail=i18n_t("errors.slug_taken", lang)
+            ) from None
+        short_url = None
+    if custom_slug and not short_url:
+        raise HTTPException(
+            status_code=503, detail=i18n_t("errors.shrink_unavailable", lang)
+        )
     user = current_user(request)
     db.save_paste(paste_id, content, short_url, user["sub"] if user else None)
     if user:
@@ -777,7 +791,20 @@ async def create_paste(
     user_pastes = load_user_pastes(request)
     user_pastes.append(paste_id)
 
-    response = RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
+    if "application/json" in request.headers.get("accept", "").lower():
+        trusted_short_url = gldf_short_url(short_url)
+        response = JSONResponse(
+            status_code=201,
+            content={
+                "status": "ok",
+                "paste_id": paste_id,
+                "url": paste_url,
+                "short_url": trusted_short_url,
+                "share_url": trusted_short_url or paste_url,
+            },
+        )
+    else:
+        response = RedirectResponse(url=f"/paste/{paste_id}", status_code=303)
     response.set_cookie(
         key="user_pastes",
         value=dump_user_pastes_cookie(user_pastes),

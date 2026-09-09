@@ -120,7 +120,7 @@
         {
             name: "create_paste",
             description:
-                "Create a new Nopaste from the provided text. Returns the new paste URL. Optionally pass custom_slug to set a vanity short-link name (requires Shlink to be configured on the server).",
+                "Create a new Nopaste from the provided text. Returns the paste URL and, when the server has a shortener configured, its short URL. Pass custom_slug to request a vanity short-link name: it is strict — if the slug is already taken or the shortener is unavailable, the paste is NOT created and an error is returned.",
             inputSchema: {
                 type: "object",
                 properties: {
@@ -131,7 +131,7 @@
                     custom_slug: {
                         type: "string",
                         description:
-                            "Optional custom short-link slug (letters, digits, underscore, dash; 5-64 chars).",
+                            "Optional custom short-link slug (letters, digits, underscore, dash; 5-64 chars). Strict: taken slug or shortener outage fails the call without creating the paste.",
                     },
                 },
                 required: ["content"],
@@ -154,19 +154,28 @@
                         body: body,
                         headers: {
                             "Content-Type": "application/x-www-form-urlencoded",
-                            Accept: "text/html",
+                            Accept: "application/json",
                         },
                         redirect: "follow",
                     });
-                    if (!res.ok && res.status !== 200) {
-                        return fail("HTTP " + res.status + " creating paste.");
+                    let payload = null;
+                    try {
+                        payload = await res.json();
+                    } catch (parseErr) {
+                        payload = null;
                     }
-                    const url = res.url;
-                    const match = url.match(/\/paste\/([A-Za-z0-9_-]+)/);
-                    const id = match ? match[1] : null;
+                    if (!res.ok || !payload || payload.status !== "ok") {
+                        const detail =
+                            payload && typeof payload.detail === "string"
+                                ? payload.detail
+                                : "HTTP " + res.status + " creating paste.";
+                        return fail(detail);
+                    }
                     return json({
-                        paste_id: id,
-                        url: url,
+                        paste_id: payload.paste_id,
+                        url: payload.url,
+                        short_url: payload.short_url,
+                        share_url: payload.share_url,
                     });
                 } catch (err) {
                     return fail("Network error: " + (err && err.message ? err.message : err));
