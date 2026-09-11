@@ -683,12 +683,15 @@ async def robots_txt():
     return PlainTextResponse(
         "User-agent: TelegramBot\n"
         "Allow: /paste/\n"
+        "Allow: /raw/\n"
         "Allow: /static/\n\n"
         "User-agent: Twitterbot\n"
         "Allow: /paste/\n"
+        "Allow: /raw/\n"
         "Allow: /static/\n\n"
         "User-agent: facebookexternalhit\n"
         "Allow: /paste/\n"
+        "Allow: /raw/\n"
         "Allow: /static/\n\n"
         "User-agent: *\n"
         "Allow: /paste/\n"
@@ -767,7 +770,7 @@ async def create_paste(
         )
 
     paste_id = generate_paste_id(db)
-    paste_url = str(request.url_for("get_paste", paste_id=paste_id))
+    paste_url = canonical_paste_url(request, paste_id)
     try:
         short_url = await shorten_url(paste_url, custom_slug)
     except SlugTakenError:
@@ -942,7 +945,7 @@ async def update_paste_slug(
     if not normalized_slug:
         raise HTTPException(status_code=400, detail=i18n_t("errors.slug_empty", lang))
 
-    paste_url = str(request.url_for("get_paste", paste_id=paste_id))
+    paste_url = canonical_paste_url(request, paste_id)
     try:
         short_url = await shorten_url(paste_url, normalized_slug)
     except SlugTakenError:

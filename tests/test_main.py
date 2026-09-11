@@ -159,6 +159,14 @@ def test_legacy_iv_url_redirects_to_canonical_paste(client):
     assert response.status_code == 301
     assert response.headers["location"] == f"/paste/{paste_id}"
 
+    head_response = client.head(f"/iv/{paste_id}", follow_redirects=False)
+    assert head_response.status_code == 301
+    assert head_response.headers["location"] == f"/paste/{paste_id}"
+
+    invalid_response = client.get("/iv/invalid_id!", follow_redirects=False)
+    assert invalid_response.status_code == 303
+    assert invalid_response.headers["location"] == "/"
+
 
 def test_paste_page_is_noindex_for_normal_requests(client):
     create_response = client.post(
@@ -250,12 +258,22 @@ def test_robots_txt_disallows_indexing(client):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/plain")
     assert response.headers.get("x-robots-tag") == "noindex, nofollow"
-    assert "User-agent: TelegramBot\nAllow: /paste/\nAllow: /static/" in response.text
     assert (
-        "User-agent: *\nAllow: /paste/\nAllow: /raw/\nAllow: /static/" in response.text
+        "User-agent: TelegramBot\n"
+        "Allow: /paste/\n"
+        "Allow: /raw/\n"
+        "Allow: /static/" in response.text
+    )
+    assert (
+        "User-agent: *\n"
+        "Allow: /paste/\n"
+        "Allow: /raw/\n"
+        "Allow: /static/\n"
+        "Allow: /robots.txt" in response.text
     )
     assert "Disallow: /list" in response.text
     assert "Disallow: /\n" not in response.text
+    assert "Allow: /iv/" not in response.text
 
 
 def test_load_asset_version_prefers_environment(monkeypatch):
@@ -626,6 +644,29 @@ def test_public_base_url_overrides_share_metadata_urls(client, monkeypatch):
     )
 
 
+def test_public_base_url_bind_address_zero_zero_zero_zero_ignored_for_metadata(
+    client, monkeypatch
+):
+    monkeypatch.setattr(main_module.settings, "PUBLIC_BASE_URL", "http://0.0.0.0:8000")
+    create_response = client.post(
+        "/paste", data={"content": "bind address metadata"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+
+    response = client.get(f"/paste/{paste_id}")
+
+    assert response.status_code == 200
+    assert (
+        f'<meta property="og:url" content="http://testserver/paste/{paste_id}">'
+        in response.text
+    )
+    assert (
+        '<meta property="og:image" '
+        'content="http://testserver/static/images/goldfinches_logo.png">'
+        in response.text
+    )
+
+
 def test_list_pastes_shows_newest_first_with_preview_and_line_count(client):
     first_response = client.post(
         "/paste", data={"content": "first line\nsecond line"}, follow_redirects=False
@@ -985,6 +1026,10 @@ def test_create_paste_with_shrink_shows_short_url_in_view(client, monkeypatch):
     assert "https://gldf.ru/ab12c" in view_response.text
     assert 'id="short-url-link"' in view_response.text
     assert "short-url-editor" in view_response.text
+    assert (
+        'href="https://t.me/share/url?url=https%3A//gldf.ru/ab12c"'
+        in view_response.text
+    )
 
 
 def test_create_paste_without_shrink_omits_short_url(client):
@@ -996,6 +1041,10 @@ def test_create_paste_without_shrink_omits_short_url(client):
 
     assert view_response.status_code == 200
     assert 'id="short-url-link"' not in view_response.text
+    assert (
+        f'href="https://t.me/share/url?url=http%3A//testserver/paste/{paste_id}"'
+        in view_response.text
+    )
 
 
 def test_copy_link_uses_short_url_when_shrink_configured(client, monkeypatch):

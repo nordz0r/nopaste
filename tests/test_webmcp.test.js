@@ -101,3 +101,105 @@ test("create_paste fails early for empty content without calling network", async
     assert.equal(result.isError, true);
     assert.equal(called, false);
 });
+
+test("app layout loads WebMCP polyfill before webmcp.js", () => {
+    const html = fs.readFileSync(
+        path.join(__dirname, "..", "src", "templates", "layouts", "app.html"),
+        "utf8"
+    );
+    const polyfillIndex = html.indexOf("@mcp-b/global");
+    const webmcpIndex = html.indexOf("/static/js/webmcp.js");
+    assert.notEqual(polyfillIndex, -1, "polyfill script missing from app.html");
+    assert.notEqual(webmcpIndex, -1, "webmcp.js script missing from app.html");
+    assert.ok(
+        polyfillIndex < webmcpIndex,
+        "Expected @mcp-b/global to load before webmcp.js so document.modelContext exists"
+    );
+});
+
+test("registers all tools immediately when document.modelContext is present", () => {
+    const code = fs.readFileSync(
+        path.join(__dirname, "..", "src", "static", "js", "webmcp.js"),
+        "utf8"
+    );
+    const registered = [];
+    let listenerAdded = false;
+    const context = {
+        document: {
+            modelContext: {
+                registerTool: (tool) => registered.push(tool),
+            },
+            getElementById: () => null,
+            cookie: "",
+        },
+        window: {
+            location: {
+                pathname: "/",
+                origin: "https://example.test",
+            },
+            addEventListener: () => {
+                listenerAdded = true;
+            },
+        },
+        console,
+        URLSearchParams,
+        fetch: async () => ({}),
+    };
+    vm.runInNewContext(code, context);
+
+    assert.equal(listenerAdded, false);
+    const names = registered.map((t) => t.name);
+    assert.deepEqual(names, [
+        "get_paste",
+        "read_current_paste",
+        "create_paste",
+        "list_recent_pastes",
+    ]);
+});
+
+test("registers all tools on window load when document.modelContext is deferred", () => {
+    const code = fs.readFileSync(
+        path.join(__dirname, "..", "src", "static", "js", "webmcp.js"),
+        "utf8"
+    );
+    const registered = [];
+    let loadHandler = null;
+    const doc = {
+        getElementById: () => null,
+        cookie: "",
+    };
+    const context = {
+        document: doc,
+        window: {
+            location: {
+                pathname: "/",
+                origin: "https://example.test",
+            },
+            addEventListener: (event, handler) => {
+                if (event === "load") {
+                    loadHandler = handler;
+                }
+            },
+        },
+        console,
+        URLSearchParams,
+        fetch: async () => ({}),
+    };
+    vm.runInNewContext(code, context);
+
+    assert.equal(registered.length, 0);
+    assert.equal(typeof loadHandler, "function");
+
+    doc.modelContext = {
+        registerTool: (tool) => registered.push(tool),
+    };
+    loadHandler();
+
+    const names = registered.map((t) => t.name);
+    assert.deepEqual(names, [
+        "get_paste",
+        "read_current_paste",
+        "create_paste",
+        "list_recent_pastes",
+    ]);
+});

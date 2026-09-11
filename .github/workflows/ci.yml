@@ -62,6 +62,9 @@ jobs:
       - name: Run tests
         run: uv run pytest --cov=src --cov-report=term-missing
 
+      - name: Run node tests
+        run: node --test
+
   compose-smoke:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
