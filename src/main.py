@@ -17,6 +17,8 @@ from cookies import (
     dump_user_pastes_cookie,
     load_user_pastes as parse_recent_paste_cookie,
     order_recent_pastes,
+    parse_user_paste_ids,
+    verify_signed_cookie_value,
 )
 from database import Database, create_database_from_settings
 from highlighting import (
@@ -176,7 +178,13 @@ async def auth_callback(
     response = RedirectResponse(state_data.get("return_to") or "/", status_code=303)
     response.set_cookie(
         settings.SESSION_COOKIE_NAME,
-        make_session({"sub": user_id, **user}),
+        make_session(
+            {
+                "sub": user_id,
+                **user,
+                "role": str(claims.get("role") or ""),
+            }
+        ),
         max_age=settings.SESSION_MAX_AGE_SECONDS,
         httponly=True,
         secure=request.url.scheme == "https",
@@ -328,32 +336,28 @@ def _is_ip_in_allowlist(ip: str, allowlist: list[str]) -> bool:
 
 
 def get_client_ip(request: Request) -> str:
+    peer = request.client.host if request.client else "unknown"
+    trusted = [ip.strip() for ip in settings.TRUSTED_PROXY_IPS.split(",") if ip.strip()]
     fwd = request.headers.get("x-forwarded-for", "")
-    if fwd:
-        return fwd.split(",")[0].strip()
-    if request.client and request.client.host:
-        return request.client.host
-    return "127.0.0.1"
-
-
-def _docs_ip_candidates(request: Request) -> list[str]:
-    candidates: list[str] = []
-    if request.client and request.client.host:
-        candidates.append(request.client.host)
-    fwd = request.headers.get("x-forwarded-for", "")
-    if fwd:
-        candidates.append(fwd.split(",")[0].strip())
-    return candidates
+    if not trusted or not fwd or not _is_ip_in_allowlist(peer, trusted):
+        return peer
+    try:
+        forwarded = [str(ip_address(ip.strip())) for ip in fwd.split(",")]
+    except ValueError:
+        return peer
+    # Walk right-to-left from the trusted peer.  The first untrusted address
+    # is the client; values further left are attacker-controlled.
+    for candidate in reversed(forwarded):
+        if not _is_ip_in_allowlist(candidate, trusted):
+            return candidate
+    return forwarded[0]
 
 
 @app.middleware("http")
 async def restrict_api_docs(request: Request, call_next):
     """Restrict /docs, /redoc, /openapi.json when DOCS_ALLOWLIST is set."""
     if request.url.path in {"/docs", "/redoc", "/openapi.json"}:
-        for candidate in _docs_ip_candidates(request):
-            if _is_ip_in_allowlist(candidate, settings.DOCS_ALLOWLIST):
-                break
-        else:
+        if not _is_ip_in_allowlist(get_client_ip(request), settings.DOCS_ALLOWLIST):
             return PlainTextResponse("Forbidden", status_code=403)
 
     return await call_next(request)
@@ -419,19 +423,24 @@ def load_user_pastes(request: Request) -> list[str]:
 
 
 def cookie_owns_paste(request: Request, paste_id: str) -> bool:
-    return paste_id in load_user_pastes(request)
+    payload = verify_signed_cookie_value(request.cookies.get("user_pastes", ""))
+    return payload is not None and paste_id in parse_user_paste_ids(payload)
 
 
-def user_may_edit_slug(request: Request, paste_id: str) -> bool:
-    """Cookie owner of this paste, or any authenticated user."""
-    if current_user(request):
+def user_may_edit_slug(request: Request, paste: dict[str, Any]) -> bool:
+    """Staff/admins may edit all pastes; users may edit only their own."""
+    user = current_user(request)
+    if user and user.get("role") in {"staff", "admin"}:
         return True
-    return cookie_owns_paste(request, paste_id)
+    author_id = paste.get("author_id")
+    if author_id:
+        return bool(user and user["sub"] == author_id)
+    return cookie_owns_paste(request, paste["id"])
 
 
-def user_may_edit_content(request: Request) -> bool:
-    """Paste body edits are limited to authenticated users."""
-    return current_user(request) is not None
+def user_may_edit_content(request: Request, paste: dict[str, Any]) -> bool:
+    """Body edits and deletion additionally require authentication."""
+    return current_user(request) is not None and user_may_edit_slug(request, paste)
 
 
 def require_paste_content(content: str, lang: str) -> str:
@@ -791,7 +800,10 @@ async def create_paste(
         db.add_bookmark(user["sub"], paste_id)
     logger.info("Created paste: id=%s, length=%s", paste_id, len(content))
 
-    user_pastes = load_user_pastes(request)
+    # Legacy unsigned history remains readable, but must never be signed into
+    # an ownership credential when a new paste is created.
+    payload = verify_signed_cookie_value(request.cookies.get("user_pastes", ""))
+    user_pastes = parse_user_paste_ids(payload) if payload is not None else []
     user_pastes.append(paste_id)
 
     if "application/json" in request.headers.get("accept", "").lower():
@@ -860,9 +872,9 @@ async def get_paste(request: Request, paste_id: str):
     canonical_url = canonical_paste_url(request, paste_id)
     user = current_user(request)
     is_bookmarked = bool(user and db.is_bookmarked(user["sub"], paste_id))
-    can_edit_slug = user_may_edit_slug(request, paste_id)
-    can_edit_content = user_may_edit_content(request)
-    can_delete = bool(user)
+    can_edit_slug = user_may_edit_slug(request, paste)
+    can_edit_content = user_may_edit_content(request, paste)
+    can_delete = can_edit_content
     logger.info("Retrieved paste: id=%s", paste_id)
     template_name = (
         "paste_preview.html" if is_telegram_preview_request(request) else "paste.html"
@@ -924,7 +936,7 @@ async def update_paste_slug(
         raise HTTPException(
             status_code=404, detail=i18n_t("errors.paste_not_found", lang)
         )
-    if not user_may_edit_slug(request, paste_id):
+    if not user_may_edit_slug(request, paste):
         raise HTTPException(
             status_code=403, detail=i18n_t("errors.slug_forbidden", lang)
         )
@@ -976,10 +988,13 @@ async def delete_paste(request: Request, paste_id: str):
         raise HTTPException(
             status_code=404, detail=i18n_t("errors.paste_not_found", lang)
         )
-    if not db.get_paste(paste_id):
+    paste = db.get_paste(paste_id)
+    if not paste:
         raise HTTPException(
             status_code=404, detail=i18n_t("errors.paste_not_found", lang)
         )
+    if not user_may_edit_content(request, paste):
+        raise HTTPException(status_code=403, detail="Forbidden")
     db.delete_paste(paste_id)
     logger.info("Deleted paste: id=%s user=%s", paste_id, user["sub"])
     return JSONResponse(content={"status": "ok", "deleted": True})
@@ -988,7 +1003,7 @@ async def delete_paste(request: Request, paste_id: str):
 @app.get("/paste/{paste_id}/edit", include_in_schema=False)
 async def edit_paste_form(request: Request, paste_id: str):
     lang = request_lang(request)
-    if not user_may_edit_content(request):
+    if not current_user(request):
         raise HTTPException(status_code=401, detail=i18n_t("toast.auth_required", lang))
     if not PASTE_ID_PATTERN.fullmatch(paste_id):
         raise HTTPException(
@@ -999,6 +1014,8 @@ async def edit_paste_form(request: Request, paste_id: str):
         raise HTTPException(
             status_code=404, detail=i18n_t("errors.paste_not_found", lang)
         )
+    if not user_may_edit_content(request, paste):
+        raise HTTPException(status_code=403, detail="Forbidden")
     display_name = paste_display_name(
         paste_id,
         paste.get("short_url") if isinstance(paste.get("short_url"), str) else None,
@@ -1027,7 +1044,7 @@ async def edit_paste(
     content: str = Form(..., description="Updated paste body"),
 ):
     lang = request_lang(request)
-    if not user_may_edit_content(request):
+    if not current_user(request):
         raise HTTPException(status_code=401, detail=i18n_t("toast.auth_required", lang))
     check_rate_limit(request)
     if not PASTE_ID_PATTERN.fullmatch(paste_id):
@@ -1039,6 +1056,8 @@ async def edit_paste(
         raise HTTPException(
             status_code=404, detail=i18n_t("errors.paste_not_found", lang)
         )
+    if not user_may_edit_content(request, paste):
+        raise HTTPException(status_code=403, detail="Forbidden")
     content = require_paste_content(content, lang)
     if not db.update_paste_content(paste_id, content):
         raise HTTPException(

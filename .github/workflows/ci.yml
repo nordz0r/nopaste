@@ -76,6 +76,9 @@ jobs:
 
       - name: Start SQLite stack
         run: docker compose -f docker-compose.local.yml up -d nopaste-app
+        env:
+          DEBUG: "true"
+          COOKIE_SIGNING_SECRET: ci-compose-smoke-secret
 
       - name: Wait for health
         run: |

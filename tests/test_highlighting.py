@@ -266,3 +266,143 @@ def test_highlighted_paste_keeps_unified_diff_not_yaml():
 
     assert highlighted_paste.language == "Diff"
     assert highlighted_paste.is_markdown is False
+
+
+# ---------------------------------------------------------------------------
+# GFM Instant View renderer — new block-level features
+# ---------------------------------------------------------------------------
+
+
+def test_instant_view_renders_gfm_table():
+    content = "| Name | Age |\n| ---- | --- |\n| Alice | 30 |\n| Bob | 25 |\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<table>" in rendered
+    assert "<thead>" in rendered
+    assert "<th>Name</th>" in rendered
+    assert "<th>Age</th>" in rendered
+    assert "<tbody>" in rendered
+    assert "<td>Alice</td>" in rendered
+    assert "<td>30</td>" in rendered
+    assert "<td>Bob</td>" in rendered
+    assert "<td>25</td>" in rendered
+
+
+def test_instant_view_renders_table_without_leading_pipes():
+    content = "Name | Score\n---- | -----\nAlice | 100\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<table>" in rendered
+    assert "<th>Name</th>" in rendered
+    assert "<td>Alice</td>" in rendered
+
+
+def test_instant_view_renders_task_list_unchecked():
+    content = "- [ ] Buy milk\n- [ ] Write tests\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert '<input type="checkbox" disabled>' in rendered
+    assert "Buy milk" in rendered
+
+
+def test_instant_view_renders_task_list_checked():
+    content = "- [x] Done task\n- [X] Also done\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert 'checked=""' in rendered
+    assert "Done task" in rendered
+
+
+def test_instant_view_renders_mixed_task_and_plain_list():
+    content = "- [ ] Todo\n- [x] Done\n- Plain item\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert '<input type="checkbox" disabled>' in rendered
+    assert 'checked=""' in rendered
+    assert "<li>Plain item</li>" in rendered
+
+
+def test_instant_view_renders_thematic_break():
+    content = "Above\n\n---\n\nBelow\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<hr>" in rendered
+    assert "<p>Above</p>" in rendered
+    assert "<p>Below</p>" in rendered
+
+
+def test_instant_view_renders_thematic_break_asterisks():
+    content = "Before\n\n***\n\nAfter\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<hr>" in rendered
+
+
+def test_instant_view_renders_setext_heading_level1():
+    content = "My Title\n========\n\nParagraph\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<h1>My Title</h1>" in rendered
+    assert "<p>Paragraph</p>" in rendered
+
+
+def test_instant_view_renders_setext_heading_level2():
+    content = "Subtitle\n--------\n\nText\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<h2>Subtitle</h2>" in rendered
+
+
+def test_instant_view_renders_autolink_url():
+    content = "Visit <https://example.com> for info.\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert '<a href="https://example.com">https://example.com</a>' in rendered
+
+
+def test_instant_view_renders_autolink_email():
+    content = "Contact <user@example.com> please.\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert 'href="mailto:user@example.com"' in rendered
+    assert "user@example.com" in rendered
+
+
+def test_instant_view_rejects_autolink_javascript():
+    # javascript: is not a valid autolink scheme per GFM.
+    # The angle-bracket text is HTML-escaped; no clickable href is emitted.
+    content = "Bad link: <javascript:alert(1)>\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert 'href="javascript:' not in rendered
+    assert "<script" not in rendered
+    assert "&lt;javascript:alert(1)&gt;" in rendered
+
+
+def test_instant_view_table_parses_escaped_pipes():
+    content = "| Name | Note |\n| --- | --- |\n| Alice | a \\| b |\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<td>a | b</td>" in rendered
+
+
+def test_instant_view_table_does_not_swallow_malformed_prose_row():
+    content = "Intro\nThis is prose\n| --- | --- |\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<table>" not in rendered
+    assert "<p>Intro This is prose | --- | --- |</p>" in rendered
+
+
+def test_instant_view_table_rejects_mismatched_header():
+    rendered = highlighting_module.render_markdown_for_instant_view(
+        "Name | Note | Extra\n--- | ---\n"
+    )
+    assert "<table>" not in rendered
+    assert "Name | Note | Extra" in rendered
+
+
+def test_instant_view_table_escaped_pipe_in_code_and_at_row_end():
+    rendered = highlighting_module.render_markdown_for_instant_view(
+        "Name | Note\n--- | ---\n`a\\|b` | end\\|\n"
+    )
+    assert "<td><code>a|b</code></td><td>end|</td>" in rendered
+
+
+def test_instant_view_table_escapes_html_in_cells():
+    content = "| Col |\n| --- |\n| <script>alert(1)</script> |\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<script>" not in rendered
+    assert "&lt;script&gt;" in rendered
+
+
+def test_instant_view_strikethrough_in_inline():
+    content = "This is ~~deleted~~ text.\n"
+    rendered = highlighting_module.render_markdown_for_instant_view(content)
+    assert "<del>deleted</del>" in rendered

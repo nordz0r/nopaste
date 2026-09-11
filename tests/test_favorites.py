@@ -21,6 +21,7 @@ def authenticate(
     user_id: str = "user-1",
     username: str = "alice",
     display_name: str = "Alice",
+    role: str = "",
 ):
     user = main_module.db.upsert_user(
         user_id, username, f"{username}@example.com", display_name
@@ -32,6 +33,7 @@ def authenticate(
             "username": username,
             "display_name": display_name,
             "email": user.get("email"),
+            "role": role,
         }
     )
     client.cookies.set(main_module.settings.SESSION_COOKIE_NAME, token)
@@ -292,7 +294,7 @@ def test_favorites_list_shows_gldf_short_url_for_authenticated_user(
     db.close()
 
 
-def test_slug_edit_cookie_owner_ok_stranger_rejected_authed_can_edit_any(
+def test_slug_edit_cookie_owner_ok_authenticated_stranger_rejected(
     tmp_path, monkeypatch
 ):
     db = _client(tmp_path, monkeypatch)
@@ -339,12 +341,27 @@ def test_slug_edit_cookie_owner_ok_stranger_rejected_authed_can_edit_any(
         authenticate(editor, user_id="editor-9", username="editor")
         editor_page = editor.get(f"/paste/{paste_id}")
         assert editor_page.status_code == 200
-        assert 'id="short-url-slug"' in editor_page.text
+        assert 'id="short-url-slug"' not in editor_page.text
         authed_update = editor.post(
             f"/paste/{paste_id}/slug", data={"custom_slug": "staff-slug"}
         )
-        assert authed_update.status_code == 200
-        assert authed_update.json() == {
+        assert authed_update.status_code == 403
+        assert (
+            main_module.db.get_paste(paste_id)["short_url"]
+            == "https://gldf.ru/owner-slug"
+        )
+
+        staff = TestClient(main_module.app)
+        staff.headers["Accept-Language"] = "en"
+        authenticate(staff, user_id="staff-9", username="staffer", role="staff")
+        staff_page = staff.get(f"/paste/{paste_id}")
+        assert staff_page.status_code == 200
+        assert 'id="short-url-slug"' in staff_page.text
+        staff_update = staff.post(
+            f"/paste/{paste_id}/slug", data={"custom_slug": "staff-slug"}
+        )
+        assert staff_update.status_code == 200
+        assert staff_update.json() == {
             "status": "ok",
             "short_url": "https://gldf.ru/staff-slug",
             "slug": "staff-slug",

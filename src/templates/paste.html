@@ -469,13 +469,25 @@ async function renderMarkdownAndMermaid() {
 
     const renderer = new marked.Renderer();
     const defaultCodeRenderer = renderer.code.bind(renderer);
+    const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    }[char]));
+    // Raw HTML is text, not markup. Only explicit safe URL forms are rendered.
+    const safeHref = (href) => /^(https?:\/\/|mailto:|\/|#|\?)/i.test(href || "");
+    renderer.html = (token) => escapeHtml(token.text);
+    const defaultLinkRenderer = renderer.link.bind(renderer);
+    const defaultImageRenderer = renderer.image.bind(renderer);
+    renderer.link = (token) => safeHref(token.href)
+        ? defaultLinkRenderer(token) : renderer.parser.parseInline(token.tokens);
+    renderer.image = (token) => safeHref(token.href)
+        ? defaultImageRenderer(token) : escapeHtml(token.text);
 
     renderer.code = function(code, language, isEscaped) {
         let codeText = typeof code === "object" && code ? (code.text || "") : (code || "");
         let langStr = typeof code === "object" && code ? (code.lang || "") : (language || "");
         const lang = (langStr || "").trim().toLowerCase();
         if (lang === "mermaid") {
-            return `<div class="mermaid-wrap"><pre class="mermaid">${codeText}</pre></div>`;
+            return `<div class="mermaid-wrap"><pre class="mermaid">${escapeHtml(codeText)}</pre></div>`;
         }
         const rendered = typeof code === "object"
             ? defaultCodeRenderer(code)
