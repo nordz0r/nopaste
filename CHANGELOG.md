@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.22.1 (2026-09-11)
+
+### Bug Fixes
+
+- Improve Telegram previews and WebMCP coverage
+  ([`3802701`](https://github.com/nordz0r/nopaste/commit/38027014b3c13360677c3327dd24757cf61248de))
+
+
 ## v1.22.0 (2026-09-09)
 
 ### Features
