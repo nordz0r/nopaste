@@ -1275,9 +1275,34 @@ def test_custom_slug_validation_min_length_and_reserved_names(client, monkeypatc
     assert valid_long_res.json()["slug"] == "my-custom-note-2026"
 
 
+@pytest.mark.parametrize(
+    ("forwarded", "expected"),
+    [
+        ("198.51.100.7, 10.0.0.2", "198.51.100.7"),
+        ("127.0.0.1, 198.51.100.7, 10.0.0.2", "198.51.100.7"),
+        ("198.51.100.8, 198.51.100.7, 10.0.0.2", "198.51.100.7"),
+        ("10.0.0.1, 10.0.0.2", "10.0.0.1"),
+        ("invalid, 198.51.100.7", "10.0.0.3"),
+    ],
+)
+def test_get_client_ip_uses_first_untrusted_hop_from_right(
+    monkeypatch, forwarded, expected
+):
+    monkeypatch.setattr(main_module.settings, "TRUSTED_PROXY_IPS", "10.0.0.0/8")
+    request = main_module.Request(
+        {
+            "type": "http",
+            "headers": [(b"x-forwarded-for", forwarded.encode("ascii"))],
+            "client": ("10.0.0.3", 1234),
+        }
+    )
+    assert main_module.get_client_ip(request) == expected
+
+
 def test_rate_limiting_on_paste_creation(client, monkeypatch):
     monkeypatch.setattr(main_module.settings, "RATE_LIMIT_ENABLED", True)
     monkeypatch.setattr(main_module.settings, "RATE_LIMIT_PER_MINUTE", 3)
+    monkeypatch.setattr(main_module.settings, "TRUSTED_PROXY_IPS", "127.0.0.1")
 
     # First 3 requests succeed
     for i in range(3):

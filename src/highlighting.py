@@ -80,6 +80,15 @@ def _render_markdown_inline(text: str) -> str:
                 rendered.append(label)
             else:
                 rendered.append(f'<a href="{escape(href, quote=True)}">{label}</a>')
+        elif token.startswith("<") and token.endswith(">"):
+            inner = token[1:-1]
+            href = _safe_markdown_href(inner if ":" in inner else f"mailto:{inner}")
+            if href:
+                rendered.append(
+                    f'<a href="{escape(href, quote=True)}">{escape(inner)}</a>'
+                )
+            else:
+                rendered.append(escape(token))
         elif token.startswith("`"):
             rendered.append(f"<code>{escape(token.strip('`'))}</code>")
         elif token.startswith(("**", "__")):
@@ -119,14 +128,54 @@ def markdown_to_plain_text(content: str) -> str:
     return " ".join(text.split())
 
 
+def _render_table_row(cells: list[str], tag: str, column_count: int) -> str:
+    """Render a table row, padding short rows and truncating long rows."""
+    cells = (cells + [""] * column_count)[:column_count]
+    rendered = "".join(
+        f"<{tag}>{_render_markdown_inline(c.strip())}</{tag}>" for c in cells
+    )
+    return f"<tr>{rendered}</tr>"
+
+
+def _split_table_row(line: str) -> list[str]:
+    """Split a GFM table row, honoring backslash-escaped pipes."""
+    cells: list[str] = []
+    current: list[str] = []
+    for character in line.strip():
+        if character == "|":
+            # GFM removes the escaping backslash even inside code spans.
+            if current and current[-1] == "\\":
+                current[-1] = "|"
+                continue
+            cells.append("".join(current))
+            current = []
+        else:
+            current.append(character)
+    cells.append("".join(current))
+    if len(cells) > 1 and not cells[0]:
+        cells.pop(0)
+    if len(cells) > 1 and not cells[-1]:
+        cells.pop()
+    return cells
+
+
+def _is_table_header(line: str, separator: str) -> bool:
+    return bool(
+        "|" in line
+        and MARKDOWN_TABLE_SEP.match(separator)
+        and len(_split_table_row(line)) == len(_split_table_row(separator))
+    )
+
+
 def render_markdown_for_instant_view(
     content: str, *, omit_first_heading: bool = False
 ) -> str:
     """Render paste Markdown to safe semantic HTML for Telegram's IV parser.
 
-    The browser view uses the client-side Markdown renderer, but Telegram's
-    crawler does not execute page JavaScript. Keep this renderer intentionally
-    small and escape all source text so untrusted pastes cannot inject HTML.
+    Implements the GFM block elements needed for Telegram Instant View:
+    fenced code, ATX headings, setext headings, thematic breaks, blockquotes,
+    ordered/unordered lists with task-list checkboxes, GFM tables, and
+    paragraphs. Raw HTML is never passed through. All source text is escaped.
     """
     lines = normalize_newlines(content).split("\n")
     blocks: list[str] = []
@@ -135,10 +184,43 @@ def render_markdown_for_instant_view(
 
     while index < len(lines):
         line = lines[index]
+
+        # Blank lines are block separators — skip them.
         if not line.strip():
             index += 1
             continue
 
+        # Setext heading: plain text line followed by === (h1) or --- (h2).
+        # Must be checked before HR since "---" is also a valid thematic break.
+        if (
+            index + 1 < len(lines)
+            and MARKDOWN_SETEXT_HEADING.match(lines[index + 1])
+            and not MARKDOWN_FENCE.match(line)
+            and not MARKDOWN_HEADING.match(line)
+            and not MARKDOWN_BLOCKQUOTE.match(line)
+            and not MARKDOWN_LIST.match(line)
+            and not MARKDOWN_HR.match(line)
+            and line.strip()
+        ):
+            level = 1 if lines[index + 1].lstrip().startswith("=") else 2
+            heading_text = line.strip()
+            if omit_first_heading and not first_heading_seen:
+                first_heading_seen = True
+            else:
+                first_heading_seen = True
+                blocks.append(
+                    f"<h{level}>{_render_markdown_inline(heading_text)}</h{level}>"
+                )
+            index += 2
+            continue
+
+        # Thematic break: ***, ---, ___ (3+ chars, nothing else on line).
+        if MARKDOWN_HR.match(line) and not MARKDOWN_HEADING.match(line):
+            blocks.append("<hr>")
+            index += 1
+            continue
+
+        # Fenced code block.
         fence_match = MARKDOWN_FENCE.match(line)
         if fence_match:
             fence = fence_match.group(1)
@@ -160,6 +242,7 @@ def render_markdown_for_instant_view(
             )
             continue
 
+        # ATX heading: # H1 … ###### H6
         heading_match = MARKDOWN_HEADING.match(line)
         if heading_match:
             if omit_first_heading and not first_heading_seen:
@@ -174,6 +257,7 @@ def render_markdown_for_instant_view(
             index += 1
             continue
 
+        # Blockquote.
         if MARKDOWN_BLOCKQUOTE.match(line):
             quote_lines: list[str] = []
             while index < len(lines):
@@ -182,38 +266,97 @@ def render_markdown_for_instant_view(
                     break
                 quote_lines.append(quote_match.group(1))
                 index += 1
-            blocks.append(
-                f"<blockquote>{_render_markdown_inline(' '.join(quote_lines))}</blockquote>"
-            )
+            inner = " ".join(q for q in quote_lines if q.strip())
+            blocks.append(f"<blockquote>{_render_markdown_inline(inner)}</blockquote>")
             continue
 
+        # GFM table: header row | sep row | body rows.
+        if index + 1 < len(lines) and _is_table_header(line, lines[index + 1]):
+            header_cells = _split_table_row(line)
+            index += 2  # skip header + separator
+            body_rows: list[str] = []
+            while index < len(lines) and lines[index].strip():
+                body_cells = _split_table_row(lines[index])
+                if (
+                    "|" not in lines[index]
+                    or MARKDOWN_HEADING.match(lines[index])
+                    or MARKDOWN_FENCE.match(lines[index])
+                    or MARKDOWN_LIST.match(lines[index])
+                    or MARKDOWN_BLOCKQUOTE.match(lines[index])
+                ):
+                    break
+                body_rows.append(_render_table_row(body_cells, "td", len(header_cells)))
+                index += 1
+            thead = f"<thead>{_render_table_row(header_cells, 'th', len(header_cells))}</thead>"
+            tbody = f"<tbody>{''.join(body_rows)}</tbody>" if body_rows else ""
+            blocks.append(f"<table>{thead}{tbody}</table>")
+            continue
+
+        # List (ordered or unordered, with GFM task-list checkboxes).
         list_match = MARKDOWN_LIST.match(line)
         if list_match:
             ordered = list_match.group(1)[0].isdigit()
             tag = "ol" if ordered else "ul"
             items: list[str] = []
             while index < len(lines):
+                task_match = MARKDOWN_TASK_ITEM.match(lines[index])
                 item_match = MARKDOWN_LIST.match(lines[index])
                 if not item_match or item_match.group(1)[0].isdigit() != ordered:
                     break
-                items.append(f"<li>{_render_markdown_inline(item_match.group(2))}</li>")
+                if task_match:
+                    checked = task_match.group(1).lower() == "x"
+                    check_attr = ' checked=""' if checked else ""
+                    items.append(
+                        f'<li><input type="checkbox" disabled{check_attr}> '
+                        f"{_render_markdown_inline(task_match.group(2))}</li>"
+                    )
+                else:
+                    items.append(
+                        f"<li>{_render_markdown_inline(item_match.group(2))}</li>"
+                    )
                 index += 1
             blocks.append(f"<{tag}>{''.join(items)}</{tag}>")
             continue
 
+        # Paragraph — consume lines until a blank or block-level element.
         paragraph_lines = [line.strip()]
         index += 1
         while index < len(lines) and lines[index].strip():
+            next_line = lines[index]
+            # Stop if next line starts a new block.
             if (
-                MARKDOWN_FENCE.match(lines[index])
-                or MARKDOWN_HEADING.match(lines[index])
-                or MARKDOWN_BLOCKQUOTE.match(lines[index])
-                or MARKDOWN_LIST.match(lines[index])
+                MARKDOWN_FENCE.match(next_line)
+                or MARKDOWN_HEADING.match(next_line)
+                or MARKDOWN_BLOCKQUOTE.match(next_line)
+                or MARKDOWN_LIST.match(next_line)
+                or MARKDOWN_HR.match(next_line)
+                or (
+                    index + 1 < len(lines)
+                    and _is_table_header(next_line, lines[index + 1])
+                )
             ):
                 break
-            paragraph_lines.append(lines[index].strip())
+            # Setext heading: underline of = or - on the *next* line promotes current
+            # paragraph to a heading.
+            if MARKDOWN_SETEXT_HEADING.match(next_line):
+                level = 1 if next_line.lstrip().startswith("=") else 2
+                heading_text = " ".join(paragraph_lines)
+                if omit_first_heading and not first_heading_seen:
+                    first_heading_seen = True
+                else:
+                    first_heading_seen = True
+                    blocks.append(
+                        f"<h{level}>{_render_markdown_inline(heading_text)}</h{level}>"
+                    )
+                paragraph_lines = []
+                index += 1
+                break
+            paragraph_lines.append(next_line.strip())
             index += 1
-        blocks.append(f"<p>{_render_markdown_inline(' '.join(paragraph_lines))}</p>")
+        if paragraph_lines:
+            blocks.append(
+                f"<p>{_render_markdown_inline(' '.join(paragraph_lines))}</p>"
+            )
 
     return "\n".join(blocks)
 
@@ -240,10 +383,18 @@ UNIFIED_DIFF_FILE_HEADER = re.compile(r"^---\s+\S")
 
 MARKDOWN_FENCE = re.compile(r"^\s{0,3}(`{3,}|~{3,})\s*([^ ]*)\s*$")
 MARKDOWN_HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$")
+MARKDOWN_SETEXT_HEADING = re.compile(r"^\s{0,3}(=+|-+)\s*$")
 MARKDOWN_LIST = re.compile(r"^\s{0,3}([-*+]|\d+[.)])\s+(.+?)\s*$")
+MARKDOWN_TASK_ITEM = re.compile(r"^\s{0,3}(?:[-*+]|\d+[.)])\s+\[([ xX])\]\s+(.+?)\s*$")
 MARKDOWN_BLOCKQUOTE = re.compile(r"^\s{0,3}>\s?(.*)$")
+MARKDOWN_TABLE_SEP = re.compile(r"^\s*\|?(?:\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?\s*$")
+MARKDOWN_HR = re.compile(r"^\s{0,3}(\*{3,}|-{3,}|_{3,})\s*$")
+MARKDOWN_AUTOLINK = re.compile(
+    r"<([a-zA-Z][a-zA-Z0-9+.\-]{1,31}:[^<>\s]+|[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})>"
+)
 MARKDOWN_INLINE_TOKEN = re.compile(
-    r"(!?\[[^\]]+\]\([^\n]+?\)|`+[^`\n]+?`+|\*\*[^*\n]+?\*\*|__[^_\n]+?__|~~[^~\n]+?~~|\*[^*\n]+?\*|_[^_\n]+?_)"
+    r"(!?\[[^\]]+\]\([^\n]+?\)|`+[^`\n]+?`+|\*\*[^*\n]+?\*\*|__[^_\n]+?__|"
+    r"~~[^~\n]+?~~|\*[^*\n]+?\*|_[^_\n]+?_|" + MARKDOWN_AUTOLINK.pattern + r")"
 )
 
 

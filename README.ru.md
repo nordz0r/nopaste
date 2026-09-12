@@ -35,7 +35,7 @@ docker compose up -d
 - Подсветка синтаксиса + Markdown / Mermaid
 - SQLite по умолчанию, PostgreSQL при необходимости
 - Опциональное шифрование at-rest (`PASTE_ENCRYPTION_KEY`)
-- Опциональные аккаунты через OIDC — закладки, редактирование/удаление паст
+- Опциональные аккаунты через OIDC — закладки; владелец правит свои пасты; staff/admin — любые
 - Закладки/избранное и список паст с постраничной навигацией по дням
 - WebMCP-инструменты: AI-агенты могут создавать и читать пасты на странице
 - RU/EN UI по `Accept-Language`
@@ -80,7 +80,9 @@ curl -fsSL "http://localhost:8000/raw/<paste_id>"
 | `DATABASE_URL` | URL SQLAlchemy |
 | `POSTGRES_*` | Дискретные credentials Postgres |
 | `PASTE_ENCRYPTION_KEY` | **Опционально.** Fernet или passphrase — шифрование тел |
-| `COOKIE_SIGNING_SECRET` | HMAC для cookie истории. Смените в проде. |
+| `COOKIE_SIGNING_SECRET` | HMAC для cookie истории. Уникальное значение обязательно при `DEBUG=false`. |
+| `TRUSTED_PROXY_IPS` | IP/CIDR прокси, которым можно доверять `X-Forwarded-For`. Пусто — заголовок игнорируется. |
+| `FORWARDED_ALLOW_IPS` | Значение uvicorn `--forwarded-allow-ips`. Держите синхронно с `TRUSTED_PROXY_IPS`. |
 | `MAX_PASTE_SIZE_BYTES` | Макс. размер paste |
 | `MAX_RECENT_PASTES` | Лимит истории в cookie |
 | `RATE_LIMIT_ENABLED` / `RATE_LIMIT_PER_MINUTE` | Лимит на создание/обновление |
@@ -104,7 +106,8 @@ Nopaste полностью работает **анонимно** — вход н
 `OIDC_CLIENT_ID` и `OIDC_CLIENT_SECRET`, чтобы включить вход через любой
 стандартный OpenID Connect провайдер (Keycloak, Authentik, Nextcloud, Google …).
 Вошедшие пользователи получают закладки/избранное, редактирование и удаление
-любой пасты, а также список паст с постраничной навигацией по дням.
+своих паст (`role=staff` или `role=admin` — любой пасты), а также список паст
+с постраничной навигацией по дням.
 
 ## Релизы
 

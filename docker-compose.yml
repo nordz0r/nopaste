@@ -22,7 +22,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
       POSTGRES_SSLMODE: ${POSTGRES_SSLMODE:-disable}
       PASTE_ENCRYPTION_KEY: ${PASTE_ENCRYPTION_KEY:-}
+      # Trial default. Production must set DEBUG=false and a unique secret.
+      DEBUG: ${DEBUG:-true}
       COOKIE_SIGNING_SECRET: ${COOKIE_SIGNING_SECRET:-local-development-cookie-secret}
+      TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
       SHRINK_URL: ${SHRINK_URL:-}
       SHRINK_TOKEN: ${SHRINK_TOKEN:-}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}

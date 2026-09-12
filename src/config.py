@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from urllib.parse import quote_plus
 
-from pydantic import Field, computed_field
+from pydantic import Field, computed_field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -113,6 +113,23 @@ class Settings(BaseSettings):
             "(opens a prefilled GitHub issue). Empty disables the button."
         ),
     )
+    TRUSTED_PROXY_IPS: str = Field(
+        default="",
+        description=(
+            "Comma-separated proxy IPs/CIDRs allowed to supply X-Forwarded-For. "
+            "Empty ignores the header. Proxies must append or overwrite it."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def validate_cookie_secret(self) -> Settings:
+        secret = self.COOKIE_SIGNING_SECRET.strip()
+        if not secret or (
+            not self.DEBUG and secret == "local-development-cookie-secret"
+        ):
+            raise ValueError("Set a unique COOKIE_SIGNING_SECRET outside debug mode")
+        return self
+
     RATE_LIMIT_ENABLED: bool = Field(
         default=True,
         description="Enable in-memory rate limiting on mutating endpoints.",

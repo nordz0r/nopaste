@@ -27,6 +27,8 @@ docker compose up -d
 # → http://localhost:8000
 ```
 
+Local trials default to `DEBUG=true`. Production must set `DEBUG=false` and a unique `COOKIE_SIGNING_SECRET`.
+
 If Nopaste is useful, [star the repo](https://github.com/nordz0r/nopaste) — it is the single best way to help others find it.
 
 ## Why Nopaste
@@ -40,7 +42,7 @@ Most pastebins are either public SaaS or heavy appliances. Nopaste is a single c
 - **Syntax highlighting** plus Markdown / Mermaid
 - **SQLite by default**, PostgreSQL when you need it
 - **Optional at-rest encryption** (`PASTE_ENCRYPTION_KEY`)
-- **Optional accounts via OIDC** — personal bookmarks, edit/delete any paste
+- **Optional accounts via OIDC** — personal bookmarks; owners edit their pastes; staff/admin may edit any paste
 - **Bookmarks / favorites** and a 7-day paginated paste list
 - **WebMCP tools** so AI agents can create and read pastes on the page
 - **RU/EN UI** from `Accept-Language`
@@ -134,7 +136,9 @@ Settings load from the environment / `.env` (see `.env.example`).
 | `DATABASE_URL` | SQLAlchemy URL (`sqlite+…` or `postgresql+psycopg://…`) |
 | `POSTGRES_*` | Discrete Postgres credentials (used if URL empty) |
 | `PASTE_ENCRYPTION_KEY` | **Optional.** Fernet key or passphrase — encrypts bodies at rest |
-| `COOKIE_SIGNING_SECRET` | HMAC secret for the recent-pastes cookie. Change in production. |
+| `COOKIE_SIGNING_SECRET` | HMAC secret for the recent-pastes cookie. Required unique value when `DEBUG=false`. |
+| `TRUSTED_PROXY_IPS` | Comma-separated proxy IPs/CIDRs allowed to supply `X-Forwarded-For`. Empty ignores the header. |
+| `FORWARDED_ALLOW_IPS` | Matching uvicorn `--forwarded-allow-ips` value. Keep in sync with `TRUSTED_PROXY_IPS`. |
 | `MAX_PASTE_SIZE_BYTES` | Max paste size |
 | `MAX_RECENT_PASTES` | Cookie history cap |
 | `RATE_LIMIT_ENABLED` / `RATE_LIMIT_PER_MINUTE` | Create/update rate limit |
@@ -171,7 +175,7 @@ login with any standard OpenID Connect provider (Keycloak, Authentik, Nextcloud,
 Google, …). When enabled, signed-in users get:
 
 - **Bookmarks / favorites** — a personal list of saved pastes
-- **Edit and delete** any paste (staff capability)
+- **Edit and delete** their own pastes; `role=staff` or `role=admin` may edit any paste
 - A **7-day paginated list** of recent pastes
 
 Anonymous ownership of freshly created pastes still works through the signed

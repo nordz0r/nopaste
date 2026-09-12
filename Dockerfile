@@ -63,4 +63,8 @@ USER app
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+# Keep this value synchronized with TRUSTED_PROXY_IPS in the application environment.
+# The default trusts only the local container host; set FORWARDED_ALLOW_IPS to the
+# same proxy IPs/CIDRs as TRUSTED_PROXY_IPS when running behind a proxy.
+ENV FORWARDED_ALLOW_IPS=127.0.0.1
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips \"${FORWARDED_ALLOW_IPS:-127.0.0.1}\""]
