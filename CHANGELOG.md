@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.22.2 (2026-09-12)
+
+### Bug Fixes
+
+- Restrict paste mutations to owners and harden preview trust
+  ([`7e3b69e`](https://github.com/nordz0r/nopaste/commit/7e3b69e05c655c04f967f2ca4d1c1a7a5e690973))
+
+### Continuous Integration
+
+- Publish Docker images from the dev branch
+  ([`03875e5`](https://github.com/nordz0r/nopaste/commit/03875e5a91a5a5dfa59d8383d973efef80a0586d))
+
+- Run GitHub Actions CI on the dev branch
+  ([`527c919`](https://github.com/nordz0r/nopaste/commit/527c919e59b79d195bb503ed6a4af48ac90f5086))
+
+
 ## v1.22.1 (2026-09-11)
 
 ### Bug Fixes
