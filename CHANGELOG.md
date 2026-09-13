@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.23.0 (2026-09-13)
+
+### Features
+
+- Publish llms.txt agent guidance
+  ([`653176c`](https://github.com/nordz0r/nopaste/commit/653176c3af77ad21d4a49256405cce31ab55d271))
+
+
 ## v1.22.2 (2026-09-12)
 
 ### Bug Fixes
