@@ -99,7 +99,10 @@ RESERVED_SLUGS = frozenset(
 APP_NAME = "Nopaste"
 DEFAULT_META_DESCRIPTION = "Share text, logs, notes, and configs with Nopaste."
 GITHUB_REPO_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
-BRAND_PREVIEW_IMAGE_PATH = "images/goldfinches_logo.png"
+BRAND_PREVIEW_IMAGE_PATH = "images/og-preview.png"
+BRAND_PREVIEW_IMAGE_WIDTH = "1200"
+BRAND_PREVIEW_IMAGE_HEIGHT = "630"
+BRAND_PREVIEW_IMAGE_TYPE = "image/png"
 APP_VERSION_ENV_VAR = "APP_VERSION"
 DEFAULT_COOKIE_SECRET = "local-development-cookie-secret"
 INSTANT_VIEW_EDITOR_HOST = "instantview.telegram.org"
@@ -621,6 +624,9 @@ def build_page_meta(
         ),
         "image_url": build_absolute_app_url(request, preview_image_path),
         "image_alt": f"{APP_NAME} brand preview",
+        "image_width": BRAND_PREVIEW_IMAGE_WIDTH,
+        "image_height": BRAND_PREVIEW_IMAGE_HEIGHT,
+        "image_type": BRAND_PREVIEW_IMAGE_TYPE,
         "site_name": APP_NAME,
         "type": page_type,
     }

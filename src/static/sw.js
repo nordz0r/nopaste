@@ -10,6 +10,7 @@ self.addEventListener("install", (event) => {
                 "/static/js/app.js",
                 "/static/fonts/inter-400.woff2",
                 "/static/images/goldfinches_logo.png",
+                "/static/images/og-preview.png",
                 "/static/images/favicon.png",
             ]).catch(() => undefined)
         )
