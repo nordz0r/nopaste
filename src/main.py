@@ -655,7 +655,9 @@ def normalize_custom_slug(custom_slug: str | None) -> str | None:
         or normalized_slug.lower() in RESERVED_SLUGS
     ):
         raise HTTPException(status_code=400, detail="Invalid custom short link name")
-    return normalized_slug
+    # Shlink is deployed in loose mode so generated and custom short codes are
+    # lowercase and remain usable when clients normalize URL casing.
+    return normalized_slug.lower()
 
 
 def generate_paste_id(database: Database) -> str:
@@ -745,8 +747,8 @@ header the endpoint redirects to `/paste/<paste-id>`. `content` must be
 non-empty. To request a short link during creation, add
 `--data-urlencode 'custom_slug=my-note'`; the slug must be 5–64 characters,
 start and end with a letter or digit, and contain only letters, digits, `_`, or
-`-`. A requested slug is strict: if it is taken or Shlink is unavailable, the
-paste is not created.
+`-`. Nopaste normalizes custom slugs to lowercase. A requested slug is strict:
+if it is taken or Shlink is unavailable, the paste is not created.
 
 The WebMCP equivalent is:
 

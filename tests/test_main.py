@@ -1285,6 +1285,12 @@ def test_custom_slug_validation_min_length_and_reserved_names(client, monkeypatc
     assert valid_long_res.status_code == 200
     assert valid_long_res.json()["slug"] == "my-custom-note-2026"
 
+    uppercase_res = client.post(
+        f"/paste/{paste_id}/slug", data={"custom_slug": "My-Mixed-Case"}
+    )
+    assert uppercase_res.status_code == 200
+    assert uppercase_res.json()["slug"] == "my-mixed-case"
+
 
 @pytest.mark.parametrize(
     ("forwarded", "expected"),
