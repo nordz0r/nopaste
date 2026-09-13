@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.23.2 (2026-09-13)
+
+### Bug Fixes
+
+- Provide Telegram-compatible link preview image
+  ([`b9552b4`](https://github.com/nordz0r/nopaste/commit/b9552b4f2b90fac6113f90babea537ebbc14f1b4))
+
+
 ## v1.23.1 (2026-09-13)
 
 ### Bug Fixes
