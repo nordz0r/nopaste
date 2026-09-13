@@ -236,6 +236,18 @@ def test_telegram_preview_uses_minimal_complete_document(client):
     assert "site-header" not in response.text
     assert "/static/css/style.css" not in response.text
     assert "/static/js/app.js" not in response.text
+    assert (
+        '<meta property="og:image" content="http://testserver/static/images/og-preview.png">'
+        in response.text
+    )
+    assert '<meta property="og:image:width" content="1200">' in response.text
+    assert '<meta property="og:image:height" content="630">' in response.text
+    assert '<meta property="og:image:type" content="image/png">' in response.text
+    assert '<meta name="twitter:card" content="summary_large_image">' in response.text
+    assert (
+        '<meta name="twitter:image" content="http://testserver/static/images/og-preview.png">'
+        in response.text
+    )
 
 
 def test_paste_page_allows_only_instant_view_editor_to_frame_source(client):
@@ -626,10 +638,16 @@ def test_get_paste_includes_branded_link_preview_metadata(client, monkeypatch):
     )
     assert (
         '<meta property="og:image" '
-        'content="http://testserver/static/images/goldfinches_logo.png">'
+        'content="http://testserver/static/images/og-preview.png">' in response.text
+    )
+    assert '<meta property="og:image:width" content="1200">' in response.text
+    assert '<meta property="og:image:height" content="630">' in response.text
+    assert '<meta property="og:image:type" content="image/png">' in response.text
+    assert '<meta name="twitter:card" content="summary_large_image">' in response.text
+    assert (
+        '<meta name="twitter:image" content="http://testserver/static/images/og-preview.png">'
         in response.text
     )
-    assert '<meta name="twitter:card" content="summary_large_image">' in response.text
 
 
 def test_public_base_url_overrides_share_metadata_urls(client, monkeypatch):
@@ -650,7 +668,7 @@ def test_public_base_url_overrides_share_metadata_urls(client, monkeypatch):
     )
     assert (
         '<meta property="og:image" '
-        'content="https://paste.example.com/static/images/goldfinches_logo.png">'
+        'content="https://paste.example.com/static/images/og-preview.png">'
         in response.text
     )
 
@@ -673,8 +691,7 @@ def test_public_base_url_bind_address_zero_zero_zero_zero_ignored_for_metadata(
     )
     assert (
         '<meta property="og:image" '
-        'content="http://testserver/static/images/goldfinches_logo.png">'
-        in response.text
+        'content="http://testserver/static/images/og-preview.png">' in response.text
     )
 
 

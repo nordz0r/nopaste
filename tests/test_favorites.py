@@ -383,6 +383,7 @@ def test_shipped_heart_link_icons_css_and_unfavorite_js_sequence(tmp_path, monke
             "heart_broken.png",
             "link.png",
             "delete.png",
+            "og-preview.png",
         ):
             response = client.get(f"/static/images/{name}")
             assert response.status_code == 200, name
