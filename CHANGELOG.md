@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.23.1 (2026-09-13)
+
+### Bug Fixes
+
+- Normalize custom short links to lowercase
+  ([`b2f4cc2`](https://github.com/nordz0r/nopaste/commit/b2f4cc26ac4822b0b597c90604d0cfe3ae325dc4))
+
+### Documentation
+
+- Describe WebMCP tools in llms.txt
+  ([`ceabe35`](https://github.com/nordz0r/nopaste/commit/ceabe352c4f3220730b35d5079b451c5f2990fdd))
+
+- Document HTTP fallback for paste workflows
+  ([`85c78f2`](https://github.com/nordz0r/nopaste/commit/85c78f2005bf45869fd0a0ee48b2c595c2766a12))
+
+
 ## v1.23.0 (2026-09-13)
 
 ### Features
