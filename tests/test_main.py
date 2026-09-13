@@ -69,6 +69,17 @@ def test_read_root(client):
     assert "Имя короткой ссылки" not in response.text
 
 
+def test_llms_txt_documents_http_fallback_workflow(client):
+    response = client.get("/llms.txt")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/plain")
+    assert "POST https://paste.goldfinches.ru/paste" in response.text
+    assert "GET /raw/<paste-id>" in response.text
+    assert "https://paste.goldfinches.ru/paste/<paste-id>/slug" in response.text
+    assert "WebMCP is optional" in response.text
+
+
 def test_header_places_icon_login_to_the_right_of_my_list(client, monkeypatch):
     monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_ID", "nopaste")
     monkeypatch.setattr(main_module.settings, "OIDC_CLIENT_SECRET", "secret")
