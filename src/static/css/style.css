@@ -1050,8 +1050,10 @@ textarea::placeholder {
 /* Paste List */
 .paste-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
     gap: var(--space-4);
+    width: 100%;
+    min-width: 0;
 }
 
 .paste-card {
@@ -1060,6 +1062,10 @@ textarea::placeholder {
     border-radius: var(--radius-md);
     padding: var(--space-4);
     transition: all 0.2s;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .paste-card-main {
@@ -1130,6 +1136,7 @@ textarea::placeholder {
     margin-top: var(--space-2);
     font-size: 0.75rem;
     color: var(--text-muted);
+    min-width: 0;
 }
 
 .paste-card-short-url {
@@ -1269,7 +1276,30 @@ textarea::placeholder {
     }
 
     .paste-list {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+    }
+    .paste-list-page,
+    .paste-card,
+    .paste-card-main,
+    .paste-card-footer {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+    .paste-card-header {
+        flex-wrap: wrap;
+    }
+    .paste-card-time {
+        white-space: nowrap;
+    }
+    .paste-card-short-url {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+    .paste-card-actions {
+        margin-left: auto;
     }
     .paste-container {
         border-radius: var(--radius-sm);
