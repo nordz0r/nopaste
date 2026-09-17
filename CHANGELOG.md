@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.23.3 (2026-09-17)
+
+### Bug Fixes
+
+- **list**: Stretch favorite paste cards on mobile
+  ([`b9e801b`](https://github.com/nordz0r/nopaste/commit/b9e801b9b01cee868c2573c9dccc8a962dbcf126))
+
+
 ## v1.23.2 (2026-09-13)
 
 ### Bug Fixes
