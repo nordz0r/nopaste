@@ -411,7 +411,9 @@ def test_shipped_heart_link_icons_css_and_unfavorite_js_sequence(tmp_path, monke
         assert 'src="/static/images/heart_gray.png"' in authed_page.text
         assert "d1nhio0ox7pgb.cloudfront.net" not in authed_page.text
 
-    assert "grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr))" in css
+    assert (
+        "grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr))" in css
+    )
     assert "grid-template-columns: minmax(0, 1fr)" in css
     assert "minmax(320px, 1fr)" not in css
     assert ".favorite-heart" in css
