@@ -1,5 +1,5 @@
---- a/tests/test_main.py	2026-09-21 12:54:51.347465925 +0300
-+++ b/tests/test_main.py	2026-09-21 12:53:20.410753182 +0300
+--- a/tests/test_main.py
++++ b/tests/test_main.py
 @@ -1054,10 +1054,42 @@
      assert "https://gldf.ru/ab12c" in view_response.text
      assert 'id="short-url-link"' in view_response.text
@@ -16,7 +16,7 @@
 +    )
 +
 +
-def test_telegram_share_href_uses_canonical_not_shrink_host(client, monkeypatch):
++def test_telegram_share_href_uses_canonical_not_shrink_host(client, monkeypatch):
 +    """Telegram share always targets canonical paste URL even when SHRINK works."""
 +
 +    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
