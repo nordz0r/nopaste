@@ -196,6 +196,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-# Install instance-aware /llms.txt override before routes register.
-import llms_install  # noqa: E402,F401
