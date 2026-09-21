@@ -1,0 +1,143 @@
+name: apply-telegram-share-canonical
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/telegram-share-canonical-url
+      - name: Patch paste.html Telegram share to canonical
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path("src/templates/paste.html")
+          text = p.read_text(encoding="utf-8")
+          old_href = 'href="https://t.me/share/url?url={{ (short_url or canonical_url or meta.url)|urlencode }}"'
+          new_href = 'href="https://t.me/share/url?url={{ (canonical_url or meta.url)|urlencode }}"'
+          if old_href not in text:
+              raise SystemExit("href pattern missing")
+          text = text.replace(old_href, new_href, 1)
+          old_js = """                    // Update Telegram share button URL
+                    const tgBtn = document.getElementById("telegram-share-btn");
+                    if (tgBtn) {
+                        tgBtn.href = 'https://t.me/share/url?url=' + encodeURIComponent(data.short_url || {{ canonical_url|tojson }});
+                    }
+"""
+          if old_js not in text:
+              raise SystemExit("js block missing")
+          text = text.replace(old_js, "", 1)
+          p.write_text(text, encoding="utf-8")
+          print("paste.html patched")
+          PY
+      - name: Patch tests for canonical Telegram share
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path("tests/test_main.py")
+          text = p.read_text(encoding="utf-8")
+          old = '''def test_create_paste_with_shrink_shows_short_url_in_view(client, monkeypatch):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        return "https://gldf.ru/ab12c"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    create_response = client.post(
+        "/paste", data={"content": "short link test"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    view_response = client.get(f"/paste/{paste_id}")
+
+    assert view_response.status_code == 200
+    assert "https://gldf.ru/ab12c" in view_response.text
+    assert 'id="short-url-link"' in view_response.text
+    assert "short-url-editor" in view_response.text
+    assert (
+        'href="https://t.me/share/url?url=https%3A//gldf.ru/ab12c"'
+        in view_response.text
+    )
+'''
+          new = '''def test_create_paste_with_shrink_shows_short_url_in_view(client, monkeypatch):
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        return "https://gldf.ru/ab12c"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+
+    create_response = client.post(
+        "/paste", data={"content": "short link test"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    view_response = client.get(f"/paste/{paste_id}")
+
+    assert view_response.status_code == 200
+    assert "https://gldf.ru/ab12c" in view_response.text
+    assert 'id="short-url-link"' in view_response.text
+    assert "short-url-editor" in view_response.text
+    # Telegram share must use canonical /paste/<id> for Instant View, not SHRINK.
+    assert (
+        f'href="https://t.me/share/url?url=http%3A//testserver/paste/{paste_id}"'
+        in view_response.text
+    )
+    assert (
+        'href="https://t.me/share/url?url=https%3A//gldf.ru/ab12c"'
+        not in view_response.text
+    )
+
+
+def test_telegram_share_href_uses_canonical_not_shrink_host(client, monkeypatch):
+    """Telegram share always targets canonical paste URL even when SHRINK works."""
+
+    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
+        return "https://gldf.ru/ivtest"
+
+    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
+    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
+    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
+
+    create_response = client.post(
+        "/paste", data={"content": "iv share canonical"}, follow_redirects=False
+    )
+    paste_id = create_response.headers["location"].split("/")[-1]
+    view_response = client.get(f"/paste/{paste_id}")
+    assert view_response.status_code == 200
+
+    # Extract the telegram-share-btn href
+    marker = 'id="telegram-share-btn"'
+    assert marker in view_response.text
+    chunk = view_response.text.split(marker, 1)[1].split("</a>", 1)[0]
+    assert "/paste/" in chunk
+    assert paste_id in chunk
+    assert "gldf.ru" not in chunk
+    assert "encodeURIComponent(data.short_url" not in view_response.text
+'''
+          if old not in text:
+              raise SystemExit("test block missing")
+          p.write_text(text.replace(old, new, 1), encoding="utf-8")
+          print("test_main.py patched")
+          PY
+      - name: Commit changes and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm -f .github/workflows/apply-telegram-share-canonical.yml
+          git add src/templates/paste.html tests/test_main.py
+          git add -u .github/workflows/apply-telegram-share-canonical.yml || true
+          git status
+          git commit -m "$(cat <<'EOF'
+fix: Telegram share always uses canonical paste URL
+
+Keep t.me/share on /paste/<id> so Instant View templates on
+paste.goldfinches.ru work. Short SHRINK links remain for copy/slug UI.
+Update tests accordingly.
+EOF
+)"
+          git push origin HEAD:fix/telegram-share-canonical-url
