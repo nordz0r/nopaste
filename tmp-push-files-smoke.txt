@@ -1,0 +1,4 @@
+{% extends base_template %}
+
+{% block content %}
+<!-- smoke test for push_files size -->
