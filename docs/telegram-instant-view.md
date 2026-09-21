@@ -39,6 +39,17 @@ requests still receive `noindex, nofollow` in both HTML and response headers.
 `noindex` directive; it only restricts non-content areas. These are indexing
 controls, not access control: anyone who has a paste URL can still read it.
 
+## Telegram share button
+
+The in-app Telegram share button (`t.me/share`) always uses the **canonical**
+paste URL (`/paste/<id>`), never a SHRINK short link such as `gldf.ru`. Instant
+View templates are registered for `paste.goldfinches.ru` on the `/paste/…`
+path; short hosts alone do not receive Instant View unless a separate template
+is published for them.
+
+Copy-link and the short-URL / slug UI still prefer the short link when SHRINK
+is configured — only the Telegram share target is forced to canonical.
+
 ## Preview privacy
 
 The Telegram/social preview description contains a normalized excerpt of the
