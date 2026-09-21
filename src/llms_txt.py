@@ -180,4 +180,3 @@ def build_llms_txt(
         + "returns an empty list with a note.\n"
     )
     return body
-
