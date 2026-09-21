@@ -1,6 +1,9 @@
 name: Restore readable main
 
 on:
+  push:
+    branches:
+      - feat/dynamic-llms-txt-webmcp-v2
   workflow_dispatch:
 
 permissions:
