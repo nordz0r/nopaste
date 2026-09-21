@@ -1,6 +1,6 @@
 name: apply-telegram-share-canonical
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 permissions:
   contents: write
 jobs:
@@ -10,6 +10,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix/telegram-share-canonical-url
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Patch paste.html Telegram share to canonical
         shell: bash
         run: |
@@ -141,7 +142,6 @@ Update tests accordingly.
 EOF
 )"
           git push origin HEAD:fix/telegram-share-canonical-url
-          # Also remove this temporary workflow from main if present
           git fetch origin main
           git checkout -B main origin/main
           if [ -f .github/workflows/apply-telegram-share-canonical.yml ]; then
