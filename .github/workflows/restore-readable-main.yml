@@ -1,0 +1,30 @@
+name: Restore readable main
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/dynamic-llms-txt-webmcp-v2
+          fetch-depth: 0
+
+      - name: Restore readable source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat src/main_payload_a.b64 src/main_payload_b.b64 | base64 -d | gzip -d > src/main.py
+          rm src/main_payload_a.b64 src/main_payload_b.b64
+          rm .github/workflows/restore-readable-main.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main.py src/main_payload_a.b64 src/main_payload_b.b64 .github/workflows/restore-readable-main.yml
+          git commit -m "refactor: restore readable main.py without payload loader"
+          git push origin HEAD:feat/dynamic-llms-txt-webmcp-v2
