@@ -41,7 +41,6 @@
 +    assert paste_id in chunk
 +    assert "gldf.ru" not in chunk
 +    assert "encodeURIComponent(data.short_url" not in view_response.text
-+
  
  
  def test_create_paste_without_shrink_omits_short_url(client):
