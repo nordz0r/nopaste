@@ -1,1 +1,2 @@
-@/workspace/webmcp.js
+/* probe mid size */
+const PROBE = true;
