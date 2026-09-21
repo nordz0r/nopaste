@@ -35,3 +35,5 @@ jobs:
           git add src/llms_txt.py src/main.py .github/workflows/ruff-format.yml
           git commit -m "style: ruff format llms_txt and main"
           git push origin HEAD:feat/dynamic-llms-txt-webmcp-v2
+
+# Temporary workflow; remove after formatting.
