@@ -1,5 +1,5 @@
 name: apply-telegram-share-canonical
-# bump: trigger-apply-5
+# bump: trigger-apply-6
 on:
   push:
     branches: [main]
