@@ -4,6 +4,63 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.24.1 (2026-09-21)
+
+### Bug Fixes
+
+- Telegram share always uses canonical paste URL ([#15](https://github.com/nordz0r/nopaste/pull/15),
+  [`31f2196`](https://github.com/nordz0r/nopaste/commit/31f2196896405e940460eeb5f2e517a9c4b58ba6))
+
+### Chores
+
+- Add patches for telegram share canonical URL fix
+  ([#15](https://github.com/nordz0r/nopaste/pull/15),
+  [`31f2196`](https://github.com/nordz0r/nopaste/commit/31f2196896405e940460eeb5f2e517a9c4b58ba6))
+
+- Correct tests patch ending context blanks ([#15](https://github.com/nordz0r/nopaste/pull/15),
+  [`31f2196`](https://github.com/nordz0r/nopaste/commit/31f2196896405e940460eeb5f2e517a9c4b58ba6))
+
+- Fix malformed + prefix in tests patch ([#15](https://github.com/nordz0r/nopaste/pull/15),
+  [`31f2196`](https://github.com/nordz0r/nopaste/commit/31f2196896405e940460eeb5f2e517a9c4b58ba6))
+
+- Fix temporary apply workflow dispatch trigger
+  ([`3ba6d37`](https://github.com/nordz0r/nopaste/commit/3ba6d37b1e710553a5f8ac19d0e3a52bb45a0f12))
+
+- Fix tests patch context blank lines ([#15](https://github.com/nordz0r/nopaste/pull/15),
+  [`31f2196`](https://github.com/nordz0r/nopaste/commit/31f2196896405e940460eeb5f2e517a9c4b58ba6))
+
+- Re-trigger telegram-share apply after patch fix
+  ([`7f5c578`](https://github.com/nordz0r/nopaste/commit/7f5c578f7aaff9e0d283158a0566d1afe14b2680))
+
+- Re-trigger telegram-share apply workflow
+  ([`1adb890`](https://github.com/nordz0r/nopaste/commit/1adb890d911b2348f1d8665cdbf4c19e987e81a6))
+
+- Remove temporary telegram-share apply workflow
+  ([`fe3bc83`](https://github.com/nordz0r/nopaste/commit/fe3bc831f8fc255f3f87dbe7e8c3ef1f10526dd4))
+
+- Smoke test push_files (will delete) ([#15](https://github.com/nordz0r/nopaste/pull/15),
+  [`31f2196`](https://github.com/nordz0r/nopaste/commit/31f2196896405e940460eeb5f2e517a9c4b58ba6))
+
+- Temporary workflow to apply telegram share canonical fix
+  ([#15](https://github.com/nordz0r/nopaste/pull/15),
+  [`31f2196`](https://github.com/nordz0r/nopaste/commit/31f2196896405e940460eeb5f2e517a9c4b58ba6))
+
+- Temporary workflow to apply telegram share canonical fix
+  ([`5812fca`](https://github.com/nordz0r/nopaste/commit/5812fca1133fcc01ca2d829cccb030008e1ec71f))
+
+- Trigger temporary telegram-share apply workflow
+  ([`8f92819`](https://github.com/nordz0r/nopaste/commit/8f9281980bb2daf1f2c05f4fe467812fd5583de6))
+
+- Trigger temporary telegram-share apply workflow (valid YAML)
+  ([`a3b44c1`](https://github.com/nordz0r/nopaste/commit/a3b44c1c3106dfd11389411170677c7397651edc))
+
+### Documentation
+
+- Note Telegram share uses canonical paste URL for IV
+  ([#15](https://github.com/nordz0r/nopaste/pull/15),
+  [`31f2196`](https://github.com/nordz0r/nopaste/commit/31f2196896405e940460eeb5f2e517a9c4b58ba6))
+
+
 ## v1.24.0 (2026-09-21)
 
 ### Bug Fixes
