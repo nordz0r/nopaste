@@ -153,6 +153,9 @@ test("registers all tools immediately when document.modelContext is present", ()
         "get_paste",
         "read_current_paste",
         "create_paste",
+        "set_paste_slug",
+        "update_paste",
+        "delete_paste",
         "list_recent_pastes",
     ]);
 });
@@ -200,6 +203,153 @@ test("registers all tools on window load when document.modelContext is deferred"
         "get_paste",
         "read_current_paste",
         "create_paste",
+        "set_paste_slug",
+        "update_paste",
+        "delete_paste",
         "list_recent_pastes",
     ]);
+});
+
+
+function loadAllWebMcpTools(mockFetch) {
+    const code = fs.readFileSync(
+        path.join(__dirname, "..", "src", "static", "js", "webmcp.js"),
+        "utf8"
+    );
+    const registered = [];
+    const context = {
+        document: {
+            modelContext: {
+                registerTool: (tool) => registered.push(tool),
+            },
+            getElementById: () => null,
+            cookie: "",
+        },
+        window: {
+            location: {
+                pathname: "/",
+                origin: "https://example.test",
+            },
+            addEventListener: () => {},
+        },
+        console,
+        URLSearchParams,
+        fetch: mockFetch,
+    };
+    vm.runInNewContext(code, context);
+    return Object.fromEntries(registered.map((t) => [t.name, t]));
+}
+
+test("set_paste_slug posts to /paste/{id}/slug and returns short_url", async () => {
+    let capturedUrl = null;
+    let capturedBody = null;
+    const tools = loadAllWebMcpTools(async (url, init) => {
+        capturedUrl = url;
+        capturedBody = init.body.toString();
+        return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+                status: "ok",
+                short_url: "https://short.example/my-note",
+                slug: "my-note",
+            }),
+        };
+    });
+
+    const result = await tools.set_paste_slug.execute({
+        paste_id: "AbCd1234",
+        custom_slug: "my-note",
+    });
+
+    assert.equal(result.isError, undefined);
+    assert.equal(capturedUrl, "/paste/AbCd1234/slug");
+    assert.match(capturedBody, /custom_slug=my-note/);
+    const parsed = JSON.parse(result.content[0].text);
+    assert.equal(parsed.slug, "my-note");
+    assert.equal(parsed.short_url, "https://short.example/my-note");
+});
+
+test("set_paste_slug surfaces 409 slug_taken detail", async () => {
+    const tools = loadAllWebMcpTools(async () => ({
+        ok: false,
+        status: 409,
+        json: async () => ({ detail: "This short link name is already in use." }),
+    }));
+
+    const result = await tools.set_paste_slug.execute({
+        paste_id: "AbCd1234",
+        custom_slug: "taken",
+    });
+
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /Error: This short link name is already in use\./);
+});
+
+test("update_paste posts content to /paste/{id}/edit", async () => {
+    let capturedUrl = null;
+    let capturedBody = null;
+    const tools = loadAllWebMcpTools(async (url, init) => {
+        capturedUrl = url;
+        capturedBody = init.body.toString();
+        return { ok: true, status: 200, json: async () => ({}) };
+    });
+
+    const result = await tools.update_paste.execute({
+        paste_id: "AbCd1234",
+        content: "updated body",
+    });
+
+    assert.equal(result.isError, undefined);
+    assert.equal(capturedUrl, "/paste/AbCd1234/edit");
+    assert.match(capturedBody, /content=updated\+body/);
+    const parsed = JSON.parse(result.content[0].text);
+    assert.equal(parsed.updated, true);
+    assert.equal(parsed.url, "https://example.test/paste/AbCd1234");
+});
+
+test("update_paste surfaces 403 ownership failure", async () => {
+    const tools = loadAllWebMcpTools(async () => ({
+        ok: false,
+        status: 403,
+        json: async () => ({ detail: "Forbidden" }),
+    }));
+
+    const result = await tools.update_paste.execute({
+        paste_id: "AbCd1234",
+        content: "nope",
+    });
+
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /Error: Forbidden/);
+});
+
+test("delete_paste posts to /paste/{id}/delete", async () => {
+    let capturedUrl = null;
+    const tools = loadAllWebMcpTools(async (url) => {
+        capturedUrl = url;
+        return {
+            ok: true,
+            status: 200,
+            json: async () => ({ status: "ok", deleted: true }),
+        };
+    });
+
+    const result = await tools.delete_paste.execute({ paste_id: "AbCd1234" });
+    assert.equal(result.isError, undefined);
+    assert.equal(capturedUrl, "/paste/AbCd1234/delete");
+    const parsed = JSON.parse(result.content[0].text);
+    assert.equal(parsed.deleted, true);
+});
+
+test("delete_paste surfaces 401 auth required", async () => {
+    const tools = loadAllWebMcpTools(async () => ({
+        ok: false,
+        status: 401,
+        json: async () => ({ detail: "Authentication required." }),
+    }));
+
+    const result = await tools.delete_paste.execute({ paste_id: "AbCd1234" });
+    assert.equal(result.isError, true);
+    assert.match(result.content[0].text, /Error: Authentication required\./);
 });
