@@ -1,0 +1,46 @@
+--- a/tests/test_main.py	2026-09-21 12:54:51.347465925 +0300
++++ b/tests/test_main.py	2026-09-21 12:53:20.410753182 +0300
+@@ -1054,10 +1054,42 @@
+     assert "https://gldf.ru/ab12c" in view_response.text
+     assert 'id="short-url-link"' in view_response.text
+     assert "short-url-editor" in view_response.text
++    # Telegram share must use canonical /paste/<id> for Instant View, not SHRINK.
+     assert (
+-        'href="https://t.me/share/url?url=https%3A//gldf.ru/ab12c"'
++        f'href="https://t.me/share/url?url=http%3A//testserver/paste/{paste_id}"'
+         in view_response.text
+     )
++    assert (
++        'href="https://t.me/share/url?url=https%3A//gldf.ru/ab12c"'
++        not in view_response.text
++    )
++
++
+def test_telegram_share_href_uses_canonical_not_shrink_host(client, monkeypatch):
++    """Telegram share always targets canonical paste URL even when SHRINK works."""
++
++    async def mock_shorten(_url: str, custom_slug: str | None = None) -> str:
++        return "https://gldf.ru/ivtest"
++
++    monkeypatch.setattr(main_module, "shorten_url", mock_shorten)
++    monkeypatch.setattr(main_module.settings, "SHRINK_URL", "https://gldf.ru")
++    monkeypatch.setattr(main_module.settings, "SHRINK_TOKEN", "token")
++
++    create_response = client.post(
++        "/paste", data={"content": "iv share canonical"}, follow_redirects=False
++    )
++    paste_id = create_response.headers["location"].split("/")[-1]
++    view_response = client.get(f"/paste/{paste_id}")
++    assert view_response.status_code == 200
++
++    # Extract the telegram-share-btn href
++    marker = 'id="telegram-share-btn"'
++    assert marker in view_response.text
++    chunk = view_response.text.split(marker, 1)[1].split("</a>", 1)[0]
++    assert "/paste/" in chunk
++    assert paste_id in chunk
++    assert "gldf.ru" not in chunk
++    assert "encodeURIComponent(data.short_url" not in view_response.text
++
+ 
+ def test_create_paste_without_shrink_omits_short_url(client):

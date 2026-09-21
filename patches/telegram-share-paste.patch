@@ -1,0 +1,23 @@
+--- a/src/templates/paste.html	2026-09-21 12:54:51.179464874 +0300
++++ b/src/templates/paste.html	2026-09-21 12:59:42.604132760 +0300
+@@ -100,7 +100,7 @@
+                 class="btn btn-ghost btn-icon-only"
+                 title="{{ t('paste.share_telegram') }}"
+                 aria-label="{{ t('paste.share_telegram') }}"
+-                href="https://t.me/share/url?url={{ (short_url or canonical_url or meta.url)|urlencode }}"
++                href="https://t.me/share/url?url={{ (canonical_url or meta.url)|urlencode }}"
+                 target="_blank"
+                 rel="noopener noreferrer"
+             >
+@@ -387,11 +387,6 @@
+                     }
+                     originalSlug = data.slug;
+                     shortUrlSlug.value = data.slug;
+-                    // Update Telegram share button URL
+-                    const tgBtn = document.getElementById("telegram-share-btn");
+-                    if (tgBtn) {
+-                        tgBtn.href = 'https://t.me/share/url?url=' + encodeURIComponent(data.short_url || {{ canonical_url|tojson }});
+-                    }
+                     // Keep tab title + header label in sync with custom slug.
+                     const titleLabel = document.getElementById("paste-title-label");
+                     if (titleLabel && data.slug) {
