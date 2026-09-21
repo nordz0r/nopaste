@@ -4,6 +4,93 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.24.0 (2026-09-21)
+
+### Bug Fixes
+
+- Fill main payload A ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Fill main payload B ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+### Chores
+
+- Add temporary readable-main restore workflow ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Add temporary ruff formatting workflow ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Drop redundant llms_install hook (main payload already dynamic)
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Remove unused llms_install module ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Trigger readable-main restore workflow ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Trigger ruff formatting workflow ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+### Code Style
+
+- Ruff format llms_txt and main ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Wrap long favorites CSS assertion
+  ([`bcc6ae7`](https://github.com/nordz0r/nopaste/commit/bcc6ae7283f0104f3c0baf26f798a89a74d211eb))
+
+### Documentation
+
+- Explain compressed main.py MCP size workaround ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+### Features
+
+- Dynamic llms.txt + WebMCP slug/update/delete tools
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Generate instance-specific /llms.txt from PUBLIC_BASE_URL
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Import llms_install so /llms.txt uses instance base URL
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Load main.py from compressed payloads (MCP size workaround)
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- Override /llms.txt with instance-aware builder via config import
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- **webmcp**: Add set_paste_slug, update_paste, and delete_paste tools
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+### Refactoring
+
+- Restore readable main.py without payload loader
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+### Testing
+
+- Cover dynamic llms.txt against PUBLIC_BASE_URL and shortener settings
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+- **webmcp**: Cover set_paste_slug, update_paste, and delete_paste
+  ([#14](https://github.com/nordz0r/nopaste/pull/14),
+  [`7edb42f`](https://github.com/nordz0r/nopaste/commit/7edb42f895b917e2c4d71fbd9110964844199549))
+
+
 ## v1.23.3 (2026-09-17)
 
 ### Bug Fixes
