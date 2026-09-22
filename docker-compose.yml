@@ -30,6 +30,7 @@ services:
       SHRINK_URL: ${SHRINK_URL:-}
       SHRINK_TOKEN: ${SHRINK_TOKEN:-}
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
+      TELEGRAM_IV_RHASH: ${TELEGRAM_IV_RHASH:-}
       UI_DESIGN: ${UI_DESIGN:-default}
       GITHUB_REPO: ${GITHUB_REPO:-nordz0r/nopaste}
     volumes:
