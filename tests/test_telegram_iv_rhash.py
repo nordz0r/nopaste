@@ -1,4 +1,5 @@
 """Tests for TELEGRAM_IV_RHASH share href behavior."""
+
 from __future__ import annotations
 
 from urllib.parse import parse_qs, unquote, urlparse
@@ -74,9 +75,9 @@ def test_build_telegram_share_href_helpers():
 
     assert (
         build_telegram_share_href("https://paste.example/paste/abc", "")
-        == "https://t.me/share/url?url=https%3A%2F%2Fpaste.example%2Fpaste%2Fabc"
+        == "https://t.me/share/url?url=https%3A//paste.example/paste/abc"
     )
     assert (
         build_telegram_share_href("https://paste.example/paste/abc", "deadbeef01")
-        == "https://t.me/share/url?url=https%3A%2F%2Ft.me%2Fiv%3Furl%3Dhttps%253A%252F%252Fpaste.example%252Fpaste%252Fabc%26rhash%3Ddeadbeef01"
+        == "https://t.me/share/url?url=https%3A//t.me/iv%3Furl%3Dhttps%253A%252F%252Fpaste.example%252Fpaste%252Fabc%26rhash%3Ddeadbeef01"
     )

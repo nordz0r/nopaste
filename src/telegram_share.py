@@ -1,4 +1,5 @@
 """Telegram Instant View share URL helpers."""
+
 from __future__ import annotations
 
 import logging
@@ -36,7 +37,5 @@ def build_telegram_share_href(canonical_url: str, iv_rhash: str | None = None) -
         iv_rhash if iv_rhash is not None else settings.TELEGRAM_IV_RHASH
     )
     if rhash:
-        target = (
-            f"https://t.me/iv?url={quote(canonical_url, safe='')}&rhash={quote(rhash, safe='')}"
-        )
-    return f"https://t.me/share/url?url={quote(target, safe='')}"
+        target = f"https://t.me/iv?url={quote(canonical_url, safe='')}&rhash={quote(rhash, safe='')}"
+    return f"https://t.me/share/url?url={quote(target, safe='/')}"
