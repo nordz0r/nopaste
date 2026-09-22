@@ -65,6 +65,15 @@ class Settings(BaseSettings):
         default=None,
         description="Public base URL for canonical/Open Graph metadata.",
     )
+    TELEGRAM_PUBLIC_BASE_URL: str = Field(
+        default="",
+        description=(
+            "Optional public origin used only for Telegram Share and t.me/iv "
+            "url= (and TelegramBot SSR og/canonical). Example: "
+            "https://paste.bynord.dev when WebpageBot cannot reach the primary "
+            "PUBLIC_BASE_URL host. Empty falls back to PUBLIC_BASE_URL / request host."
+        ),
+    )
     TELEGRAM_IV_RHASH: str = Field(
         default="",
         description=(
