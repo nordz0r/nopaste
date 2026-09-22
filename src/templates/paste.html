@@ -100,7 +100,7 @@
                 class="btn btn-ghost btn-icon-only"
                 title="{{ t('paste.share_telegram') }}"
                 aria-label="{{ t('paste.share_telegram') }}"
-                href="https://t.me/share/url?url={{ (canonical_url or meta.url)|urlencode }}"
+                href="{{ telegram_share_href }}"
                 target="_blank"
                 rel="noopener noreferrer"
             >

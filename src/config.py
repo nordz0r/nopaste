@@ -65,6 +65,15 @@ class Settings(BaseSettings):
         default=None,
         description="Public base URL for canonical/Open Graph metadata.",
     )
+    TELEGRAM_IV_RHASH: str = Field(
+        default="",
+        description=(
+            "Optional Instant View template rhash from instantview.telegram.org. "
+            "When set, the Telegram share button shares a t.me/iv?url=…&rhash=… "
+            "link so recipients get Instant View without a publicly approved "
+            "template. Empty keeps sharing the bare canonical paste URL."
+        ),
+    )
     OIDC_DISCOVERY_URL: str = Field(
         default="",
         description=(

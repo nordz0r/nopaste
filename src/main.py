@@ -33,6 +33,7 @@ from list_paging import paginate_pastes_by_day_window
 from rate_limit import InMemoryRateLimiter
 from shlink import SlugTakenError, shorten_url
 from versioning import load_asset_version as _load_asset_version
+from telegram_share import build_telegram_share_href
 
 from auth import (
     authorization_url,
@@ -917,6 +918,7 @@ async def get_paste(request: Request, paste_id: str):
             instant_view_title=instant_view_title,
             short_url=short_url,
             canonical_url=canonical_url,
+            telegram_share_href=build_telegram_share_href(canonical_url),
             is_bookmarked=is_bookmarked,
             can_edit_slug=can_edit_slug,
             can_edit_content=can_edit_content,
