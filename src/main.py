@@ -33,7 +33,7 @@ from list_paging import paginate_pastes_by_day_window
 from rate_limit import InMemoryRateLimiter
 from shlink import SlugTakenError, shorten_url
 from versioning import load_asset_version as _load_asset_version
-from telegram_share import build_telegram_share_href
+from telegram_share import build_telegram_share_href, telegram_share_paste_url
 
 from auth import (
     authorization_url,
@@ -893,6 +893,14 @@ async def get_paste(request: Request, paste_id: str):
     )
     instant_view_title = markdown_title or f"Paste {display_name or paste_id}"
     canonical_url = canonical_paste_url(request, paste_id)
+    share_paste_url = telegram_share_paste_url(canonical_url)
+    # TelegramBot/IV editor should see the same host Share points at (bynord),
+    # while normal browser UI keeps PUBLIC_BASE_URL (goldfinches).
+    page_canonical_url = (
+        share_paste_url
+        if is_telegram_preview_request(request) and share_paste_url != canonical_url
+        else canonical_url
+    )
     user = current_user(request)
     is_bookmarked = bool(user and db.is_bookmarked(user["sub"], paste_id))
     can_edit_slug = user_may_edit_slug(request, paste)
@@ -902,6 +910,18 @@ async def get_paste(request: Request, paste_id: str):
     template_name = (
         "paste_preview.html" if is_telegram_preview_request(request) else "paste.html"
     )
+    page_meta = build_page_meta(
+        request,
+        title=f"Nopaste — {display_name}",
+        description=content_preview
+        or (
+            f"Open paste {display_name} in Nopaste — a clean way to share text, "
+            "logs, notes, and configs."
+        ),
+        page_type="article",
+    )
+    if page_canonical_url != canonical_url:
+        page_meta = {**page_meta, "url": page_canonical_url}
     return templates.TemplateResponse(
         request,
         template_name,
@@ -917,7 +937,7 @@ async def get_paste(request: Request, paste_id: str):
             instant_view_markdown=instant_view_markdown,
             instant_view_title=instant_view_title,
             short_url=short_url,
-            canonical_url=canonical_url,
+            canonical_url=page_canonical_url,
             telegram_share_href=build_telegram_share_href(canonical_url),
             is_bookmarked=is_bookmarked,
             can_edit_slug=can_edit_slug,
@@ -925,16 +945,7 @@ async def get_paste(request: Request, paste_id: str):
             can_delete=can_delete,
             meta_extra=None,
             content_preview=content_preview,
-            meta=build_page_meta(
-                request,
-                title=f"Nopaste — {display_name}",
-                description=content_preview
-                or (
-                    f"Open paste {display_name} in Nopaste — a clean way to share text, "
-                    "logs, notes, and configs."
-                ),
-                page_type="article",
-            ),
+            meta=page_meta,
         ),
     )
 
