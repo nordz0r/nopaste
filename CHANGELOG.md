@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.26.0 (2026-09-22)
+
+### Features
+
+- **telegram**: TELEGRAM_PUBLIC_BASE_URL for Share/IV
+  ([#17](https://github.com/nordz0r/nopaste/pull/17),
+  [`342037a`](https://github.com/nordz0r/nopaste/commit/342037a2e557b1061172f7467a1f1f669dd2c67c))
+
+
 ## v1.25.0 (2026-09-22)
 
 ### Features
