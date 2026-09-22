@@ -72,6 +72,34 @@ def telegram_share_paste_url(
     )
 
 
+def rewrite_to_telegram_public_base(
+    absolute_url: str,
+    *,
+    telegram_base: str | None = None,
+) -> str:
+    """Rewrite an absolute URL's origin to TELEGRAM_PUBLIC_BASE_URL when set.
+
+    Used for TelegramBot SSR assets (og:image, twitter:image, etc.) so WebpageBot
+    does not follow PUBLIC_BASE_URL hosts it cannot fetch.
+    """
+    base = resolve_telegram_public_base_url(telegram_base)
+    if not base:
+        return absolute_url
+    parts = urlsplit(absolute_url)
+    if not parts.scheme or not parts.netloc:
+        return absolute_url
+    base_parts = urlsplit(base)
+    return urlunsplit(
+        (
+            base_parts.scheme or parts.scheme or "https",
+            base_parts.netloc,
+            parts.path or "/",
+            parts.query,
+            "",
+        )
+    )
+
+
 def build_telegram_share_href(
     canonical_url: str,
     iv_rhash: str | None = None,

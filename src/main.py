@@ -33,7 +33,11 @@ from list_paging import paginate_pastes_by_day_window
 from rate_limit import InMemoryRateLimiter
 from shlink import SlugTakenError, shorten_url
 from versioning import load_asset_version as _load_asset_version
-from telegram_share import build_telegram_share_href, telegram_share_paste_url
+from telegram_share import (
+    build_telegram_share_href,
+    rewrite_to_telegram_public_base,
+    telegram_share_paste_url,
+)
 
 from auth import (
     authorization_url,
@@ -921,7 +925,11 @@ async def get_paste(request: Request, paste_id: str):
         page_type="article",
     )
     if page_canonical_url != canonical_url:
-        page_meta = {**page_meta, "url": page_canonical_url}
+        page_meta = {
+            **page_meta,
+            "url": page_canonical_url,
+            "image_url": rewrite_to_telegram_public_base(page_meta["image_url"]),
+        }
     return templates.TemplateResponse(
         request,
         template_name,

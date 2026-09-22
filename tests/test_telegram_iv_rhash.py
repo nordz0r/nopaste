@@ -111,7 +111,15 @@ def test_telegram_bot_preview_uses_telegram_public_base(client, monkeypatch):
         in view_response.text
     )
     assert f'href="https://paste.bynord.dev/paste/{paste_id}"' in view_response.text
-    # og:image may still use PUBLIC_BASE_URL; only url/canonical must be bynord.
+    assert (
+        'property="og:image" content="https://paste.bynord.dev/static/images/og-preview.png"'
+        in view_response.text
+    )
+    assert (
+        'name="twitter:image" content="https://paste.bynord.dev/static/images/og-preview.png"'
+        in view_response.text
+    )
+    assert "paste.goldfinches.ru/static/" not in view_response.text
     assert (
         'property="og:url" content="https://paste.goldfinches.ru'
         not in view_response.text
@@ -133,7 +141,11 @@ def test_telegram_share_ignores_invalid_iv_rhash(client, monkeypatch):
 
 
 def test_build_telegram_share_href_helpers(monkeypatch):
-    from telegram_share import build_telegram_share_href, telegram_share_paste_url
+    from telegram_share import (
+        build_telegram_share_href,
+        rewrite_to_telegram_public_base,
+        telegram_share_paste_url,
+    )
 
     monkeypatch.setattr(
         "telegram_share.settings.TELEGRAM_PUBLIC_BASE_URL",
@@ -153,6 +165,14 @@ def test_build_telegram_share_href_helpers(monkeypatch):
         telegram_base="https://paste.bynord.dev",
     )
     assert rewritten == "https://paste.bynord.dev/paste/abc"
+
+    assert (
+        rewrite_to_telegram_public_base(
+            "https://paste.goldfinches.ru/static/images/og-preview.png",
+            telegram_base="https://paste.bynord.dev",
+        )
+        == "https://paste.bynord.dev/static/images/og-preview.png"
+    )
     href = build_telegram_share_href(
         "https://paste.goldfinches.ru/paste/abc",
         "deadbeef01",
