@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.26.1 (2026-09-22)
+
+### Bug Fixes
+
+- **telegram**: TG SSR og/twitter image on TELEGRAM_PUBLIC_BASE_URL
+  ([#18](https://github.com/nordz0r/nopaste/pull/18),
+  [`2b94889`](https://github.com/nordz0r/nopaste/commit/2b9488927ee19196b4381c300bf95e9444b0fb20))
+
+
 ## v1.26.0 (2026-09-22)
 
 ### Features
