@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.25.0 (2026-09-22)
+
+### Features
+
+- **telegram**: Instant View via TELEGRAM_IV_RHASH share
+  ([#16](https://github.com/nordz0r/nopaste/pull/16),
+  [`ba3a785`](https://github.com/nordz0r/nopaste/commit/ba3a7855db57bf5993947ffab550d34e4bd3354a))
+
+
 ## v1.24.1 (2026-09-21)
 
 ### Bug Fixes
