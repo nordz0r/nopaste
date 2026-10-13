@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.30.1 (2026-10-13)
+
+### Bug Fixes
+
+- **ci**: Correct major/minor image tags in release workflow
+  ([#24](https://github.com/nordz0r/nopaste/pull/24),
+  [`1e4346f`](https://github.com/nordz0r/nopaste/commit/1e4346f2ca1e993eefa6393cb7c51d0e1c80061c))
+
+
 ## v1.30.0 (2026-10-13)
 
 ### Features
