@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.30.0 (2026-10-13)
+
+### Features
+
+- **markdown**: Theme-aware PR Lens-style mermaid diagrams
+  ([#22](https://github.com/nordz0r/nopaste/pull/22),
+  [`b9060fe`](https://github.com/nordz0r/nopaste/commit/b9060fec967b0ba867b40fdd5f0746f1e95930f5))
+
+
 ## v1.29.0 (2026-10-13)
 
 ### Documentation
