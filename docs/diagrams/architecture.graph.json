@@ -1,0 +1,276 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "graph",
+  "id": "nopaste-architecture",
+  "generatedAt": "2026-10-13T18:00:00.000Z",
+  "title": "Nopaste architecture",
+  "summary": "Browser → FastAPI → storage; markdown, mermaid and PR Lens render in the browser under CSP.",
+  "lenses": [
+    "architecture"
+  ],
+  "layout": {
+    "direction": "right",
+    "laneOrder": [
+      "client",
+      "server",
+      "data",
+      "ops"
+    ],
+    "rank": {
+      "browser": 0,
+      "app": 1,
+      "tpl": 2,
+      "repo": 2,
+      "csp": 3,
+      "crypto": 3,
+      "render": 4,
+      "shlink": 4,
+      "ci": 1,
+      "img": 2
+    }
+  },
+  "provenance": {
+    "repo": {
+      "owner": "nordz0r",
+      "name": "nopaste",
+      "host": "github.com"
+    },
+    "base": {
+      "sha": "0000000000000000000000000000000000000000",
+      "ref": "main"
+    },
+    "head": {
+      "sha": "0000000000000000000000000000000000000000",
+      "ref": "main"
+    },
+    "generator": {
+      "name": "manual",
+      "version": "1.0.0"
+    }
+  },
+  "lanes": [
+    {
+      "id": "client",
+      "label": "Client",
+      "subtitle": "browser",
+      "order": 0
+    },
+    {
+      "id": "server",
+      "label": "Server",
+      "subtitle": "FastAPI",
+      "order": 1
+    },
+    {
+      "id": "data",
+      "label": "Data",
+      "subtitle": "storage",
+      "order": 2
+    },
+    {
+      "id": "ops",
+      "label": "Delivery",
+      "subtitle": "CI · Docker",
+      "order": 3
+    }
+  ],
+  "nodes": [
+    {
+      "id": "browser",
+      "label": "Browser",
+      "kind": "ui",
+      "delta": "unchanged",
+      "lane": "client",
+      "subtitle": "editor · paste view",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "render",
+      "label": "Markdown renderers",
+      "kind": "module",
+      "delta": "unchanged",
+      "lane": "client",
+      "subtitle": "marked · mermaid · PR Lens",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "app",
+      "label": "FastAPI app",
+      "kind": "service",
+      "delta": "unchanged",
+      "lane": "server",
+      "subtitle": "routes · OIDC · rate limit",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "tpl",
+      "label": "Jinja2 templates",
+      "kind": "module",
+      "delta": "unchanged",
+      "lane": "server",
+      "subtitle": "HTML + static JS/CSS",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "csp",
+      "label": "CSP headers",
+      "kind": "config",
+      "delta": "unchanged",
+      "lane": "server",
+      "subtitle": "per-request nonce · blob: img",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "repo",
+      "label": "Repository",
+      "kind": "datastore",
+      "delta": "unchanged",
+      "lane": "data",
+      "subtitle": "SQLAlchemy · SQLite / Postgres",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "crypto",
+      "label": "Fernet encryption",
+      "kind": "module",
+      "delta": "unchanged",
+      "lane": "data",
+      "subtitle": "optional, at rest",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "shlink",
+      "label": "Shlink API",
+      "kind": "external",
+      "delta": "unchanged",
+      "lane": "data",
+      "subtitle": "optional short links",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "ci",
+      "label": "GitHub Actions",
+      "kind": "job",
+      "delta": "unchanged",
+      "lane": "ops",
+      "subtitle": "tests · semantic-release",
+      "files": [],
+      "badges": []
+    },
+    {
+      "id": "img",
+      "label": "Docker image",
+      "kind": "package",
+      "delta": "unchanged",
+      "lane": "ops",
+      "subtitle": "Docker Hub · GHCR",
+      "files": [],
+      "badges": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "browser",
+      "to": "app",
+      "kind": "http",
+      "delta": "unchanged",
+      "emphasis": "hero",
+      "animated": true,
+      "files": [],
+      "label": "HTTP"
+    },
+    {
+      "id": "e2",
+      "from": "app",
+      "to": "repo",
+      "kind": "data",
+      "delta": "unchanged",
+      "emphasis": "hero",
+      "animated": true,
+      "files": [],
+      "label": "pastes"
+    },
+    {
+      "id": "e3",
+      "from": "app",
+      "to": "tpl",
+      "kind": "render",
+      "delta": "unchanged",
+      "emphasis": "normal",
+      "animated": true,
+      "files": []
+    },
+    {
+      "id": "e4",
+      "from": "tpl",
+      "to": "csp",
+      "kind": "other",
+      "delta": "unchanged",
+      "emphasis": "normal",
+      "animated": true,
+      "files": []
+    },
+    {
+      "id": "e5",
+      "from": "csp",
+      "to": "render",
+      "kind": "render",
+      "delta": "unchanged",
+      "emphasis": "normal",
+      "animated": true,
+      "files": [],
+      "label": "safe render"
+    },
+    {
+      "id": "e6",
+      "from": "app",
+      "to": "crypto",
+      "kind": "call",
+      "delta": "unchanged",
+      "emphasis": "muted",
+      "animated": true,
+      "files": []
+    },
+    {
+      "id": "e7",
+      "from": "app",
+      "to": "shlink",
+      "kind": "http",
+      "delta": "unchanged",
+      "emphasis": "muted",
+      "animated": true,
+      "files": []
+    },
+    {
+      "id": "e8",
+      "from": "ci",
+      "to": "img",
+      "kind": "dependency",
+      "delta": "unchanged",
+      "emphasis": "normal",
+      "animated": true,
+      "files": [],
+      "label": "release"
+    },
+    {
+      "id": "e9",
+      "from": "browser",
+      "to": "render",
+      "kind": "render",
+      "delta": "unchanged",
+      "emphasis": "normal",
+      "animated": true,
+      "files": []
+    }
+  ],
+  "flows": []
+}
