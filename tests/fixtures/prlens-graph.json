@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "0.2.0",
+  "kind": "graph",
+  "id": "nopaste-flow",
+  "generatedAt": "2026-10-13T00:00:00.000Z",
+  "title": "Nopaste request flow",
+  "summary": "Browser posts a paste, the API stores it, the page renders markdown.",
+  "lenses": ["architecture"],
+  "provenance": {
+    "repo": { "owner": "nordz0r", "name": "nopaste", "host": "github.com" },
+    "base": { "sha": "0000000000000000000000000000000000000000", "ref": "main" },
+    "head": { "sha": "0000000000000000000000000000000000000000", "ref": "main" },
+    "generator": { "name": "manual", "version": "1.0.0" }
+  },
+  "lanes": [
+    { "id": "client", "label": "Client", "order": 0 },
+    { "id": "server", "label": "Server", "order": 1 }
+  ],
+  "nodes": [
+    { "id": "browser", "label": "Browser", "kind": "ui", "delta": "unchanged", "lane": "client", "files": [], "badges": [] },
+    { "id": "api", "label": "FastAPI", "kind": "service", "delta": "unchanged", "lane": "server", "files": [], "badges": [] },
+    { "id": "db", "label": "SQLite", "kind": "datastore", "delta": "unchanged", "lane": "server", "files": [], "badges": [] }
+  ],
+  "edges": [
+    { "id": "e1", "from": "browser", "to": "api", "kind": "http", "delta": "unchanged", "label": "POST /paste", "animated": true, "files": [] },
+    { "id": "e2", "from": "api", "to": "db", "kind": "data", "delta": "unchanged", "label": "insert", "files": [] }
+  ]
+}

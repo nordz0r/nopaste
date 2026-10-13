@@ -4,6 +4,65 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.28.0 (2026-10-13)
+
+### Documentation
+
+- **prlens**: README RU/EN section and CHANGELOG; restore uv.lock
+  ([#20](https://github.com/nordz0r/nopaste/pull/20),
+  [`4d3ab28`](https://github.com/nordz0r/nopaste/commit/4d3ab282009bf7c970a05d043a2d33088f788c99))
+
+### Features
+
+- **markdown**: PR Lens diagrams in markdown pastes
+  ([#20](https://github.com/nordz0r/nopaste/pull/20),
+  [`4d3ab28`](https://github.com/nordz0r/nopaste/commit/4d3ab282009bf7c970a05d043a2d33088f788c99))
+
+- **markdown**: Render PR Lens diagrams in markdown pastes
+  ([#20](https://github.com/nordz0r/nopaste/pull/20),
+  [`4d3ab28`](https://github.com/nordz0r/nopaste/commit/4d3ab282009bf7c970a05d043a2d33088f788c99))
+
+
+## v1.27.0 (2026-10-13)
+
+### Bug Fixes
+
+- **security**: Full Yandex.Metrika host list in CSP, no-store for HTML
+  ([#21](https://github.com/nordz0r/nopaste/pull/21),
+  [`96cb130`](https://github.com/nordz0r/nopaste/commit/96cb130927939e6094df68f5b8da0a254d9bc160))
+
+### Features
+
+- **security**: Nonce-based CSP and vendored @mcp-b/global 6.0.2
+  ([#21](https://github.com/nordz0r/nopaste/pull/21),
+  [`96cb130`](https://github.com/nordz0r/nopaste/commit/96cb130927939e6094df68f5b8da0a254d9bc160))
+
+- **security**: Nonce-based CSP, vendor @mcp-b/global instead of unpkg @latest
+  ([#21](https://github.com/nordz0r/nopaste/pull/21),
+  [`96cb130`](https://github.com/nordz0r/nopaste/commit/96cb130927939e6094df68f5b8da0a254d9bc160))
+
+
+## Unreleased
+
+### Features
+
+- **markdown**: PR Lens diagrams from ` ```prlens ` and graph ` ```json ` blocks, rendered client-side
+  by the pinned `@coldtea/pr-lens-renderer` 0.3.2 bundle (built in the Dockerfile) and shown only
+  through `<img src="blob:">`; lens tabs, theme follow, Download SVG, inline schema errors
+
+### Security
+
+- **csp**: Content-Security-Policy on HTML pages: per-request nonce for inline scripts, no
+  `'unsafe-inline'`/`'unsafe-eval'` for scripts, `object-src 'none'`, `base-uri 'none'`,
+  `img-src` allows `blob:`; Yandex.Metrika origins only when `YANDEX_METRIKA_ID` is set;
+  IV editor keeps `frame-ancestors https://instantview.telegram.org`
+- **csp**: Yandex.Metrika uses the full host list from Yandex's CSP docs (all `mc.yandex.*`
+  mirrors, `mc.webvisor.*`, `yastatic.net`) in `script-src`/`img-src`/`connect-src`/`frame-src`,
+  plus `wss://` hosts for Webvisor in `connect-src`; `blob:` in `frame-src` is for Metrika only.
+  HTML responses send `Cache-Control: no-store` so a cached page never reuses a CSP nonce
+- **webmcp**: `@mcp-b/global` 6.0.2 is vendored under `/static/js` instead of
+  `unpkg.com/@mcp-b/global@latest`
+
 ## v1.26.1 (2026-09-22)
 
 ### Bug Fixes

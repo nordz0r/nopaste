@@ -124,6 +124,17 @@ flowchart LR
   Crypto -.-> Storage
 ```
 
+## PR Lens diagrams
+
+Markdown pastes can show animated [PR Lens](https://github.com/coldteadotai/pr-lens) architecture and data-flow diagrams. Put a `graph.json` (PR Lens schema) into a ` ```prlens ` block. A ` ```json ` block whose document has `"kind": "graph"` and `schemaVersion` is drawn too, with the source kept under a `graph.json` spoiler.
+
+- Rendered in the browser by the pinned `@coldtea/pr-lens-renderer` (MIT), loaded only when a paste has a diagram.
+- The SVG is shown only as `<img src="blob:…">`: scripts and event handlers in it never run, SMIL animation still plays.
+- Tabs switch lenses; the diagram follows the site theme; **Download SVG** saves the current view.
+- Invalid JSON or schema errors are shown inside the block instead of the diagram.
+
+The bundle is built in the Dockerfile (`frontend/prlens`, `npm ci` from the lockfile) and is not committed. For local runs without Docker: `cd frontend/prlens && npm ci && npm run build`.
+
 ## Configuration
 
 Settings load from the environment / `.env` (see `.env.example`).
