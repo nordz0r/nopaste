@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.28.0 (2026-10-13)
+
+### Documentation
+
+- **prlens**: README RU/EN section and CHANGELOG; restore uv.lock
+  ([#20](https://github.com/nordz0r/nopaste/pull/20),
+  [`4d3ab28`](https://github.com/nordz0r/nopaste/commit/4d3ab282009bf7c970a05d043a2d33088f788c99))
+
+### Features
+
+- **markdown**: PR Lens diagrams in markdown pastes
+  ([#20](https://github.com/nordz0r/nopaste/pull/20),
+  [`4d3ab28`](https://github.com/nordz0r/nopaste/commit/4d3ab282009bf7c970a05d043a2d33088f788c99))
+
+- **markdown**: Render PR Lens diagrams in markdown pastes
+  ([#20](https://github.com/nordz0r/nopaste/pull/20),
+  [`4d3ab28`](https://github.com/nordz0r/nopaste/commit/4d3ab282009bf7c970a05d043a2d33088f788c99))
+
+
 ## v1.27.0 (2026-10-13)
 
 ### Bug Fixes
