@@ -27,7 +27,7 @@
     <meta name="twitter:description" content="{{ meta.description if meta else 'Share text, logs, notes, and configs with Nopaste.' }}">
     <meta name="twitter:image" content="{{ meta.image_url if meta else request.url_for('static', path='images/og-preview.png') }}">
     <link rel="stylesheet" href="/static/css/style.css?v={{ asset_version }}">
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
         (function() {
             const savedTheme = localStorage.getItem("nopaste-theme");
             const fallback = {{ (default_theme|default('dark'))|tojson }};
@@ -118,7 +118,7 @@
     </div>
 
     <div id="notification" class="notification"></div>
-    <script>
+    <script nonce="{{ request.state.csp_nonce }}">
     window.NOPASTE = {
         i18n: {{ (i18n_js if i18n_js is defined else {})|tojson }},
         assetVersion: {{ asset_version|tojson }},
@@ -137,11 +137,12 @@
     </script>
     <script src="/static/js/canvas-confetti.min.js?v={{ asset_version }}"></script>
     <script src="/static/js/app.js?v={{ asset_version }}"></script>
-    <script src="https://unpkg.com/@mcp-b/global@latest/dist/index.iife.js" defer></script>
+    <!-- @mcp-b/global 6.0.2 (MIT), vendored: see static/js/mcp-b-global.LICENSE -->
+    <script src="/static/js/mcp-b-global.iife.js?v=6.0.2" defer></script>
     <script src="/static/js/webmcp.js?v={{ asset_version }}" defer></script>
     {% if yandex_metrika_id and not is_telegram_preview_request|default(false) %}
     <!-- Yandex.Metrika counter -->
-    <script type="text/javascript">
+    <script type="text/javascript" nonce="{{ request.state.csp_nonce }}">
         (function(m,e,t,r,i,k,a){
             m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
             m[i].l=1*new Date();

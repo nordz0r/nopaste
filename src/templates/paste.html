@@ -175,7 +175,7 @@
     {% endif %}
 </article>
 
-<script>
+<script nonce="{{ request.state.csp_nonce }}">
 const i18n = {{ i18n_js|tojson }};
 const assetVersion = (window.NOPASTE && window.NOPASTE.assetVersion) || {{ asset_version|tojson }};
 // Mutable share URL used by the copy-link button (updated after slug edit).

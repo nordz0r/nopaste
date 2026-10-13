@@ -372,8 +372,79 @@ async def restrict_api_docs(request: Request, call_next):
     return await call_next(request)
 
 
+# Yandex Metrika hosts from the official CSP list:
+# https://yandex.ru/support/metrica/ru/code/install-counter-csp
+# tag.js picks the mirror by geo/locale (e.g. mc.yandex.com), so all are needed.
+_YANDEX_METRIKA_HOSTS = [
+    "mc.yandex.ru",
+    "mc.yandex.az",
+    "mc.yandex.by",
+    "mc.yandex.co.il",
+    "mc.yandex.com",
+    "mc.yandex.com.am",
+    "mc.yandex.com.ge",
+    "mc.yandex.com.tr",
+    "mc.yandex.ee",
+    "mc.yandex.fr",
+    "mc.yandex.kg",
+    "mc.yandex.kz",
+    "mc.yandex.lt",
+    "mc.yandex.lv",
+    "mc.yandex.md",
+    "mc.yandex.tj",
+    "mc.yandex.tm",
+    "mc.yandex.uz",
+    "mc.webvisor.com",
+    "mc.webvisor.org",
+]
+YANDEX_METRIKA_ORIGINS = [f"https://{h}" for h in _YANDEX_METRIKA_HOSTS] + [
+    "https://yastatic.net"
+]
+# Webvisor uses WebSockets to the same hosts (connect-src only).
+YANDEX_METRIKA_WSS_ORIGINS = [f"wss://{h}" for h in _YANDEX_METRIKA_HOSTS]
+
+
+def build_content_security_policy(nonce: str, *, allow_iv_editor_frame: bool) -> str:
+    """CSP for HTML pages. Inline scripts run only with the per-request nonce.
+
+    Styles keep 'unsafe-inline' (template style attributes, Mermaid SVG styles).
+    blob: images are needed for PR Lens/diagram previews shown via <img>.
+    """
+    script_src = ["'self'", f"'nonce-{nonce}'"]
+    img_src = ["'self'", "data:", "blob:"]
+    connect_src = ["'self'"]
+    frame_src = ["'none'"]
+    if (settings.YANDEX_METRIKA_ID or "").strip():
+        script_src += YANDEX_METRIKA_ORIGINS
+        img_src += YANDEX_METRIKA_ORIGINS
+        connect_src += YANDEX_METRIKA_ORIGINS + YANDEX_METRIKA_WSS_ORIGINS
+        # blob: frames are created by Metrika/Webvisor scripts only.
+        frame_src = ["blob:", *YANDEX_METRIKA_ORIGINS]
+    frame_ancestors = ["'self'"]
+    if allow_iv_editor_frame:
+        frame_ancestors.append("https://instantview.telegram.org")
+    directives = {
+        "default-src": ["'self'"],
+        "script-src": script_src,
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "img-src": img_src,
+        "font-src": ["'self'"],
+        "connect-src": connect_src,
+        "frame-src": frame_src,
+        "worker-src": ["'self'"],
+        "object-src": ["'none'"],
+        "base-uri": ["'none'"],
+        "form-action": ["'self'"],
+        "frame-ancestors": frame_ancestors,
+    }
+    return "; ".join(
+        f"{name} {' '.join(values)}" for name, values in directives.items()
+    )
+
+
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
+    request.state.csp_nonce = secrets.token_urlsafe(18)
     response = await call_next(request)
     path = request.url.path
     is_paste_page = is_paste_page_path(path)
@@ -406,6 +477,17 @@ async def add_security_headers(request: Request, call_next):
     response.headers.setdefault(
         "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
     )
+    if response.headers.get("content-type", "").startswith("text/html"):
+        # HTML carries a per-request CSP nonce: never let a cache reuse it.
+        response.headers.setdefault("Cache-Control", "no-store")
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            build_content_security_policy(
+                request.state.csp_nonce,
+                allow_iv_editor_frame=is_paste_page
+                and is_instant_view_editor_request(request),
+            ),
+        )
     return response
 
 
