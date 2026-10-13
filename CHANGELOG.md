@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## Unreleased
+
+### Features
+
+- **markdown**: PR Lens diagrams from ` ```prlens ` and graph ` ```json ` blocks, rendered client-side
+  by the pinned `@coldtea/pr-lens-renderer` 0.3.2 bundle (built in the Dockerfile) and shown only
+  through `<img src="blob:">`; lens tabs, theme follow, Download SVG, inline schema errors
+
 ## v1.26.1 (2026-09-22)
 
 ### Bug Fixes
