@@ -359,11 +359,10 @@ def test_app_assets_only_reference_approved_external_urls():
     ]
     # `cv.goldfinches.ru` is the developer portfolio link, `t.me/` powers the
     # Telegram share button. External scripts loaded for analytics and the
-    # WebMCP runtime are pinned to specific CDN origins below.
+    # WebMCP runtime is vendored under /static/js (no third-party CDN).
     approved_external_urls = (
         "https://cv.goldfinches.ru",
         "https://t.me/",
-        "https://unpkg.com/@mcp-b/",
         "https://mc.yandex.ru/",
     )
 
