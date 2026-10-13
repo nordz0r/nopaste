@@ -119,17 +119,13 @@ curl -fsSL "http://localhost:8000/raw/<paste_id>"
 | Хранилище | SQLAlchemy + Alembic · SQLite или PostgreSQL |
 | Эксплуатация | `/health/live`, `/health/ready`, rate limit в памяти, allowlist для docs |
 
-```mermaid
-flowchart LR
-  Browser -->|HTTP| App[Nopaste FastAPI]
-  App --> Templates[Jinja2 + static]
-  App --> Storage[SQLAlchemy repository]
-  Storage --> SQLite[(SQLite)]
-  Storage --> PG[(PostgreSQL)]
-  App -.->|optional| Shlink[Shlink API]
-  App -.->|optional| Crypto[Fernet encrypt]
-  Crypto -.-> Storage
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/architecture-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/architecture-light.svg">
+    <img alt="Архитектура Nopaste: клиенты → FastAPI → репозиторий → SQLite/PostgreSQL; Shlink, Fernet и OIDC опциональны" src=".github/assets/architecture-light.svg" width="100%">
+  </picture>
+</p>
 
 ## Диаграммы PR Lens
 

@@ -1,0 +1,295 @@
+{
+ "schemaVersion": "0.2.0",
+ "kind": "graph",
+ "id": "nopaste-architecture",
+ "generatedAt": "2026-10-13T18:00:00.000Z",
+ "title": "Nopaste architecture",
+ "summary": "FastAPI app renders Jinja2 pages, stores pastes via SQLAlchemy in SQLite or PostgreSQL; Shlink, Fernet and OIDC are optional.",
+ "lenses": [
+  "architecture"
+ ],
+ "layout": {
+  "direction": "right",
+  "laneOrder": [
+   "client",
+   "app",
+   "store",
+   "ext"
+  ],
+  "rank": {
+   "browser": 0,
+   "cli": 1,
+   "agent": 2,
+   "main": 1,
+   "tpl": 0,
+   "auth": 2,
+   "repo": 1,
+   "crypto": 2,
+   "db": 3,
+   "shlink": 1,
+   "idp": 2
+  }
+ },
+ "provenance": {
+  "repo": {
+   "owner": "nordz0r",
+   "name": "nopaste",
+   "host": "github.com"
+  },
+  "base": {
+   "sha": "0000000000000000000000000000000000000000",
+   "ref": "main"
+  },
+  "head": {
+   "sha": "0000000000000000000000000000000000000000",
+   "ref": "main"
+  },
+  "generator": {
+   "name": "manual",
+   "version": "1.0.0"
+  }
+ },
+ "lanes": [
+  {
+   "id": "client",
+   "label": "Clients",
+   "subtitle": "browser · curl · agents",
+   "order": 0
+  },
+  {
+   "id": "app",
+   "label": "Nopaste",
+   "subtitle": "FastAPI, src/",
+   "order": 1
+  },
+  {
+   "id": "store",
+   "label": "Storage",
+   "subtitle": "SQLAlchemy + Alembic",
+   "order": 2
+  },
+  {
+   "id": "ext",
+   "label": "Optional",
+   "subtitle": "off by default",
+   "order": 3
+  }
+ ],
+ "nodes": [
+  {
+   "id": "browser",
+   "label": "Browser",
+   "kind": "ui",
+   "delta": "unchanged",
+   "lane": "client",
+   "subtitle": "pages, Ctrl+Enter, anchors",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "cli",
+   "label": "curl / CI",
+   "kind": "external",
+   "delta": "unchanged",
+   "lane": "client",
+   "subtitle": "GET /raw/<id>",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "agent",
+   "label": "AI agent",
+   "kind": "external",
+   "delta": "unchanged",
+   "lane": "client",
+   "subtitle": "WebMCP tools on the page",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "main",
+   "label": "FastAPI routes",
+   "kind": "service",
+   "delta": "unchanged",
+   "lane": "app",
+   "subtitle": "main.py · rate limit",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "tpl",
+   "label": "Jinja2 + static",
+   "kind": "module",
+   "delta": "unchanged",
+   "lane": "app",
+   "subtitle": "templates, highlighting",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "auth",
+   "label": "OIDC login",
+   "kind": "module",
+   "delta": "unchanged",
+   "lane": "app",
+   "subtitle": "auth.py · sessions",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "repo",
+   "label": "Repository",
+   "kind": "module",
+   "delta": "unchanged",
+   "lane": "store",
+   "subtitle": "storage/repository.py",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "crypto",
+   "label": "Fernet",
+   "kind": "module",
+   "delta": "unchanged",
+   "lane": "store",
+   "subtitle": "enc:v1 at rest (optional)",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "db",
+   "label": "SQLite / PostgreSQL",
+   "kind": "datastore",
+   "delta": "unchanged",
+   "lane": "store",
+   "subtitle": "DATABASE_URL",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "shlink",
+   "label": "Shlink API",
+   "kind": "external",
+   "delta": "unchanged",
+   "lane": "ext",
+   "subtitle": "short URLs",
+   "files": [],
+   "badges": []
+  },
+  {
+   "id": "idp",
+   "label": "OIDC provider",
+   "kind": "external",
+   "delta": "unchanged",
+   "lane": "ext",
+   "subtitle": "Keycloak, Authentik…",
+   "files": [],
+   "badges": []
+  }
+ ],
+ "edges": [
+  {
+   "id": "e0",
+   "from": "browser",
+   "to": "main",
+   "kind": "http",
+   "delta": "unchanged",
+   "label": "HTTP",
+   "emphasis": "hero",
+   "animated": true,
+   "files": []
+  },
+  {
+   "id": "e1",
+   "from": "cli",
+   "to": "main",
+   "kind": "http",
+   "delta": "unchanged",
+   "emphasis": "normal",
+   "animated": true,
+   "files": []
+  },
+  {
+   "id": "e2",
+   "from": "agent",
+   "to": "main",
+   "kind": "http",
+   "delta": "unchanged",
+   "emphasis": "normal",
+   "animated": true,
+   "files": []
+  },
+  {
+   "id": "e3",
+   "from": "main",
+   "to": "tpl",
+   "kind": "render",
+   "delta": "unchanged",
+   "emphasis": "normal",
+   "animated": true,
+   "files": []
+  },
+  {
+   "id": "e4",
+   "from": "main",
+   "to": "repo",
+   "kind": "call",
+   "delta": "unchanged",
+   "label": "save / read",
+   "emphasis": "hero",
+   "animated": true,
+   "files": []
+  },
+  {
+   "id": "e5",
+   "from": "main",
+   "to": "auth",
+   "kind": "call",
+   "delta": "unchanged",
+   "emphasis": "muted",
+   "animated": false,
+   "files": []
+  },
+  {
+   "id": "e6",
+   "from": "repo",
+   "to": "crypto",
+   "kind": "call",
+   "delta": "unchanged",
+   "emphasis": "muted",
+   "animated": false,
+   "files": []
+  },
+  {
+   "id": "e7",
+   "from": "repo",
+   "to": "db",
+   "kind": "data",
+   "delta": "unchanged",
+   "emphasis": "hero",
+   "animated": true,
+   "files": []
+  },
+  {
+   "id": "e8",
+   "from": "main",
+   "to": "shlink",
+   "kind": "http",
+   "delta": "unchanged",
+   "emphasis": "muted",
+   "animated": false,
+   "files": []
+  },
+  {
+   "id": "e9",
+   "from": "auth",
+   "to": "idp",
+   "kind": "http",
+   "delta": "unchanged",
+   "emphasis": "muted",
+   "animated": false,
+   "files": []
+  }
+ ],
+ "flows": []
+}

@@ -119,17 +119,13 @@ Images:
 | Storage | SQLAlchemy + Alembic · SQLite or PostgreSQL |
 | Ops | `/health/live`, `/health/ready`, in-memory rate limit, docs allowlist |
 
-```mermaid
-flowchart LR
-  Browser -->|HTTP| App[Nopaste FastAPI]
-  App --> Templates[Jinja2 + static]
-  App --> Storage[SQLAlchemy repository]
-  Storage --> SQLite[(SQLite)]
-  Storage --> PG[(PostgreSQL)]
-  App -.->|optional| Shlink[Shlink API]
-  App -.->|optional| Crypto[Fernet encrypt]
-  Crypto -.-> Storage
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/architecture-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/architecture-light.svg">
+    <img alt="Nopaste architecture: clients → FastAPI → repository → SQLite/PostgreSQL; Shlink, Fernet and OIDC are optional" src=".github/assets/architecture-light.svg" width="100%">
+  </picture>
+</p>
 
 ## PR Lens diagrams
 
