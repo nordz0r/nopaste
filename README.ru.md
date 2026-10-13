@@ -68,6 +68,17 @@ curl -fsSL "http://localhost:8000/raw/<paste_id>"
 
 Образы: `nordz0r/nopaste:latest`, `ghcr.io/nordz0r/nopaste:latest`, rolling `nordz0r/nopaste:main`.
 
+## Диаграммы PR Lens
+
+В markdown-пастах можно показывать анимированные диаграммы [PR Lens](https://github.com/coldteadotai/pr-lens): архитектуру и потоки данных. Положите `graph.json` (схема PR Lens) в блок ` ```prlens `. Блок ` ```json ` с документом, где есть `"kind": "graph"` и `schemaVersion`, тоже рисуется, а исходник остаётся под спойлером `graph.json`.
+
+- Рисует браузер через `@coldtea/pr-lens-renderer` (MIT) с зафиксированной версией. Скрипт грузится, только если в пасте есть диаграмма.
+- SVG показывается только как `<img src="blob:…">`: скрипты и обработчики событий в нём не выполняются, SMIL-анимация работает.
+- Вкладки переключают линзы, диаграмма следует теме сайта, кнопка **Скачать SVG** сохраняет текущий вид.
+- Ошибки JSON и схемы показываются внутри блока вместо диаграммы.
+
+Бандл собирается в Dockerfile (`frontend/prlens`, `npm ci` по lock-файлу) и в git не хранится. Для локального запуска без Docker: `cd frontend/prlens && npm ci && npm run build`.
+
 ## Конфигурация
 
 Переменные окружения / `.env` (см. `.env.example`).

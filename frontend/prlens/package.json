@@ -1,0 +1,16 @@
+{
+  "name": "nopaste-prlens-bundle",
+  "private": true,
+  "description": "Browser bundle of the PR Lens renderer for nopaste. Built in the Dockerfile; not committed.",
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild entry.js --bundle --minify --format=iife --platform=browser --target=es2020 --alias:node:crypto=./crypto-stub.js --legal-comments=eof --outfile=../../src/static/js/prlens.min.js"
+  },
+  "dependencies": {
+    "@coldtea/pr-lens-renderer": "0.3.2",
+    "@coldtea/pr-lens-schema": "0.7.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10"
+  }
+}

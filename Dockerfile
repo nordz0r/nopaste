@@ -1,6 +1,15 @@
 # syntax=docker/dockerfile:1.7
 # Multi-stage: uv builds a venv, alpine runtime stays small.
 
+# PR Lens renderer bundle: pinned npm package (frontend/prlens/package-lock.json),
+# bundled for the browser with esbuild. The output is not committed to git.
+FROM node:20-alpine AS prlens-builder
+WORKDIR /build/frontend/prlens
+COPY frontend/prlens/package.json frontend/prlens/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY frontend/prlens/entry.js frontend/prlens/crypto-stub.js ./
+RUN mkdir -p /build/src/static/js && npm run build
+
 FROM python:3.12-alpine AS base-builder
 COPY --from=ghcr.io/astral-sh/uv:0.12.2 /uv /usr/local/bin/uv
 
@@ -58,6 +67,7 @@ COPY --from=prod-builder --chown=app:app /app/.venv .venv
 COPY --chown=app:app pyproject.toml CHANGELOG.md alembic.ini ./
 COPY --chown=app:app alembic ./alembic
 COPY --chown=app:app src ./
+COPY --from=prlens-builder --chown=app:app /build/src/static/js/prlens.min.js ./static/js/prlens.min.js
 
 USER app
 EXPOSE 8000

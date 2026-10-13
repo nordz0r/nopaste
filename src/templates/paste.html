@@ -458,6 +458,15 @@ async function renderMarkdownAndMermaid() {
 
     const rawContent = rawContentField.value;
     const needsMermaid = pasteNeedsMermaid(rawContent);
+    let prlensView = null;
+    if (/```|"kind"/.test(rawContent)) {
+        try { await window.nopasteLoadScript(`/static/js/prlens-view.js?v=${assetVersion}`); } catch (_) {}
+    }
+    if (window.NopastePrLensView && window.NopastePrLensView.needs(rawContent)) {
+        prlensView = window.NopastePrLensView;
+        // A missing bundle is reported inside each diagram block, not thrown.
+        try { await window.nopasteLoadScript(`/static/js/prlens.min.js?v=${assetVersion}`); } catch (_) {}
+    }
     if (needsMermaid) {
         await window.nopasteLoadScript(`/static/js/mermaid.min.js?v=${assetVersion}`);
     }
@@ -484,6 +493,15 @@ async function renderMarkdownAndMermaid() {
         if (lang === "mermaid") {
             return `<div class="mermaid-wrap"><pre class="mermaid">${escapeHtml(codeText)}</pre></div>`;
         }
+        if (prlensView && prlensView.isGraph(lang, codeText)) {
+            const diagram = prlensView.blockHtml(codeText);
+            if (lang === "prlens") return diagram;
+            // A plain ```json graph.json keeps its source under a spoiler.
+            const source = typeof code === "object"
+                ? defaultCodeRenderer(code)
+                : defaultCodeRenderer(codeText, langStr, isEscaped);
+            return `${diagram}<details class="prlens-json"><summary>graph.json</summary>${source}</details>`;
+        }
         const rendered = typeof code === "object"
             ? defaultCodeRenderer(code)
             : defaultCodeRenderer(codeText, langStr, isEscaped);
@@ -506,6 +524,7 @@ async function renderMarkdownAndMermaid() {
     });
 
     markdownContainer.innerHTML = marked.parse(rawContent);
+    if (prlensView) prlensView.renderBlocks(markdownContainer, { i18n });
 
     if (needsMermaid && window.mermaid) {
         const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";

@@ -36,3 +36,5 @@ README.ru.md
 # Lock noise
 *.md~
 *~
+
+frontend/prlens/node_modules
