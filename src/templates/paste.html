@@ -508,23 +508,95 @@ async function renderMarkdownAndMermaid() {
     markdownContainer.innerHTML = marked.parse(rawContent);
 
     if (needsMermaid && window.mermaid) {
-        const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
-        try {
-            window.mermaid.initialize({
-                startOnLoad: false,
-                theme: currentTheme === "light" ? "default" : "dark",
-                securityLevel: "strict",
-                fontFamily: "var(--font-sans)",
-            });
-
-            const mermaidNodes = markdownContainer.querySelectorAll(".mermaid");
-            if (mermaidNodes.length > 0) {
-                window.mermaid.run({ nodes: mermaidNodes });
-            }
-        } catch (err) {
-            console.warn("Mermaid rendering warning:", err);
-        }
+        const mermaidNodes = Array.from(markdownContainer.querySelectorAll(".mermaid"));
+        // Keep the source (as text, never HTML) so the diagram can be re-rendered on theme change.
+        mermaidNodes.forEach((node) => { node.dataset.mermaidSrc = node.textContent; });
+        await renderMermaidThemed(mermaidNodes);
+        observeThemeForDiagrams(() => renderMermaidThemed(mermaidNodes));
     }
+}
+
+// Mermaid palette is taken from nopaste theme CSS variables, so diagrams follow light/dark.
+function nopasteThemeVars() {
+    const css = getComputedStyle(document.documentElement);
+    const v = (name, fallback) => (css.getPropertyValue(name) || "").trim() || fallback;
+    return {
+        isLight: document.documentElement.getAttribute("data-theme") === "light",
+        bg: v("--bg-surface-alt", "#212427"),
+        surface: v("--bg-surface", "#1a1c1e"),
+        text: v("--text-main", "#e2e2e6"),
+        muted: v("--text-muted", "#9ba3af"),
+        accent: v("--accent", "#8ab4f8"),
+        accentSoft: v("--accent-soft", "rgba(138,180,248,0.1)"),
+        border: v("--border", "#33373b"),
+        success: v("--success", "#81c995"),
+        font: v("--font-sans", "Inter, sans-serif"),
+    };
+}
+
+let mermaidRenderSeq = 0;
+async function renderMermaidThemed(nodes) {
+    if (!window.mermaid || !nodes.length) return;
+    const seq = ++mermaidRenderSeq;
+    const t = nopasteThemeVars();
+    try {
+        window.mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: "strict",
+            theme: "base",
+            fontFamily: t.font,
+            fontSize: 16,
+            flowchart: { curve: "basis", padding: 16, nodeSpacing: 48, rankSpacing: 56 },
+            themeVariables: {
+                darkMode: !t.isLight,
+                background: t.bg,
+                fontFamily: t.font,
+                fontSize: "16px",
+                primaryColor: t.surface,
+                primaryTextColor: t.text,
+                primaryBorderColor: t.accent,
+                secondaryColor: t.bg,
+                secondaryTextColor: t.text,
+                secondaryBorderColor: t.border,
+                tertiaryColor: t.surface,
+                tertiaryTextColor: t.text,
+                tertiaryBorderColor: t.border,
+                lineColor: t.accent,
+                textColor: t.text,
+                mainBkg: t.surface,
+                nodeBorder: t.accent,
+                clusterBkg: t.bg,
+                clusterBorder: t.border,
+                titleColor: t.text,
+                edgeLabelBackground: t.bg,
+                noteBkgColor: t.bg,
+                noteTextColor: t.text,
+                noteBorderColor: t.border,
+                actorBkg: t.surface,
+                actorBorder: t.accent,
+                actorTextColor: t.text,
+                actorLineColor: t.border,
+                signalColor: t.accent,
+                signalTextColor: t.text,
+            },
+        });
+        for (const node of nodes) {
+            if (seq !== mermaidRenderSeq) return;
+            node.removeAttribute("data-processed");
+            node.textContent = node.dataset.mermaidSrc || "";
+        }
+        await window.mermaid.run({ nodes });
+    } catch (err) {
+        console.warn("Mermaid rendering warning:", err);
+    }
+}
+
+function observeThemeForDiagrams(rerender) {
+    let last = document.documentElement.getAttribute("data-theme");
+    new MutationObserver(() => {
+        const now = document.documentElement.getAttribute("data-theme");
+        if (now !== last) { last = now; rerender(); }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 }
 
 const toggleRawBtn = document.getElementById("toggle-raw-btn");
