@@ -1731,6 +1731,53 @@ textarea::placeholder {
 
 .mermaid-wrap .mermaid {
     background: transparent !important;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* PR Lens-style mermaid: large clean text, flowing edges. Colors come from theme vars. */
+.mermaid-wrap svg {
+    max-width: 100% !important;
+    height: auto;
+    font-family: var(--font-sans);
+}
+.mermaid-wrap svg .node rect,
+.mermaid-wrap svg .node polygon,
+.mermaid-wrap svg .node circle,
+.mermaid-wrap svg .node path {
+    rx: 8px;
+    stroke-width: 1.5px;
+}
+.mermaid-wrap svg .nodeLabel,
+.mermaid-wrap svg .edgeLabel {
+    font-weight: 500;
+}
+.mermaid-wrap svg .flowchart-link,
+.mermaid-wrap svg .edgePath .path,
+.mermaid-wrap svg .messageLine0,
+.mermaid-wrap svg .messageLine1,
+.mermaid-wrap svg .relation,
+.mermaid-wrap svg .transition {
+    stroke-width: 2px;
+    stroke-dasharray: 8 6 !important;
+    animation: nopaste-edge-flow 1.2s linear infinite;
+}
+@keyframes nopaste-edge-flow {
+    to { stroke-dashoffset: -28; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mermaid-wrap svg .flowchart-link,
+    .mermaid-wrap svg .edgePath .path,
+    .mermaid-wrap svg .messageLine0,
+    .mermaid-wrap svg .messageLine1,
+    .mermaid-wrap svg .relation,
+    .mermaid-wrap svg .transition {
+        animation: none;
+    }
 }
 
 /* PR Lens diagrams (rendered as <img src="blob:"> only) */
