@@ -65,7 +65,7 @@ test('XSS payloads in graph.json stay escaped text in markdown output', () => {
 test('view never injects renderer output as markup', () => {
     // The SVG may only reach the page as an image (blob: URL on <img>).
     assert.doesNotMatch(viewSource, /innerHTML|outerHTML|insertAdjacentHTML|document\.write|DOMParser|createContextualFragment/);
-    assert.match(viewSource, /new Blob\(\[out\.svg\], \{ type: "image\/svg\+xml" \}\)/);
+    assert.match(viewSource, /new Blob\(\[svg\], \{ type: "image\/svg\+xml" \}\)/);
     assert.match(viewSource, /img\.src = url/);
 });
 
@@ -98,4 +98,13 @@ test('bundle renders a real graph and keeps labels escaped', { skip: !fs.existsS
     }
     assert.throws(() => ctx.NopastePrLens.render('{not json', '', 'dark'), /not valid JSON/);
     assert.throws(() => ctx.NopastePrLens.render('{"kind":"graph"}', '', 'dark'), /does not match PR Lens schema/);
+});
+
+test('recolorSvg maps palette colours in attributes only, not label text', () => {
+    const view = loadView().NopastePrLensView;
+    const out = view.recolorSvg(
+        '<rect fill="#0d1117" style="stroke:#3D444D"/><text>#0d1117</text>',
+        { '#0d1117': '#212427', '#3d444d': '#33373b' },
+    );
+    assert.equal(out, '<rect fill="#212427" style="stroke:#33373b"/><text>#0d1117</text>');
 });

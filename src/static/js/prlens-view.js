@@ -42,6 +42,44 @@
         return doc.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
     }
 
+    // Renderer palette neutrals -> nopaste theme CSS variables. Diff colours
+    // (added/modified/removed) stay as the renderer draws them.
+    const PALETTE_VARS = {
+        dark: {
+            "#0d1117": "--bg-surface-alt", "#1c2128": "--bg-surface", "#3d444d": "--border",
+            "#30363d": "--border", "#21262d": "--border", "#e6edf3": "--text-main",
+            "#9198a1": "--text-muted", "#6e7681": "--accent",
+        },
+        light: {
+            "#f4f5f7": "--bg-surface-alt", "#ffffff": "--bg-surface", "#d1d9e0": "--border",
+            "#d8dee4": "--border", "#f1f3f5": "--bg-app", "#1f2328": "--text-main",
+            "#59636e": "--text-muted", "#8c959f": "--accent",
+        },
+    };
+    const SAFE_COLOR = /^(#[0-9a-f]{3,8}|rgba?\(\s*[\d.]+%?\s*,\s*[\d.]+%?\s*,\s*[\d.]+%?\s*(,\s*[\d.]+\s*)?\))$/i;
+
+    // Only values that look like plain colours are used, and only colour
+    // tokens in attribute/style positions are rewritten, never label text.
+    function themeColors(doc, theme) {
+        const map = PALETTE_VARS[theme] || {};
+        const css = doc.defaultView && doc.defaultView.getComputedStyle
+            ? doc.defaultView.getComputedStyle(doc.documentElement) : null;
+        const out = {};
+        if (!css) return out;
+        Object.keys(map).forEach((hex) => {
+            const value = String(css.getPropertyValue(map[hex]) || "").trim();
+            if (SAFE_COLOR.test(value)) out[hex] = value;
+        });
+        return out;
+    }
+
+    function recolorSvg(svg, colors) {
+        const keys = Object.keys(colors);
+        if (!keys.length) return svg;
+        const re = new RegExp(`(=["']|:\\s*)(${keys.join("|")})(?![0-9a-f])`, "gi");
+        return svg.replace(re, (m, pre, hex) => pre + (colors[hex.toLowerCase()] || hex));
+    }
+
     function slug(text) {
         return String(text || "diagram").toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "diagram";
     }
@@ -82,7 +120,8 @@
         }
         wrap.dataset.lens = out.lens;
 
-        const url = URL.createObjectURL(new Blob([out.svg], { type: "image/svg+xml" }));
+        const svg = recolorSvg(out.svg, themeColors(doc, currentTheme(doc)));
+        const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
         wrap._prlensUrl = url;
         const img = doc.createElement("img");
         img.className = "prlens-img";
@@ -136,5 +175,5 @@
         }
     }
 
-    root.NopastePrLensView = { needs, isGraph, blockHtml, renderBlocks };
+    root.NopastePrLensView = { needs, isGraph, blockHtml, renderBlocks, recolorSvg };
 })(typeof window !== "undefined" ? window : globalThis);
