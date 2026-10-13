@@ -1,12 +1,20 @@
-# Nopaste
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset=".github/assets/banner-light.svg">
+    <img alt="nordz0r/nopaste — self-hosted pastebin" src=".github/assets/banner-light.svg" width="100%">
+  </picture>
+</p>
+
+<p align="center"><b>Русский</b> · <a href="README.en.md">English</a></p>
 
 <p align="center">
   <img src="docs/hero.png" alt="Nopaste — self-hosted pastebin" width="800">
 </p>
 
 <p align="center">
-  <strong>Self-hosted pastebin for text, logs, notes, and configs.</strong><br>
-  Fast. Private. Anonymous by default. One container.
+  <strong>Self-hosted pastebin для текста, логов, заметок и конфигов.</strong><br>
+  Быстро. Приватно. Анонимно по умолчанию. Один контейнер.
 </p>
 
 <p align="center">
@@ -20,97 +28,96 @@
 
 </p>
 
-> 🇷🇺 [Русская версия](./README.ru.md)
 
 ```bash
 docker compose up -d
 # → http://localhost:8000
 ```
 
-Local trials default to `DEBUG=true`. Production must set `DEBUG=false` and a unique `COOKIE_SIGNING_SECRET`.
+Для локальной пробы по умолчанию `DEBUG=true`. В продакшене обязательно задайте `DEBUG=false` и уникальный `COOKIE_SIGNING_SECRET`.
 
-If Nopaste is useful, [star the repo](https://github.com/nordz0r/nopaste) — it is the single best way to help others find it.
+Если Nopaste полезен — [поставьте звезду](https://github.com/nordz0r/nopaste). Это лучший способ помочь другим его найти.
 
-## Why Nopaste
+## Зачем Nopaste
 
-Most pastebins are either public SaaS or heavy appliances. Nopaste is a single container you can run at home, on a VPS, or behind your reverse proxy.
+Большинство pastebin — либо публичный SaaS, либо тяжёлые комбайны. Nopaste — один контейнер, который можно запустить дома, на VPS или за своим reverse proxy.
 
-- **Anonymous by default** — no sign-up needed to create or read a paste
-- **Share by ID** or an optional Shlink short URL
-- **Line anchors** (`#L12`, `#L12-L20`) and one-click copy
-- **RAW** view (`/raw/<id>`) for curl, CI, and editors
-- **Syntax highlighting** plus Markdown / Mermaid
-- **SQLite by default**, PostgreSQL when you need it
-- **Optional at-rest encryption** (`PASTE_ENCRYPTION_KEY`)
-- **Optional accounts via OIDC** — personal bookmarks; owners edit their pastes; staff/admin may edit any paste
-- **Bookmarks / favorites** and a 7-day paginated paste list
-- **WebMCP tools** so AI agents can create and read pastes on the page
-- **RU/EN UI** from `Accept-Language`
-- **Feedback** in the footer opens a prefilled GitHub issue
-- **No search indexing** (`robots.txt` + `noindex`)
-- **Telegram preview / Instant View** support for paste pages
+- **Анонимно по умолчанию** — регистрация не нужна ни для создания, ни для чтения
+- **Шаринг по ID** или по короткой ссылке Shlink (опционально)
+- **Якоря строк** (`#L12`, `#L12-L20`) и копирование в один клик
+- **RAW** (`/raw/<id>`) для curl, CI и редакторов
+- **Подсветка синтаксиса**, а также Markdown / Mermaid
+- **SQLite по умолчанию**, PostgreSQL при необходимости
+- **Опциональное шифрование at-rest** (`PASTE_ENCRYPTION_KEY`)
+- **Опциональные аккаунты через OIDC** — личные закладки; владельцы правят свои пасты; staff/admin — любые
+- **Закладки / избранное** и список паст за 7 дней с постраничной навигацией
+- **WebMCP-инструменты**: AI-агенты могут создавать и читать пасты на странице
+- **Интерфейс RU/EN** по `Accept-Language`
+- **Feedback** в подвале открывает предзаполненный issue в GitHub
+- **Без индексации поисковиками** (`robots.txt` + `noindex`)
+- Поддержка **preview / Instant View в Telegram** для страниц паст
 
 | | Nopaste | PrivateBin | haste-server |
 |---|:---:|:---:|:---:|
-| One Docker image | ✓ | ✓ | ✓ |
-| Zero-knowledge / client crypto | — | ✓ | — |
-| Optional server-side encryption | ✓ | — | — |
+| Один Docker-образ | ✓ | ✓ | ✓ |
+| Zero-knowledge / шифрование на клиенте | — | ✓ | — |
+| Опциональное шифрование на сервере | ✓ | — | — |
 | Markdown + Mermaid | ✓ | — | — |
-| Line anchors `#L12-L20` | ✓ | — | — |
-| SQLite *or* Postgres | ✓ | ✓ | ✓ |
-| Optional accounts (OIDC) | ✓ | — | — |
-| Shlink short URLs | ✓ | — | — |
-| RU / EN UI | ✓ | — | — |
+| Якоря строк `#L12-L20` | ✓ | — | — |
+| SQLite *или* Postgres | ✓ | ✓ | ✓ |
+| Опциональные аккаунты (OIDC) | ✓ | — | — |
+| Короткие ссылки Shlink | ✓ | — | — |
+| Интерфейс RU / EN | ✓ | — | — |
 
-## Quick start
+## Быстрый старт
 
 ```bash
-# Published image (SQLite, data in a volume)
+# Опубликованный образ (SQLite, данные в volume)
 docker compose up -d
 
-# Local build
+# Локальная сборка
 docker compose -f docker-compose.local.yml up --build -d
 
-# App + Postgres
+# Приложение + Postgres
 DATABASE_URL=postgresql+psycopg://nopaste:nopaste@postgres:5432/nopaste \
   docker compose --profile postgres up -d
 ```
 
-From source:
+Из исходников:
 
 ```bash
 uv sync --frozen --extra test --group dev
 PYTHONPATH=src uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Open http://localhost:8000
+Откройте http://localhost:8000
 
 ```bash
-# Raw content
+# Сырое содержимое
 curl -fsSL "http://localhost:8000/raw/<paste_id>"
 ```
 
-Telegram preview and Instant View setup: [docs/telegram-instant-view.md](docs/telegram-instant-view.md).
+Настройка Telegram preview и Instant View: [docs/telegram-instant-view.md](docs/telegram-instant-view.md).
 
-Images:
+Образы:
 
-| Registry | Image |
-|----------|--------|
+| Реестр | Образ |
+|--------|-------|
 | Docker Hub | `nordz0r/nopaste:latest` |
 | GHCR | `ghcr.io/nordz0r/nopaste:latest` |
 | Rolling `main` | `nordz0r/nopaste:main` |
 
-## Features
+## Возможности
 
 | | |
 |---|---|
-| Editor | Ctrl/⌘+Enter to save, signed recent-pastes cookie |
-| Viewer | Highlighted lines, Markdown toggle, `</>` RAW button |
-| Links | Copy page URL or Shlink slug; click a line number to copy `#Ln` |
-| Accounts | Optional OIDC login · bookmarks · edit/delete · 7-day list paging |
-| Agents | WebMCP tools (`document.modelContext`): create with strict vanity slug, inspect short/share URLs, read pastes |
-| Storage | SQLAlchemy + Alembic · SQLite or PostgreSQL |
-| Ops | `/health/live`, `/health/ready`, in-memory rate limit, docs allowlist |
+| Редактор | Ctrl/⌘+Enter — сохранить, подписанная cookie с недавними пастами |
+| Просмотр | Подсветка строк, переключатель Markdown, кнопка RAW `</>` |
+| Ссылки | Копирование URL страницы или slug Shlink; клик по номеру строки копирует `#Ln` |
+| Аккаунты | Опциональный вход через OIDC · закладки · правка/удаление · список за 7 дней по страницам |
+| Агенты | WebMCP-инструменты (`document.modelContext`): создание со строгим vanity slug, просмотр коротких/share-ссылок, чтение паст |
+| Хранилище | SQLAlchemy + Alembic · SQLite или PostgreSQL |
+| Эксплуатация | `/health/live`, `/health/ready`, rate limit в памяти, allowlist для docs |
 
 ```mermaid
 flowchart LR
@@ -124,106 +131,106 @@ flowchart LR
   Crypto -.-> Storage
 ```
 
-## PR Lens diagrams
+## Диаграммы PR Lens
 
-Markdown pastes can show animated [PR Lens](https://github.com/coldteadotai/pr-lens) architecture and data-flow diagrams. Put a `graph.json` (PR Lens schema) into a ` ```prlens ` block. A ` ```json ` block whose document has `"kind": "graph"` and `schemaVersion` is drawn too, with the source kept under a `graph.json` spoiler.
+В markdown-пастах можно показывать анимированные диаграммы [PR Lens](https://github.com/coldteadotai/pr-lens): архитектуру и потоки данных. Положите `graph.json` (схема PR Lens) в блок ` ```prlens `. Блок ` ```json ` с документом, где есть `"kind": "graph"` и `schemaVersion`, тоже рисуется, а исходник остаётся под спойлером `graph.json`.
 
-- Rendered in the browser by the pinned `@coldtea/pr-lens-renderer` (MIT), loaded only when a paste has a diagram.
-- The SVG is shown only as `<img src="blob:…">`: scripts and event handlers in it never run, SMIL animation still plays.
-- Tabs switch lenses; the diagram follows the site theme; **Download SVG** saves the current view.
-- Invalid JSON or schema errors are shown inside the block instead of the diagram.
+- Рисует браузер через `@coldtea/pr-lens-renderer` (MIT) с зафиксированной версией. Скрипт грузится, только если в пасте есть диаграмма.
+- SVG показывается только как `<img src="blob:…">`: скрипты и обработчики событий в нём не выполняются, SMIL-анимация работает.
+- Вкладки переключают линзы, диаграмма следует теме сайта, кнопка **Скачать SVG** сохраняет текущий вид.
+- Ошибки JSON и схемы показываются внутри блока вместо диаграммы.
 
-The bundle is built in the Dockerfile (`frontend/prlens`, `npm ci` from the lockfile) and is not committed. For local runs without Docker: `cd frontend/prlens && npm ci && npm run build`.
+Бандл собирается в Dockerfile (`frontend/prlens`, `npm ci` по lock-файлу) и в git не хранится. Для локального запуска без Docker: `cd frontend/prlens && npm ci && npm run build`.
 
-## Configuration
+## Конфигурация
 
-Settings load from the environment / `.env` (see `.env.example`).
+Настройки читаются из окружения / `.env` (см. `.env.example`).
 
-| Variable | Description |
-|----------|-------------|
-| `APP_PORT` | Listen port (default `8000`) |
-| `DEBUG` | FastAPI debug mode |
-| `DATABASE_PATH` | SQLite path when URL/Postgres unset |
-| `DATABASE_URL` | SQLAlchemy URL (`sqlite+…` or `postgresql+psycopg://…`) |
-| `POSTGRES_*` | Discrete Postgres credentials (used if URL empty) |
-| `PASTE_ENCRYPTION_KEY` | **Optional.** Fernet key or passphrase — encrypts bodies at rest |
-| `COOKIE_SIGNING_SECRET` | HMAC secret for the recent-pastes cookie. Required unique value when `DEBUG=false`. |
-| `TRUSTED_PROXY_IPS` | Comma-separated proxy IPs/CIDRs allowed to supply `X-Forwarded-For`. Empty ignores the header. |
-| `FORWARDED_ALLOW_IPS` | Matching uvicorn `--forwarded-allow-ips` value. Keep in sync with `TRUSTED_PROXY_IPS`. |
-| `MAX_PASTE_SIZE_BYTES` | Max paste size |
-| `MAX_RECENT_PASTES` | Cookie history cap |
-| `RATE_LIMIT_ENABLED` / `RATE_LIMIT_PER_MINUTE` | Create/update rate limit |
-| `SHRINK_URL` / `SHRINK_TOKEN` | Shlink base URL + API key (both required) |
-| `PUBLIC_BASE_URL` | Canonical / Open Graph base URL |
-| `UI_DESIGN` | Template design under `templates/designs/<name>/` |
-| `GITHUB_REPO` | `owner/name` for the footer Feedback button (empty hides it) |
-| `DOCS_ALLOWLIST` | CIDR/IP list for `/docs` (empty = open) |
-| `APP_VERSION` | Display version (release images set this) |
-| `OIDC_DISCOVERY_URL` | **Optional.** OIDC discovery document URL — enables login |
-| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | OIDC client credentials (both required for login) |
-| `OIDC_SCOPES` / `OIDC_REDIRECT_URI` | Requested scopes and the registered callback URL |
-| `SESSION_SECRET_KEY` | Session cookie signing secret (falls back to `COOKIE_SIGNING_SECRET`) |
-| `SESSION_COOKIE_NAME` / `SESSION_MAX_AGE_SECONDS` | Session cookie name and lifetime |
-| `YANDEX_METRIKA_ID` | **Optional.** Your Yandex.Metrika counter ID (empty = no analytics tag) |
+| Переменная | Описание |
+|------------|----------|
+| `APP_PORT` | Порт (по умолчанию `8000`) |
+| `DEBUG` | Debug-режим FastAPI |
+| `DATABASE_PATH` | Путь к SQLite, если URL/Postgres не заданы |
+| `DATABASE_URL` | URL SQLAlchemy (`sqlite+…` или `postgresql+psycopg://…`) |
+| `POSTGRES_*` | Отдельные учётные данные Postgres (используются, если URL пуст) |
+| `PASTE_ENCRYPTION_KEY` | **Опционально.** Ключ Fernet или passphrase — шифрует тела паст при хранении |
+| `COOKIE_SIGNING_SECRET` | HMAC-секрет cookie с недавними пастами. При `DEBUG=false` обязательно уникальное значение. |
+| `TRUSTED_PROXY_IPS` | IP/CIDR прокси через запятую, которым разрешено передавать `X-Forwarded-For`. Пусто — заголовок игнорируется. |
+| `FORWARDED_ALLOW_IPS` | Соответствующее значение uvicorn `--forwarded-allow-ips`. Держите синхронно с `TRUSTED_PROXY_IPS`. |
+| `MAX_PASTE_SIZE_BYTES` | Максимальный размер пасты |
+| `MAX_RECENT_PASTES` | Лимит истории в cookie |
+| `RATE_LIMIT_ENABLED` / `RATE_LIMIT_PER_MINUTE` | Лимит на создание/обновление |
+| `SHRINK_URL` / `SHRINK_TOKEN` | Базовый URL Shlink + API-ключ (нужны оба) |
+| `PUBLIC_BASE_URL` | Базовый URL для canonical / Open Graph |
+| `UI_DESIGN` | Дизайн шаблонов в `templates/designs/<name>/` |
+| `GITHUB_REPO` | `owner/name` для кнопки Feedback в подвале (пусто — скрыта) |
+| `DOCS_ALLOWLIST` | Список CIDR/IP для `/docs` (пусто — открыто) |
+| `APP_VERSION` | Версия в интерфейсе (задают релизные образы) |
+| `OIDC_DISCOVERY_URL` | **Опционально.** URL discovery-документа OIDC — включает вход |
+| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | Учётные данные OIDC-клиента (для входа нужны оба) |
+| `OIDC_SCOPES` / `OIDC_REDIRECT_URI` | Запрашиваемые scope и зарегистрированный callback URL |
+| `SESSION_SECRET_KEY` | Секрет подписи cookie сессии (по умолчанию берётся `COOKIE_SIGNING_SECRET`) |
+| `SESSION_COOKIE_NAME` / `SESSION_MAX_AGE_SECONDS` | Имя и время жизни cookie сессии |
+| `YANDEX_METRIKA_ID` | **Опционально.** ID вашего счётчика Яндекс.Метрики (пусто — без тега аналитики) |
 
-### Encryption (optional)
+### Шифрование (опционально)
 
-- **Off** (default): bodies stored as plaintext.
-- **On**: set `PASTE_ENCRYPTION_KEY`. New writes use `enc:v1:…`. Legacy plaintext rows stay readable.
-- Losing the key makes encrypted pastes unreadable.
+- **Выключено** (по умолчанию): тела паст хранятся открытым текстом.
+- **Включено**: задайте `PASTE_ENCRYPTION_KEY`. Новые записи сохраняются как `enc:v1:…`. Старые незашифрованные строки остаются читаемыми.
+- Если потерять ключ, зашифрованные пасты станет невозможно прочитать.
 
 ```bash
 python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'
 ```
 
-### Accounts (optional)
+### Аккаунты (опционально)
 
-Nopaste is fully usable **anonymously** — no login is required to create or read
-a paste. Accounts are optional and off by default.
+Nopaste полностью работает **анонимно** — вход не нужен ни для создания, ни для чтения
+пасты. Аккаунты опциональны и по умолчанию выключены.
 
-Set `OIDC_DISCOVERY_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` to enable
-login with any standard OpenID Connect provider (Keycloak, Authentik, Nextcloud,
-Google, …). When enabled, signed-in users get:
+Задайте `OIDC_DISCOVERY_URL`, `OIDC_CLIENT_ID` и `OIDC_CLIENT_SECRET`, чтобы включить
+вход через любой стандартный OpenID Connect провайдер (Keycloak, Authentik, Nextcloud,
+Google, …). После входа пользователи получают:
 
-- **Bookmarks / favorites** — a personal list of saved pastes
-- **Edit and delete** their own pastes; `role=staff` or `role=admin` may edit any paste
-- A **7-day paginated list** of recent pastes
+- **Закладки / избранное** — личный список сохранённых паст
+- **Правку и удаление** своих паст; `role=staff` или `role=admin` могут править любую пасту
+- **Список недавних паст за 7 дней** с постраничной навигацией
 
-Anonymous ownership of freshly created pastes still works through the signed
-`user_pastes` cookie, independent of accounts.
+Анонимное владение только что созданными пастами по-прежнему работает через подписанную
+cookie `user_pastes`, независимо от аккаунтов.
 
-## Releases
+## Релизы
 
-Releases are cut automatically from Conventional Commits on `main`:
+Релизы выпускаются автоматически из Conventional Commits в `main`:
 
-| Prefix | Version bump |
-|--------|----------------|
+| Префикс | Повышение версии |
+|---------|------------------|
 | `feat:` | minor |
 | `fix:` / `perf:` | patch |
 
-Workflow:
+Процесс:
 
-1. `release.yml` runs [python-semantic-release](https://python-semantic-release.readthedocs.io/) — updates `pyproject.toml` + `CHANGELOG.md`, tags `vX.Y.Z`, opens a GitHub Release.
-2. The same workflow publishes versioned images (`1.13.1`, `v1.13.1`, `1.13`, `latest`) to Docker Hub and GHCR.
-3. `dockerhub.yml` also publishes the rolling `main` and `sha-*` tags. It never overwrites `latest`.
+1. `release.yml` запускает [python-semantic-release](https://python-semantic-release.readthedocs.io/) — обновляет `pyproject.toml` и `CHANGELOG.md`, ставит тег `vX.Y.Z`, создаёт GitHub Release.
+2. Тот же workflow публикует версионированные образы (`1.13.1`, `v1.13.1`, `1.13`, `latest`) в Docker Hub и GHCR.
+3. `dockerhub.yml` дополнительно публикует rolling-теги `main` и `sha-*`. `latest` он никогда не перезаписывает.
 
-See [CHANGELOG.md](./CHANGELOG.md) or the in-app footer changelog.
+См. [CHANGELOG.md](./CHANGELOG.md) или changelog в подвале приложения.
 
-## Development
+## Разработка
 
 ```text
 src/
-  main.py           FastAPI routes
+  main.py           маршруты FastAPI
   config.py         pydantic-settings
-  auth.py           OIDC login + session helpers
-  cookies.py        signed cookie encode/decode
-  storage/          models, repository, crypto, engine
-  i18n/             en/ru catalogs
-  highlighting.py   syntax / markdown
-  list_paging.py    7-day calendar paging
-  templates/        Jinja2 designs
-  static/           CSS, fonts, images, JS (app.js, webmcp.js, sw.js)
-alembic/            migrations
+  auth.py           вход через OIDC + хелперы сессии
+  cookies.py        кодирование/декодирование подписанных cookie
+  storage/          модели, репозиторий, шифрование, engine
+  i18n/             каталоги en/ru
+  highlighting.py   подсветка / markdown
+  list_paging.py    постраничная навигация по 7 дням
+  templates/        дизайны Jinja2
+  static/           CSS, шрифты, картинки, JS (app.js, webmcp.js, sw.js)
+alembic/            миграции
 tests/              pytest
 .github/workflows/  CI, Docker, semantic-release
 ```
@@ -236,6 +243,6 @@ uv run ruff format src tests
 uv run alembic upgrade head
 ```
 
-## License
+## Лицензия
 
 [MIT](./LICENSE) © nordz0r
