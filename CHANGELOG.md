@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.27.0 (2026-10-13)
+
+### Bug Fixes
+
+- **security**: Full Yandex.Metrika host list in CSP, no-store for HTML
+  ([#21](https://github.com/nordz0r/nopaste/pull/21),
+  [`96cb130`](https://github.com/nordz0r/nopaste/commit/96cb130927939e6094df68f5b8da0a254d9bc160))
+
+### Features
+
+- **security**: Nonce-based CSP and vendored @mcp-b/global 6.0.2
+  ([#21](https://github.com/nordz0r/nopaste/pull/21),
+  [`96cb130`](https://github.com/nordz0r/nopaste/commit/96cb130927939e6094df68f5b8da0a254d9bc160))
+
+- **security**: Nonce-based CSP, vendor @mcp-b/global instead of unpkg @latest
+  ([#21](https://github.com/nordz0r/nopaste/pull/21),
+  [`96cb130`](https://github.com/nordz0r/nopaste/commit/96cb130927939e6094df68f5b8da0a254d9bc160))
+
+
 ## Unreleased
 
 ### Security
