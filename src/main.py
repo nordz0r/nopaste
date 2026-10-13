@@ -372,6 +372,38 @@ async def restrict_api_docs(request: Request, call_next):
     return await call_next(request)
 
 
+# Yandex Metrika hosts from the official CSP list:
+# https://yandex.ru/support/metrica/ru/code/install-counter-csp
+# tag.js picks the mirror by geo/locale (e.g. mc.yandex.com), so all are needed.
+_YANDEX_METRIKA_HOSTS = [
+    "mc.yandex.ru",
+    "mc.yandex.az",
+    "mc.yandex.by",
+    "mc.yandex.co.il",
+    "mc.yandex.com",
+    "mc.yandex.com.am",
+    "mc.yandex.com.ge",
+    "mc.yandex.com.tr",
+    "mc.yandex.ee",
+    "mc.yandex.fr",
+    "mc.yandex.kg",
+    "mc.yandex.kz",
+    "mc.yandex.lt",
+    "mc.yandex.lv",
+    "mc.yandex.md",
+    "mc.yandex.tj",
+    "mc.yandex.tm",
+    "mc.yandex.uz",
+    "mc.webvisor.com",
+    "mc.webvisor.org",
+]
+YANDEX_METRIKA_ORIGINS = [f"https://{h}" for h in _YANDEX_METRIKA_HOSTS] + [
+    "https://yastatic.net"
+]
+# Webvisor uses WebSockets to the same hosts (connect-src only).
+YANDEX_METRIKA_WSS_ORIGINS = [f"wss://{h}" for h in _YANDEX_METRIKA_HOSTS]
+
+
 def build_content_security_policy(nonce: str, *, allow_iv_editor_frame: bool) -> str:
     """CSP for HTML pages. Inline scripts run only with the per-request nonce.
 
@@ -383,10 +415,11 @@ def build_content_security_policy(nonce: str, *, allow_iv_editor_frame: bool) ->
     connect_src = ["'self'"]
     frame_src = ["'none'"]
     if (settings.YANDEX_METRIKA_ID or "").strip():
-        script_src += ["https://mc.yandex.ru", "https://yastatic.net"]
-        img_src += ["https://mc.yandex.ru"]
-        connect_src += ["https://mc.yandex.ru"]
-        frame_src = ["blob:", "https://mc.yandex.ru"]
+        script_src += YANDEX_METRIKA_ORIGINS
+        img_src += YANDEX_METRIKA_ORIGINS
+        connect_src += YANDEX_METRIKA_ORIGINS + YANDEX_METRIKA_WSS_ORIGINS
+        # blob: frames are created by Metrika/Webvisor scripts only.
+        frame_src = ["blob:", *YANDEX_METRIKA_ORIGINS]
     frame_ancestors = ["'self'"]
     if allow_iv_editor_frame:
         frame_ancestors.append("https://instantview.telegram.org")
@@ -445,6 +478,8 @@ async def add_security_headers(request: Request, call_next):
         "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
     )
     if response.headers.get("content-type", "").startswith("text/html"):
+        # HTML carries a per-request CSP nonce: never let a cache reuse it.
+        response.headers.setdefault("Cache-Control", "no-store")
         response.headers.setdefault(
             "Content-Security-Policy",
             build_content_security_policy(

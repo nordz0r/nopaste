@@ -78,3 +78,33 @@ def test_no_third_party_or_latest_scripts_in_templates():
     vendored = Path("src/static/js/mcp-b-global.iife.js")
     assert vendored.exists() and vendored.stat().st_size > 1000
     assert Path("src/static/js/mcp-b-global.LICENSE").exists()
+
+
+def test_metrika_csp_covers_all_mirrors_and_webvisor(monkeypatch):
+    monkeypatch.setattr(main_module.settings, "YANDEX_METRIKA_ID", "123")
+    header = main_module.build_content_security_policy("n", allow_iv_editor_frame=False)
+    csp = {}
+    for part in header.split(";"):
+        name, *values = part.split()
+        csp[name] = values
+    for directive in ("script-src", "img-src", "connect-src", "frame-src"):
+        for origin in (
+            "https://mc.yandex.ru",
+            "https://mc.yandex.com",
+            "https://mc.yandex.com.tr",
+            "https://mc.webvisor.com",
+            "https://yastatic.net",
+        ):
+            assert origin in csp[directive], (directive, origin)
+    assert "wss://mc.yandex.ru" in csp["connect-src"]
+    assert "wss://mc.yandex.com" in csp["connect-src"]
+    assert not any(v.startswith("wss://") for v in csp["script-src"])
+
+
+def test_html_responses_are_not_cacheable(tmp_path, monkeypatch):
+    db = _client(tmp_path, monkeypatch)
+    with TestClient(main_module.app) as client:
+        page = client.get("/")
+        assert "text/html" in page.headers["content-type"]
+        assert "no-store" in page.headers["cache-control"]
+    db.close()
