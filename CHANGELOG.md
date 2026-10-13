@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## Unreleased
+
+### Security
+
+- **csp**: Content-Security-Policy on HTML pages: per-request nonce for inline scripts, no
+  `'unsafe-inline'`/`'unsafe-eval'` for scripts, `object-src 'none'`, `base-uri 'none'`,
+  `img-src` allows `blob:`; Yandex.Metrika origins only when `YANDEX_METRIKA_ID` is set;
+  IV editor keeps `frame-ancestors https://instantview.telegram.org`
+- **webmcp**: `@mcp-b/global` 6.0.2 is vendored under `/static/js` instead of
+  `unpkg.com/@mcp-b/global@latest`
+
 ## v1.26.1 (2026-09-22)
 
 ### Bug Fixes
