@@ -51,3 +51,7 @@ Thumbs.db
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# Built in the Dockerfile from frontend/prlens (pinned npm package)
+src/static/js/prlens.min.js
+frontend/prlens/node_modules/

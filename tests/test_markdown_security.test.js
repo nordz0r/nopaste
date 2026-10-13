@@ -8,7 +8,7 @@ const source = fs.readFileSync('src/templates/paste.html', 'utf8');
 const start = source.indexOf('    const renderer = new marked.Renderer();');
 const end = source.indexOf('    markdownContainer.addEventListener', start);
 assert.ok(start > 0 && end > start);
-const context = vm.createContext({ marked });
+const context = vm.createContext({ marked, prlensView: null });
 vm.runInContext(source.slice(start, end) + '\nmarked.setOptions({renderer, gfm: true});', context);
 
 for (const input of [

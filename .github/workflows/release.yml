@@ -129,11 +129,13 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
             ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.tag }}
-            ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.major }}.${{ needs.release.outputs.minor }}
+            ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.minor }}
+            ${{ env.IMAGE_NAME }}:${{ needs.release.outputs.major }}
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.GHCR_IMAGE }}:${{ needs.release.outputs.version }}
             ${{ env.GHCR_IMAGE }}:${{ needs.release.outputs.tag }}
-            ${{ env.GHCR_IMAGE }}:${{ needs.release.outputs.major }}.${{ needs.release.outputs.minor }}
+            ${{ env.GHCR_IMAGE }}:${{ needs.release.outputs.minor }}
+            ${{ env.GHCR_IMAGE }}:${{ needs.release.outputs.major }}
             ${{ env.GHCR_IMAGE }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
