@@ -119,28 +119,90 @@ Images:
 | Storage | SQLAlchemy + Alembic · SQLite or PostgreSQL |
 | Ops | `/health/live`, `/health/ready`, in-memory rate limit, docs allowlist |
 
+
+## Diagrams
+
+Markdown pastes render two kinds of diagrams: animated [PR Lens](https://github.com/coldteadotai/pr-lens) graphs and [Mermaid](https://mermaid.js.org/). Both render in the browser, follow the site's light/dark theme and re-render when it changes.
+
+### Nopaste architecture
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/architecture-dark.gif">
+  <source media="(prefers-color-scheme: light)" srcset=".github/assets/architecture-light.gif">
+  <img alt="Nopaste architecture (PR Lens)" src=".github/assets/architecture-light.gif" width="100%">
+</picture>
+
+Drawn with PR Lens using the [pr-lens-diagrams](https://github.com/nordz0r/skills/tree/main/pr-lens-diagrams) skill (`PALETTE=github bash scripts/pr-lens-build.sh docs/diagrams/architecture.graph.json out both`). Source: [docs/diagrams/architecture.graph.json](docs/diagrams/architecture.graph.json) — you can paste it into a paste as well.
+
+### PR Lens
+
+Live example: [paste.goldfinches.ru/paste/tpw6qstn](https://paste.goldfinches.ru/paste/tpw6qstn).
+
+**How to embed.** Create a Markdown paste and put a `graph.json` document (PR Lens schema, `schemaVersion` 0.2.0) into a code block:
+
+- ` ```prlens ` — always rendered;
+- ` ```json ` — rendered when the document has `"kind": "graph"` and a string `schemaVersion`; any other JSON stays a regular code block.
+
+For a ` ```json ` block the source stays under a `graph.json` spoiler below the diagram.
+
+**Features:**
+
+- **Lens tabs** — one per lens listed in `lenses` (`architecture`, `data-flow`, …).
+- **Download SVG** — saves the current lens in the current theme (`<title>-<lens>-<dark|light>.svg`).
+- **Light/dark theme** — background, borders and text come from Nopaste theme CSS variables; diff colours (added/modified/removed) are kept.
+- **Errors** — invalid JSON or a document that fails the schema is shown as a message inside the block instead of the diagram; the rest of the paste renders normally.
+
+**Security.** The `@coldtea/pr-lens-renderer` (MIT, pinned version) is served from the same origin and loaded only when a paste contains a diagram. The resulting SVG is shown only as `<img src="blob:…">`: scripts and event handlers inside it never run, only SMIL animation plays. This fits the CSP (`script-src 'self' 'nonce-…'`, `img-src 'self' data: blob:`). The JSON source is escaped into a hidden `<textarea>`, never into markup.
+
+Minimal working example:
+
+````markdown
+```prlens
+{
+  "schemaVersion": "0.2.0",
+  "kind": "graph",
+  "title": "Hello PR Lens",
+  "lenses": ["architecture"],
+  "provenance": {
+    "repo": { "owner": "example", "name": "demo", "host": "github.com" },
+    "base": { "sha": "0000000000000000000000000000000000000000", "ref": "main" },
+    "head": { "sha": "0000000000000000000000000000000000000000", "ref": "main" },
+    "generator": { "name": "manual", "version": "1.0.0" }
+  },
+  "lanes": [
+    { "id": "client", "label": "Client", "order": 0 },
+    { "id": "server", "label": "Server", "order": 1 }
+  ],
+  "nodes": [
+    { "id": "browser", "label": "Browser", "kind": "ui", "delta": "unchanged", "lane": "client", "files": [], "badges": [] },
+    { "id": "api", "label": "API", "kind": "service", "delta": "unchanged", "lane": "server", "files": [], "badges": [] },
+    { "id": "db", "label": "Database", "kind": "datastore", "delta": "unchanged", "lane": "server", "files": [], "badges": [] }
+  ],
+  "edges": [
+    { "id": "e1", "from": "browser", "to": "api", "kind": "http", "delta": "unchanged", "emphasis": "hero", "animated": true, "label": "HTTP", "files": [] },
+    { "id": "e2", "from": "api", "to": "db", "kind": "data", "delta": "unchanged", "emphasis": "normal", "animated": true, "files": [] }
+  ],
+  "flows": []
+}
+```
+````
+
+The bundle is built in the Dockerfile (`frontend/prlens`, `npm ci` from the lock file) and is not stored in git. For a local run without Docker: `cd frontend/prlens && npm ci && npm run build`.
+
+### Mermaid
+
+A ` ```mermaid ` block is rendered by Mermaid (vendored, same origin) in PR Lens style: `base` theme with Nopaste colours, large 16 px font, curved edges and an animated flow along the edges.
+
+- Re-renders when the light/dark theme is switched.
+- With `prefers-reduced-motion: reduce` the animation is turned off.
+- `securityLevel: "strict"`: HTML in labels and click handlers are disabled.
+
 ```mermaid
 flowchart LR
-  Browser -->|HTTP| App[Nopaste FastAPI]
-  App --> Templates[Jinja2 + static]
-  App --> Storage[SQLAlchemy repository]
-  Storage --> SQLite[(SQLite)]
-  Storage --> PG[(PostgreSQL)]
+  Browser -->|HTTP| App[FastAPI]
+  App --> Storage[(SQLite / PostgreSQL)]
   App -.->|optional| Shlink[Shlink API]
-  App -.->|optional| Crypto[Fernet encrypt]
-  Crypto -.-> Storage
 ```
-
-## PR Lens diagrams
-
-Markdown pastes can show animated [PR Lens](https://github.com/coldteadotai/pr-lens) architecture and data-flow diagrams. Put a `graph.json` (PR Lens schema) into a ` ```prlens ` block. A ` ```json ` block whose document has `"kind": "graph"` and `schemaVersion` is drawn too, with the source kept under a `graph.json` spoiler.
-
-- Rendered in the browser by the pinned `@coldtea/pr-lens-renderer` (MIT), loaded only when a paste has a diagram.
-- The SVG is shown only as `<img src="blob:…">`: scripts and event handlers in it never run, SMIL animation still plays.
-- Tabs switch lenses; the diagram follows the site theme; **Download SVG** saves the current view.
-- Invalid JSON or schema errors are shown inside the block instead of the diagram.
-
-The bundle is built in the Dockerfile (`frontend/prlens`, `npm ci` from the lockfile) and is not committed. For local runs without Docker: `cd frontend/prlens && npm ci && npm run build`.
 
 ## Configuration
 

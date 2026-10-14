@@ -119,28 +119,90 @@ curl -fsSL "http://localhost:8000/raw/<paste_id>"
 | Хранилище | SQLAlchemy + Alembic · SQLite или PostgreSQL |
 | Эксплуатация | `/health/live`, `/health/ready`, rate limit в памяти, allowlist для docs |
 
-```mermaid
-flowchart LR
-  Browser -->|HTTP| App[Nopaste FastAPI]
-  App --> Templates[Jinja2 + static]
-  App --> Storage[SQLAlchemy repository]
-  Storage --> SQLite[(SQLite)]
-  Storage --> PG[(PostgreSQL)]
-  App -.->|optional| Shlink[Shlink API]
-  App -.->|optional| Crypto[Fernet encrypt]
-  Crypto -.-> Storage
+
+## Диаграммы
+
+Markdown-пасты умеют рисовать два вида диаграмм: анимированные схемы [PR Lens](https://github.com/coldteadotai/pr-lens) и [Mermaid](https://mermaid.js.org/). Обе рисуются в браузере, следуют светлой/тёмной теме сайта и перерисовываются при её переключении.
+
+### Архитектура Nopaste
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset=".github/assets/architecture-dark.gif">
+  <source media="(prefers-color-scheme: light)" srcset=".github/assets/architecture-light.gif">
+  <img alt="Архитектура Nopaste (PR Lens)" src=".github/assets/architecture-light.gif" width="100%">
+</picture>
+
+Схема нарисована PR Lens скиллом [pr-lens-diagrams](https://github.com/nordz0r/skills/tree/main/pr-lens-diagrams) (`PALETTE=github bash scripts/pr-lens-build.sh docs/diagrams/architecture.graph.json out both`). Исходник: [docs/diagrams/architecture.graph.json](docs/diagrams/architecture.graph.json) — его же можно вставить в пасту.
+
+### PR Lens
+
+Живой пример: [paste.goldfinches.ru/paste/tpw6qstn](https://paste.goldfinches.ru/paste/tpw6qstn).
+
+**Как вставить.** Создайте пасту в формате Markdown и положите документ `graph.json` (схема PR Lens, `schemaVersion` 0.2.0) в блок кода:
+
+- ` ```prlens ` — рисуется всегда;
+- ` ```json ` — рисуется, если в документе есть `"kind": "graph"` и строковый `schemaVersion`; остальной JSON остаётся обычным кодом.
+
+У блока ` ```json ` исходник остаётся под спойлером `graph.json` под диаграммой.
+
+**Что умеет:**
+
+- **Вкладки линз** — по одной на каждую линзу из `lenses` (`architecture`, `data-flow` и т. д.).
+- **Скачать SVG** — сохраняет текущую линзу в текущей теме (`<title>-<lens>-<dark|light>.svg`).
+- **Светлая/тёмная тема** — фон, рамки и текст берутся из CSS-переменных темы Nopaste; цвета diff (added/modified/removed) не меняются.
+- **Ошибки** — некорректный JSON или документ, не прошедший схему, показывается сообщением внутри блока вместо диаграммы; остальная паста рисуется как обычно.
+
+**Безопасность.** Рендерер `@coldtea/pr-lens-renderer` (MIT, зафиксированная версия) отдаётся с того же origin и грузится, только если в пасте есть диаграмма. Готовый SVG показывается только как `<img src="blob:…">`: скрипты и обработчики событий внутри не выполняются, работает лишь SMIL-анимация. Это совместимо с CSP (`script-src 'self' 'nonce-…'`, `img-src 'self' data: blob:`). JSON-исходник экранируется в скрытый `<textarea>`, а не в разметку.
+
+Минимальный рабочий пример:
+
+````markdown
+```prlens
+{
+  "schemaVersion": "0.2.0",
+  "kind": "graph",
+  "title": "Hello PR Lens",
+  "lenses": ["architecture"],
+  "provenance": {
+    "repo": { "owner": "example", "name": "demo", "host": "github.com" },
+    "base": { "sha": "0000000000000000000000000000000000000000", "ref": "main" },
+    "head": { "sha": "0000000000000000000000000000000000000000", "ref": "main" },
+    "generator": { "name": "manual", "version": "1.0.0" }
+  },
+  "lanes": [
+    { "id": "client", "label": "Client", "order": 0 },
+    { "id": "server", "label": "Server", "order": 1 }
+  ],
+  "nodes": [
+    { "id": "browser", "label": "Browser", "kind": "ui", "delta": "unchanged", "lane": "client", "files": [], "badges": [] },
+    { "id": "api", "label": "API", "kind": "service", "delta": "unchanged", "lane": "server", "files": [], "badges": [] },
+    { "id": "db", "label": "Database", "kind": "datastore", "delta": "unchanged", "lane": "server", "files": [], "badges": [] }
+  ],
+  "edges": [
+    { "id": "e1", "from": "browser", "to": "api", "kind": "http", "delta": "unchanged", "emphasis": "hero", "animated": true, "label": "HTTP", "files": [] },
+    { "id": "e2", "from": "api", "to": "db", "kind": "data", "delta": "unchanged", "emphasis": "normal", "animated": true, "files": [] }
+  ],
+  "flows": []
+}
 ```
-
-## Диаграммы PR Lens
-
-В markdown-пастах можно показывать анимированные диаграммы [PR Lens](https://github.com/coldteadotai/pr-lens): архитектуру и потоки данных. Положите `graph.json` (схема PR Lens) в блок ` ```prlens `. Блок ` ```json ` с документом, где есть `"kind": "graph"` и `schemaVersion`, тоже рисуется, а исходник остаётся под спойлером `graph.json`.
-
-- Рисует браузер через `@coldtea/pr-lens-renderer` (MIT) с зафиксированной версией. Скрипт грузится, только если в пасте есть диаграмма.
-- SVG показывается только как `<img src="blob:…">`: скрипты и обработчики событий в нём не выполняются, SMIL-анимация работает.
-- Вкладки переключают линзы, диаграмма следует теме сайта, кнопка **Скачать SVG** сохраняет текущий вид.
-- Ошибки JSON и схемы показываются внутри блока вместо диаграммы.
+````
 
 Бандл собирается в Dockerfile (`frontend/prlens`, `npm ci` по lock-файлу) и в git не хранится. Для локального запуска без Docker: `cd frontend/prlens && npm ci && npm run build`.
+
+### Mermaid
+
+Блок ` ```mermaid ` рисуется Mermaid (вендорная копия с того же origin) в стиле PR Lens: тема `base` с цветами Nopaste, крупный шрифт 16 px, скруглённые связи и анимированный поток по рёбрам.
+
+- Перерисовывается при переключении светлой/тёмной темы.
+- При `prefers-reduced-motion: reduce` анимация выключается.
+- `securityLevel: "strict"`: HTML в подписях и click-обработчики отключены.
+
+```mermaid
+flowchart LR
+  Browser -->|HTTP| App[FastAPI]
+  App --> Storage[(SQLite / PostgreSQL)]
+  App -.->|optional| Shlink[Shlink API]
+```
 
 ## Конфигурация
 
