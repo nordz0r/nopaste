@@ -507,6 +507,13 @@ async function renderMarkdownAndMermaid() {
             : defaultCodeRenderer(codeText, langStr, isEscaped);
         return `<div class="code-block-wrap"><button type="button" class="code-copy-btn" aria-label="Copy code" title="Copy code">⧉</button>${rendered}</div>`;
     };
+    const defaultTableRenderer = renderer.table.bind(renderer);
+    renderer.table = function(header, body) {
+        const rendered = typeof header === "object" && header !== null
+            ? defaultTableRenderer(header)
+            : defaultTableRenderer(header, body);
+        return `<div class="table-wrap">${rendered}</div>`;
+    };
 
     markdownContainer.addEventListener("click", (event) => {
         const button = event.target.closest(".code-copy-btn");
@@ -524,8 +531,10 @@ async function renderMarkdownAndMermaid() {
     });
 
     markdownContainer.innerHTML = marked.parse(rawContent);
+    if (window.nopasteAttachTableEnhancements) {
+        window.nopasteAttachTableEnhancements(markdownContainer);
+    }
     if (prlensView) prlensView.renderBlocks(markdownContainer, { i18n });
-
     if (needsMermaid && window.mermaid) {
         const mermaidNodes = Array.from(markdownContainer.querySelectorAll(".mermaid"));
         // Keep the source (as text, never HTML) so the diagram can be re-rendered on theme change.

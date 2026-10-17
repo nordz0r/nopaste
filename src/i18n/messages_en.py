@@ -84,4 +84,5 @@ MESSAGES = {
     "list.import_history": "Import browser history",
     "iv.view": "View",
     "iv.view_styled": "View with syntax highlighting",
+    "table.filter_placeholder": "Filter table…",
 }

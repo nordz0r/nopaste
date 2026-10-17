@@ -246,6 +246,41 @@
             updateToggleIcons(activeTheme);
         });
     }
+    function attachTableEnhancements(root) {
+        if (!root || typeof root.querySelectorAll !== "function") return;
+        const placeholder = i18n["table.filter_placeholder"] || "Filter table…";
+
+        root.querySelectorAll(".table-wrap").forEach((wrap) => {
+            const table = wrap.querySelector("table");
+            if (!table) return;
+            const thead = table.querySelector("thead");
+            const tbody = table.querySelector("tbody");
+            if (!tbody) return;
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            // Add a lightweight filter input if the table has enough rows to benefit.
+            if (rows.length >= 4 && !wrap.parentElement.querySelector(":scope > .table-filter")) {
+                const filter = document.createElement("input");
+                filter.type = "search";
+                filter.className = "table-filter";
+                filter.placeholder = placeholder;
+                filter.setAttribute("aria-label", placeholder);
+                filter.addEventListener("input", () => {
+                    const query = filter.value.trim().toLowerCase();
+                    rows.forEach((row) => {
+                        if (!query) {
+                            row.classList.remove("is-filtered-out");
+                            return;
+                        }
+                        const match = row.textContent.toLowerCase().includes(query);
+                        row.classList.toggle("is-filtered-out", !match);
+                    });
+                });
+                wrap.parentElement.insertBefore(filter, wrap);
+            }
+        });
+    }
+    window.nopasteAttachTableEnhancements = attachTableEnhancements;
+
 
     (function initChangelogModal() {
         const modal = document.getElementById("changelog-modal");
@@ -307,8 +342,17 @@
                     /* fall through to textContent */
                 }
                 if (mdEl && window.marked) {
-                    marked.setOptions({ gfm: true, breaks: false });
+                    const renderer = new marked.Renderer();
+                    const defaultTable = renderer.table.bind(renderer);
+                    renderer.table = function(header, body) {
+                        const rendered = typeof header === "object" && header !== null
+                            ? defaultTable(header)
+                            : defaultTable(header, body);
+                        return `<div class="table-wrap">${rendered}</div>`;
+                    };
+                    marked.setOptions({ renderer, gfm: true, breaks: false });
                     mdEl.innerHTML = sanitizeRenderedHtml(marked.parse(text));
+                    attachTableEnhancements(mdEl);
                     mdEl.hidden = false;
                     if (statusEl) statusEl.hidden = true;
                 } else if (mdEl) {

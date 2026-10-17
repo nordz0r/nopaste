@@ -84,4 +84,5 @@ MESSAGES = {
     "list.import_history": "Импортировать историю браузера",
     "iv.view": "Просмотр",
     "iv.view_styled": "Просмотр с подсветкой синтаксиса",
+    "table.filter_placeholder": "Фильтр по таблице…",
 }
