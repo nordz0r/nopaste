@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.31.0 (2026-10-17)
+
+### Features
+
+- **agents**: Document formats and diagrams in llms.txt and WebMCP
+  ([#28](https://github.com/nordz0r/nopaste/pull/28),
+  [`05119df`](https://github.com/nordz0r/nopaste/commit/05119df11114b1dc891e0279445b19476ae5490a))
+
+
 ## v1.30.2 (2026-10-17)
 
 ### Bug Fixes
