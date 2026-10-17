@@ -634,6 +634,16 @@ def github_repo_slug() -> str | None:
     return slug
 
 
+def github_repo_url() -> str:
+    slug = github_repo_slug()
+    return (
+        f"https://github.com/{slug}" if slug else "https://github.com/nordz0r/nopaste"
+    )
+
+
+templates.env.globals["github_repo_url"] = github_repo_url
+
+
 def build_feedback_issue_url(request: Request, lang: str) -> str | None:
     """Prefilled GitHub new-issue URL for the footer Feedback button."""
     repo = github_repo_slug()
@@ -765,6 +775,22 @@ def generate_paste_id(database: Database) -> str:
     raise HTTPException(status_code=503, detail="Could not allocate paste id")
 
 
+def clean_changelog_markdown(text: str) -> str:
+    """Strip mechanical header/version-list boilerplate from the changelog markdown."""
+    if "<!-- version list -->" in text:
+        _, _, text = text.partition("<!-- version list -->")
+    else:
+        lines = text.splitlines()
+        first_version_idx = 0
+        for i, line in enumerate(lines):
+            if line.startswith("## "):
+                first_version_idx = i
+                break
+        if first_version_idx > 0:
+            text = "\n".join(lines[first_version_idx:])
+    return text.strip() + "\n"
+
+
 def load_changelog_markdown() -> str:
     candidates = (
         BASE_DIR / "CHANGELOG.md",
@@ -773,8 +799,8 @@ def load_changelog_markdown() -> str:
     )
     for path in candidates:
         if path.is_file():
-            return path.read_text(encoding="utf-8")
-    return "# Changelog\n\nChangelog file is not available in this build.\n"
+            return clean_changelog_markdown(path.read_text(encoding="utf-8"))
+    return "Changelog file is not available in this build.\n"
 
 
 @app.get(

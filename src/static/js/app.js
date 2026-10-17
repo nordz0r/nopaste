@@ -291,7 +291,15 @@
                     headers: { Accept: "text/markdown, text/plain" },
                 });
                 if (!res.ok) throw new Error("bad status");
-                const text = await res.text();
+                let text = await res.text();
+                if (text.includes("<!-- version list -->")) {
+                    text = text.slice(text.indexOf("<!-- version list -->") + "<!-- version list -->".length).trim();
+                } else if (text.startsWith("# Changelog")) {
+                    const match = text.search(/^##\s+/m);
+                    if (match !== -1) {
+                        text = text.slice(match).trim();
+                    }
+                }
                 const version = cfg.assetVersion || "";
                 try {
                     await loadScript(`/static/js/marked.min.js?v=${version}`);

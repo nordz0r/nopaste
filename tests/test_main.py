@@ -44,7 +44,12 @@ def test_read_root(client):
     assert 'src="/static/images/save.png"' in response.text
     assert 'rel="icon" href="/static/images/favicon.png"' in response.text
     assert f"/static/css/style.css?v={asset_version}" in response.text
-    assert f"Nopaste v{asset_version}" in response.text
+    assert 'href="https://github.com/nordz0r/nopaste"' in response.text
+    assert (
+        f'href="https://github.com/nordz0r/nopaste/releases/tag/v{asset_version}"'
+        in response.text
+    )
+    assert f">v{asset_version}</a>" in response.text
     assert 'id="open-changelog-btn"' in response.text
     assert 'id="footer-feedback"' in response.text
     assert "github.com/nordz0r/nopaste/issues/new" in response.text
@@ -1466,3 +1471,77 @@ def test_static_assets_are_immutably_cached(client):
     assert sw.status_code == 200
     assert "no-cache" in sw.headers.get("cache-control", "")
     assert "nopaste-static" in sw.text
+
+
+def test_footer_renders_clickable_repo_and_release_links(client):
+    response = client.get("/")
+    asset_version = main_module.APP_VERSION
+
+    assert response.status_code == 200
+    expected_repo_link = (
+        '<a href="https://github.com/nordz0r/nopaste" target="_blank"'
+        ' rel="noopener noreferrer">Nopaste</a>'
+    )
+    expected_release_link = (
+        f'<a href="https://github.com/nordz0r/nopaste/releases/tag/v{asset_version}"'
+        f' target="_blank" rel="noopener noreferrer">v{asset_version}</a>'
+    )
+    assert expected_repo_link in response.text
+    assert expected_release_link in response.text
+
+
+def test_clean_changelog_markdown_removes_preamble():
+    raw = (
+        "# Changelog\n\n"
+        "All notable changes to this project will be documented in this file.\n\n"
+        "<!-- version list -->\n\n"
+        "## v1.30.1 (2026-10-13)\n\n"
+        "- Some fix\n"
+    )
+    cleaned = main_module.clean_changelog_markdown(raw)
+    assert "<!-- version list -->" not in cleaned
+    assert "# Changelog" not in cleaned
+    assert "All notable changes" not in cleaned
+    assert cleaned.startswith("## v1.30.1 (2026-10-13)")
+
+
+def test_api_changelog_endpoint_returns_cleaned_content(client, monkeypatch, tmp_path):
+    changelog_file = tmp_path / "CHANGELOG.md"
+    changelog_file.write_text(
+        "# Changelog\n\nAll notable changes\n<!-- version list -->\n\n## v1.0.0\n- Initial\n"
+    )
+    monkeypatch.setattr(main_module, "BASE_DIR", tmp_path)
+    monkeypatch.setattr(main_module, "PROJECT_ROOT", tmp_path)
+
+    response = client.get("/api/changelog")
+    assert response.status_code == 200
+    assert "<!-- version list -->" not in response.text
+    assert "# Changelog" not in response.text
+    assert response.text.startswith("## v1.0.0")
+
+
+def test_header_authenticated_user_shows_avatar_and_online_dot(client):
+    from src.auth import make_session
+
+    user = main_module.db.upsert_user(
+        "test-sub", "andrey", "andrey@example.com", "NorD"
+    )
+    token = make_session(
+        {
+            "sub": "test-sub",
+            "id": "test-sub",
+            "username": "andrey",
+            "display_name": "NorD",
+            "email": user.get("email"),
+            "role": "user",
+        }
+    )
+    client.cookies.set(main_module.settings.SESSION_COOKIE_NAME, token)
+
+    response = client.get("/")
+    assert response.status_code == 200
+    assert 'id="logout-btn"' in response.text
+    assert 'class="user-avatar-badge"' in response.text
+    assert 'class="user-online-dot"' in response.text
+    assert '<span class="user-avatar-initial">N</span>' in response.text
+    assert "NorD" in response.text
