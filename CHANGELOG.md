@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.30.2 (2026-10-17)
+
+### Bug Fixes
+
+- **ui**: Add footer repo and release links, clean changelog modal and improve mobile auth badge
+  ([#27](https://github.com/nordz0r/nopaste/pull/27),
+  [`9901e6a`](https://github.com/nordz0r/nopaste/commit/9901e6abbc7b7c4ddf362a4d0a41bf2dd98563f7))
+
+### Documentation
+
+- README diagrams section (PR Lens, Mermaid) and animated architecture diagram
+  ([`5456d9b`](https://github.com/nordz0r/nopaste/commit/5456d9bc7d7162d7567b2cdf35e54f853872372d))
+
+- README.md на русском, README.en.md на английском, баннер
+  ([#19](https://github.com/nordz0r/nopaste/pull/19),
+  [`c80b823`](https://github.com/nordz0r/nopaste/commit/c80b8237ff9e8530535770cc2a709f14b210b665))
+
+- README.md → RU, README.en.md → EN, баннер ([#19](https://github.com/nordz0r/nopaste/pull/19),
+  [`c80b823`](https://github.com/nordz0r/nopaste/commit/c80b8237ff9e8530535770cc2a709f14b210b665))
+
+- Полный русский README.md в паритете с README.en.md; pyproject readme → README.en.md
+  ([#19](https://github.com/nordz0r/nopaste/pull/19),
+  [`c80b823`](https://github.com/nordz0r/nopaste/commit/c80b8237ff9e8530535770cc2a709f14b210b665))
+
+
 ## v1.30.1 (2026-10-13)
 
 ### Bug Fixes
