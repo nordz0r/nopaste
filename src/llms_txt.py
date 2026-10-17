@@ -139,6 +139,48 @@ def build_llms_txt(
         "Both surface 401/403/400 responses as clear error text.\n"
     )
 
+    formats_section = (
+        "\n"
+        "## Formats and diagrams\n"
+        "There is no separate format field: `content` is stored verbatim and Nopaste\n"
+        "decides how to render it from the body itself. Markdown is detected\n"
+        "automatically (headings, lists, links, fenced code blocks), so a plain\n"
+        "Markdown document can be posted as-is.\n"
+        "\n"
+        "To embed a diagram, send a fenced code block with the matching language:\n"
+        "\n"
+        "* `mermaid` renders a Mermaid diagram:\n"
+        "\n"
+        "      ```mermaid\n"
+        "      flowchart LR\n"
+        "        A[agent] --> B[paste]\n"
+        "      ```\n"
+        "\n"
+        "* `prlens` renders an interactive PR Lens graph (lens tabs plus SVG download)\n"
+        "  from a graph.json body:\n"
+        "\n"
+        "      ```prlens\n"
+        '      {"kind": "graph", "schemaVersion": "0.1.0", "nodes": [], "edges": []}\n'
+        "      ```\n"
+        "\n"
+        "* `json` renders the same graph when the parsed payload has `kind` equal to\n"
+        "  `graph` and a string `schemaVersion`; the JSON source stays available in a\n"
+        "  collapsed `graph.json` block under the diagram.\n"
+        "\n"
+        "* Any other language tag (`bash`, `python`, `yaml`, `sql`, ...) is rendered as\n"
+        "  syntax-highlighted code.\n"
+        "\n"
+        "Rules of thumb for agents:\n"
+        "\n"
+        "1. A graph body is only recognized inside a fenced block. Raw JSON without a\n"
+        "   fence stays plain text, so always wrap it.\n"
+        "2. Prefer `prlens` when the diagram is the point of the paste; prefer `json`\n"
+        "   when a human should also be able to read the source JSON.\n"
+        "3. WebMCP `create_paste({content: ...})` takes the same fenced Markdown and has\n"
+        "   no diagram-specific argument: build the fence in the caller.\n"
+        "4. Attach a title by starting the body with `# Heading`.\n"
+    )
+
     body = (
         "\n".join(intro_lines)
         + "\n\n"
@@ -159,6 +201,8 @@ def build_llms_txt(
         + "\n"
         + create_notes
         + "\n\n"
+        + formats_section
+        + "\n"
         + "## Read a paste / get raw\n"
         + "Use the paste ID from the create response:\n"
         + "\n"

@@ -353,3 +353,11 @@ test("delete_paste surfaces 401 auth required", async () => {
     assert.equal(result.isError, true);
     assert.match(result.content[0].text, /Error: Authentication required\./);
 });
+
+test("create_paste content description documents fenced diagram blocks", () => {
+    const tool = loadWebMcp(async () => ({}));
+    const description = tool.inputSchema.properties.content.description;
+    assert.match(description, /fenced block/);
+    assert.match(description, /mermaid/);
+    assert.match(description, /prlens/);
+});
