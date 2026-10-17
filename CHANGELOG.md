@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.31.1 (2026-10-17)
+
+### Bug Fixes
+
+- **ui**: Responsive markdown tables with horizontal scroll and search filter
+  ([`dacfda0`](https://github.com/nordz0r/nopaste/commit/dacfda00f3fd09fcd14aba7761b181cded9285c3))
+
+
 ## v1.31.0 (2026-10-17)
 
 ### Features
