@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.31.2 (2026-10-17)
+
+### Bug Fixes
+
+- **ui**: Excel-style per-column dropdown filters for tables
+  ([`7cdb951`](https://github.com/nordz0r/nopaste/commit/7cdb95187fb85b241e3640d009f2eac76a5872bf))
+
+
 ## v1.31.1 (2026-10-17)
 
 ### Bug Fixes
