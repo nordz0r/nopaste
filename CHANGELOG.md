@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 <!-- version list -->
 
+## v1.31.3 (2026-10-17)
+
+### Bug Fixes
+
+- **ui**: Multi-select checkboxes and text search in table column filters
+  ([`c98208d`](https://github.com/nordz0r/nopaste/commit/c98208df9a6c16c2eb05b40beba3fdec189c5533))
+
+
 ## v1.31.2 (2026-10-17)
 
 ### Bug Fixes
