@@ -36,6 +36,10 @@ def test_llms_txt_documents_http_fallback_workflow(client, monkeypatch):
     assert "update_paste({paste_id:" in response.text
     assert "delete_paste({paste_id:" in response.text
     assert "WebMCP is optional" in response.text
+    assert "## Formats and diagrams" in response.text
+    assert "```prlens" in response.text
+    assert "```mermaid" in response.text
+    assert "no diagram-specific argument" in response.text
     assert "paste.goldfinches.ru" not in response.text
     assert "paste.bynord.dev" not in response.text
     assert "gldf.ru" not in response.text
