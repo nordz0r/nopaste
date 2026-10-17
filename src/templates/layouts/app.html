@@ -57,23 +57,27 @@
                     {% if current_user|default(None) %}
                     <a id="my-list-btn" href="/list" class="btn btn-secondary" title="{{ t('nav.favorites') if t is defined else 'Favorites' }}">
                         <img src="/static/images/heart.png" alt="" class="btn-icon-image header-icon-mono" width="18" height="18" decoding="async">
-                        <span>{{ t('nav.favorites') if t is defined else 'Favorites' }}</span>
+                        <span class="btn-text">{{ t('nav.favorites') if t is defined else 'Favorites' }}</span>
                     </a>
                     {% else %}
                     <a id="my-list-btn" href="/list" class="btn btn-secondary" title="{{ t('nav.pastes') if t is defined else 'Pastes' }}">
                         <img src="/static/images/heart.png" alt="" class="btn-icon-image header-icon-mono" width="18" height="18" decoding="async">
-                        <span>{{ t('nav.pastes') if t is defined else 'Pastes' }}</span>
+                        <span class="btn-text">{{ t('nav.pastes') if t is defined else 'Pastes' }}</span>
                     </a>
                     {% endif %}
                     {% if current_user|default(None) %}
-                    <a id="logout-btn" href="/auth/logout" class="btn btn-secondary" title="{{ t('nav.logout') }}" aria-label="{{ t('nav.logout') }}">
-                        <svg class="icon-svg auth-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.09 15.59 11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3h-6v2h6v14h-6v2h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-                        <span>{{ current_user.display_name or current_user.username }} | {{ t('nav.logout') }}</span>
+                    <a id="logout-btn" href="/auth/logout" class="btn btn-secondary btn-auth-user" title="{{ current_user.display_name or current_user.username }} · {{ t('nav.logout') }}" aria-label="{{ current_user.display_name or current_user.username }} · {{ t('nav.logout') }}">
+                        <span class="user-avatar-badge" aria-hidden="true">
+                            <span class="user-avatar-initial">{{ (current_user.display_name or current_user.username)[:1]|upper }}</span>
+                            <span class="user-online-dot"></span>
+                        </span>
+                        <span class="btn-text">{{ current_user.display_name or current_user.username }} | {{ t('nav.logout') }}</span>
+                        <svg class="icon-svg auth-icon logout-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
                     </a>
                     {% elif oidc_enabled|default(false) %}
                     <a id="login-btn" href="/auth/login?next={{ request.url.path|urlencode }}" class="btn btn-secondary" title="{{ t('nav.login') }}" aria-label="{{ t('nav.login') }}">
-                        <svg class="icon-svg auth-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.09 15.59 11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3h-6v2h6v14h-6v2h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-                        <span>{{ t('nav.login') }}</span>
+                        <svg class="icon-svg auth-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
+                        <span class="btn-text">{{ t('nav.login') }}</span>
                     </a>
                     {% endif %}
                 </nav>
@@ -86,7 +90,7 @@
     <footer class="site-footer">
         <div class="site-footer-container">
             <p class="site-footer-text">
-                <span class="footer-copy">© {{ current_year() }} <a href="https://cv.goldfinches.ru">NorD</a> · Nopaste v{{ app_version }}</span>
+                <span class="footer-copy">© {{ current_year() }} <a href="https://cv.goldfinches.ru">NorD</a> · <a href="{{ github_repo_url() }}" target="_blank" rel="noopener noreferrer">Nopaste</a> <a href="{{ github_repo_url() }}/releases/tag/v{{ app_version }}" target="_blank" rel="noopener noreferrer">v{{ app_version }}</a></span>
                 <span class="footer-links">
                     <button type="button" class="link-btn" id="open-changelog-btn" data-changelog-open>{{ t('footer.changelog') if t is defined else 'Changelog' }}</button>
                     {% if feedback_url %}
