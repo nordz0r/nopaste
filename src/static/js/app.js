@@ -248,35 +248,209 @@
     }
     function attachTableEnhancements(root) {
         if (!root || typeof root.querySelectorAll !== "function") return;
-        const placeholder = i18n["table.filter_placeholder"] || "Filter table…";
+        const lblFilter = i18n["table.filter_col"] || "Filter";
+        const lblAll = i18n["table.filter_all"] || "(All)";
+        const lblSearch = i18n["table.filter_search"] || "Search…";
+        const lblClear = i18n["table.filter_clear"] || "Clear";
 
         root.querySelectorAll(".table-wrap").forEach((wrap) => {
             const table = wrap.querySelector("table");
             if (!table) return;
             const thead = table.querySelector("thead");
             const tbody = table.querySelector("tbody");
-            if (!tbody) return;
+            if (!thead || !tbody) return;
+            const ths = Array.from(thead.querySelectorAll("th"));
             const rows = Array.from(tbody.querySelectorAll("tr"));
-            // Add a lightweight filter input if the table has enough rows to benefit.
-            if (rows.length >= 4 && !wrap.parentElement.querySelector(":scope > .table-filter")) {
-                const filter = document.createElement("input");
-                filter.type = "search";
-                filter.className = "table-filter";
-                filter.placeholder = placeholder;
-                filter.setAttribute("aria-label", placeholder);
-                filter.addEventListener("input", () => {
-                    const query = filter.value.trim().toLowerCase();
-                    rows.forEach((row) => {
-                        if (!query) {
-                            row.classList.remove("is-filtered-out");
-                            return;
+            // Add Excel-like filter to columns if the table has >= 3 rows
+            if (rows.length < 3 || ths.length === 0) return;
+
+            // State for this table: Map<colIndex, Set<selectedValues> | null>
+            const activeFilters = new Map();
+
+            function applyFilters() {
+                rows.forEach((row) => {
+                    const cells = row.children;
+                    let show = true;
+                    for (const [colIdx, selectedSet] of activeFilters.entries()) {
+                        if (!selectedSet || selectedSet.size === 0) continue;
+                        const cell = cells[colIdx];
+                        const val = cell ? cell.textContent.trim() : "";
+                        if (!selectedSet.has(val)) {
+                            show = false;
+                            break;
                         }
-                        const match = row.textContent.toLowerCase().includes(query);
-                        row.classList.toggle("is-filtered-out", !match);
-                    });
+                    }
+                    row.classList.toggle("is-filtered-out", !show);
                 });
-                wrap.parentElement.insertBefore(filter, wrap);
             }
+
+            let openDropdown = null;
+            let activeBtn = null;
+
+            function closeCurrentDropdown() {
+                if (openDropdown) {
+                    openDropdown.remove();
+                    openDropdown = null;
+                }
+                if (activeBtn) {
+                    activeBtn.classList.remove("is-open");
+                    activeBtn = null;
+                }
+            }
+
+            // Close dropdown on click outside or escape
+            document.addEventListener("click", (e) => {
+                if (openDropdown && !openDropdown.contains(e.target) && (!activeBtn || !activeBtn.contains(e.target))) {
+                    closeCurrentDropdown();
+                }
+            });
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && openDropdown) {
+                    closeCurrentDropdown();
+                }
+            });
+            wrap.addEventListener("scroll", closeCurrentDropdown, { passive: true });
+
+            ths.forEach((th, colIdx) => {
+                if (th.querySelector(".th-filter-btn")) return;
+
+                // Wrap th inner content in .th-content for flex layout
+                const originalNodes = Array.from(th.childNodes);
+                const contentWrap = document.createElement("span");
+                contentWrap.className = "th-content";
+                const labelSpan = document.createElement("span");
+                labelSpan.className = "th-label";
+                originalNodes.forEach((node) => labelSpan.appendChild(node));
+                contentWrap.appendChild(labelSpan);
+
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "th-filter-btn";
+                btn.title = lblFilter;
+                btn.setAttribute("aria-label", lblFilter);
+                btn.innerHTML = '<svg viewBox="0 0 16 16"><path d="M1.5 2.5h13l-5.2 6.1v4.9l-2.6-1.5v-3.4L1.5 2.5z"/></svg>';
+                contentWrap.appendChild(btn);
+
+                th.innerHTML = "";
+                th.appendChild(contentWrap);
+
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    if (openDropdown && activeBtn === btn) {
+                        closeCurrentDropdown();
+                        return;
+                    }
+                    closeCurrentDropdown();
+
+                    // Extract unique non-empty values for this column across all rows
+                    const counts = new Map();
+                    rows.forEach((row) => {
+                        const cell = row.children[colIdx];
+                        const val = cell ? cell.textContent.trim() : "";
+                        counts.set(val, (counts.get(val) || 0) + 1);
+                    });
+                    const uniqueVals = Array.from(counts.keys()).sort();
+
+                    const dd = document.createElement("div");
+                    dd.className = "th-filter-dropdown";
+
+                    // Positioning: fixed relative to button
+                    const rect = btn.getBoundingClientRect();
+                    const ddWidth = Math.min(240, window.innerWidth - 16);
+                    let left = rect.left;
+                    if (left + ddWidth > window.innerWidth - 8) {
+                        left = Math.max(8, window.innerWidth - ddWidth - 8);
+                    }
+                    let top = rect.bottom + 4;
+                    if (top + 240 > window.innerHeight && rect.top > 250) {
+                        top = rect.top - 244;
+                    }
+                    dd.style.left = `${Math.round(left)}px`;
+                    dd.style.top = `${Math.round(top)}px`;
+                    dd.style.width = `${Math.round(ddWidth)}px`;
+
+                    // Search input if > 5 values
+                    let searchInput = null;
+                    if (uniqueVals.length > 5) {
+                        searchInput = document.createElement("input");
+                        searchInput.type = "search";
+                        searchInput.className = "th-filter-search";
+                        searchInput.placeholder = lblSearch;
+                        searchInput.setAttribute("aria-label", lblSearch);
+                        dd.appendChild(searchInput);
+                    }
+
+                    const list = document.createElement("ul");
+                    list.className = "th-filter-list";
+
+                    // Option: (All)
+                    const currentFilter = activeFilters.get(colIdx) || null;
+                    const allItem = document.createElement("li");
+                    allItem.className = "th-filter-item";
+                    allItem.innerHTML = `<label style="display:flex;align-items:center;gap:0.4rem;width:100%;cursor:pointer;"><input type="radio" name="th_filter_${colIdx}" ${!currentFilter ? "checked" : ""}> <span>${lblAll}</span></label>`;
+                    allItem.addEventListener("click", (evt) => {
+                        evt.stopPropagation();
+                        activeFilters.delete(colIdx);
+                        btn.classList.remove("is-active");
+                        applyFilters();
+                        closeCurrentDropdown();
+                    });
+                    list.appendChild(allItem);
+
+                    uniqueVals.forEach((val) => {
+                        const item = document.createElement("li");
+                        item.className = "th-filter-item";
+                        const isChecked = currentFilter && currentFilter.has(val) && currentFilter.size === 1;
+                        const displayVal = val || "—";
+                        item.innerHTML = `<label style="display:flex;align-items:center;gap:0.4rem;width:100%;cursor:pointer;"><input type="radio" name="th_filter_${colIdx}" ${isChecked ? "checked" : ""}> <span>${displayVal} (${counts.get(val)})</span></label>`;
+                        item.addEventListener("click", (evt) => {
+                            evt.stopPropagation();
+                            activeFilters.set(colIdx, new Set([val]));
+                            btn.classList.add("is-active");
+                            applyFilters();
+                            closeCurrentDropdown();
+                        });
+                        list.appendChild(item);
+                    });
+                    dd.appendChild(list);
+
+                    if (searchInput) {
+                        searchInput.addEventListener("input", () => {
+                            const q = searchInput.value.trim().toLowerCase();
+                            Array.from(list.children).forEach((li, idx) => {
+                                if (idx === 0) return; // keep (All) visible
+                                const text = li.textContent.toLowerCase();
+                                li.style.display = (!q || text.includes(q)) ? "" : "none";
+                            });
+                        });
+                    }
+
+                    // Clear filter footer action if active
+                    if (currentFilter) {
+                        const actions = document.createElement("div");
+                        actions.className = "th-filter-actions";
+                        const clearBtn = document.createElement("button");
+                        clearBtn.type = "button";
+                        clearBtn.className = "th-filter-clear-btn";
+                        clearBtn.textContent = lblClear;
+                        clearBtn.addEventListener("click", (evt) => {
+                            evt.stopPropagation();
+                            activeFilters.delete(colIdx);
+                            btn.classList.remove("is-active");
+                            applyFilters();
+                            closeCurrentDropdown();
+                        });
+                        actions.appendChild(clearBtn);
+                        dd.appendChild(actions);
+                    }
+
+                    document.body.appendChild(dd);
+                    openDropdown = dd;
+                    activeBtn = btn;
+                    btn.classList.add("is-open");
+                    if (searchInput) searchInput.focus();
+                });
+            });
         });
     }
     window.nopasteAttachTableEnhancements = attachTableEnhancements;

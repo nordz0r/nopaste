@@ -84,5 +84,8 @@ MESSAGES = {
     "list.import_history": "Import browser history",
     "iv.view": "View",
     "iv.view_styled": "View with syntax highlighting",
-    "table.filter_placeholder": "Filter table…",
+    "table.filter_col": "Filter",
+    "table.filter_all": "(All)",
+    "table.filter_search": "Search…",
+    "table.filter_clear": "Clear",
 }

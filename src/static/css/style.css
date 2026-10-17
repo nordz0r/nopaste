@@ -1806,31 +1806,161 @@ textarea::placeholder {
     border-radius: var(--radius-sm);
 }
 
-/* Filter box placed above long tables by app.js. */
-.table-filter {
-    display: block;
-    width: 100%;
-    max-width: 18rem;
-    margin: 0 0 0.5rem 0;
-    box-sizing: border-box;
-    padding: 0.35rem 0.6rem;
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    color: var(--text-main);
+/* Excel-style per-column table filter inside th */
+.markdown-body th {
+    position: relative;
     background: var(--bg-surface-alt);
+    font-weight: 600;
+}
+
+.th-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    white-space: nowrap;
+}
+
+.th-label {
+    flex: 1 1 auto;
+}
+
+.th-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0.65;
+    transition: opacity 0.15s, color 0.15s, background 0.15s, border-color 0.15s;
+}
+
+.th-filter-btn:hover,
+.th-filter-btn:focus-visible,
+.th-filter-btn.is-open {
+    opacity: 1;
+    color: var(--text-main);
+    background: var(--bg-surface-hover);
+    border-color: var(--border);
+    outline: none;
+}
+
+.th-filter-btn.is-active {
+    opacity: 1;
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.th-filter-btn svg {
+    width: 0.75rem;
+    height: 0.75rem;
+    fill: currentColor;
+    pointer-events: none;
+}
+
+/* Floating dropdown anchored fixed on screen */
+.th-filter-dropdown {
+    position: fixed;
+    z-index: 1000;
+    min-width: 11rem;
+    max-width: 18rem;
+    max-height: 16rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    padding: 0.4rem;
+    box-sizing: border-box;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: normal;
+    color: var(--text-main);
+}
+
+.th-filter-search {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.25rem 0.45rem;
+    margin-bottom: 0.35rem;
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--text-main);
+    background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
 }
 
-.table-filter::placeholder {
-    color: var(--text-muted);
-}
-
-.table-filter:focus {
+.th-filter-search:focus {
     outline: none;
     border-color: var(--accent);
 }
 
+.th-filter-list {
+    overflow-y: auto;
+    max-height: 10.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.th-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.35rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    user-select: none;
+    word-break: break-all;
+    line-height: 1.25;
+}
+
+.th-filter-item:hover {
+    background: var(--bg-surface-hover);
+}
+
+.th-filter-item input[type="radio"],
+.th-filter-item input[type="checkbox"] {
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.th-filter-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--border);
+}
+
+.th-filter-clear-btn {
+    background: transparent;
+    border: none;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+    color: var(--accent);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+}
+
+.th-filter-clear-btn:hover {
+    text-decoration: underline;
+}
 .markdown-body table {
     width: 100%;
     min-width: 100%;
@@ -1863,10 +1993,6 @@ textarea::placeholder {
     overflow-wrap: break-word;
 }
 
-.markdown-body th {
-    background: var(--bg-surface-alt);
-    font-weight: 600;
-}
 
 .markdown-body tr.is-filtered-out {
     display: none;
