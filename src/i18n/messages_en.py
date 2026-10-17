@@ -85,7 +85,8 @@ MESSAGES = {
     "iv.view": "View",
     "iv.view_styled": "View with syntax highlighting",
     "table.filter_col": "Filter",
-    "table.filter_all": "(All)",
-    "table.filter_search": "Search…",
+    "table.filter_select_all": "(Select All)",
+    "table.filter_search": "Search / text…",
+    "table.filter_apply": "Apply",
     "table.filter_clear": "Clear",
 }

@@ -85,7 +85,8 @@ MESSAGES = {
     "iv.view": "Просмотр",
     "iv.view_styled": "Просмотр с подсветкой синтаксиса",
     "table.filter_col": "Фильтр",
-    "table.filter_all": "(Все)",
-    "table.filter_search": "Поиск…",
+    "table.filter_select_all": "(Выбрать все)",
+    "table.filter_search": "Поиск / текст…",
+    "table.filter_apply": "Применить",
     "table.filter_clear": "Сбросить",
 }

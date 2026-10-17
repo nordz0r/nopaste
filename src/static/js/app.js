@@ -249,8 +249,9 @@
     function attachTableEnhancements(root) {
         if (!root || typeof root.querySelectorAll !== "function") return;
         const lblFilter = i18n["table.filter_col"] || "Filter";
-        const lblAll = i18n["table.filter_all"] || "(All)";
-        const lblSearch = i18n["table.filter_search"] || "Search…";
+        const lblSelectAll = i18n["table.filter_select_all"] || "(Select All)";
+        const lblSearch = i18n["table.filter_search"] || "Search / text…";
+        const lblApply = i18n["table.filter_apply"] || "Apply";
         const lblClear = i18n["table.filter_clear"] || "Clear";
 
         root.querySelectorAll(".table-wrap").forEach((wrap) => {
@@ -264,18 +265,24 @@
             // Add Excel-like filter to columns if the table has >= 3 rows
             if (rows.length < 3 || ths.length === 0) return;
 
-            // State for this table: Map<colIndex, Set<selectedValues> | null>
+            // State for this table: Map<colIdx, { values: Set<string> | null, query: string }>
             const activeFilters = new Map();
 
             function applyFilters() {
                 rows.forEach((row) => {
                     const cells = row.children;
                     let show = true;
-                    for (const [colIdx, selectedSet] of activeFilters.entries()) {
-                        if (!selectedSet || selectedSet.size === 0) continue;
+                    for (const [colIdx, filterState] of activeFilters.entries()) {
+                        if (!filterState) continue;
                         const cell = cells[colIdx];
                         const val = cell ? cell.textContent.trim() : "";
-                        if (!selectedSet.has(val)) {
+                        // Text query check
+                        if (filterState.query && !val.toLowerCase().includes(filterState.query.toLowerCase())) {
+                            show = false;
+                            break;
+                        }
+                        // Selected checkbox values check
+                        if (filterState.values !== null && !filterState.values.has(val)) {
                             show = false;
                             break;
                         }
@@ -356,99 +363,172 @@
 
                     // Positioning: fixed relative to button
                     const rect = btn.getBoundingClientRect();
-                    const ddWidth = Math.min(240, window.innerWidth - 16);
+                    const ddWidth = Math.min(260, window.innerWidth - 16);
                     let left = rect.left;
                     if (left + ddWidth > window.innerWidth - 8) {
                         left = Math.max(8, window.innerWidth - ddWidth - 8);
                     }
                     let top = rect.bottom + 4;
-                    if (top + 240 > window.innerHeight && rect.top > 250) {
-                        top = rect.top - 244;
+                    if (top + 280 > window.innerHeight && rect.top > 290) {
+                        top = rect.top - 284;
                     }
                     dd.style.left = `${Math.round(left)}px`;
                     dd.style.top = `${Math.round(top)}px`;
                     dd.style.width = `${Math.round(ddWidth)}px`;
 
-                    // Search input if > 5 values
-                    let searchInput = null;
-                    if (uniqueVals.length > 5) {
-                        searchInput = document.createElement("input");
-                        searchInput.type = "search";
-                        searchInput.className = "th-filter-search";
-                        searchInput.placeholder = lblSearch;
-                        searchInput.setAttribute("aria-label", lblSearch);
-                        dd.appendChild(searchInput);
-                    }
+                    // Current state for this column
+                    const currentFilter = activeFilters.get(colIdx) || { values: null, query: "" };
+                    // Working copy of checked values: null means all selected
+                    let workingValues = currentFilter.values ? new Set(currentFilter.values) : new Set(uniqueVals);
+
+                    // Search / text filter input (always available)
+                    const searchInput = document.createElement("input");
+                    searchInput.type = "search";
+                    searchInput.className = "th-filter-search";
+                    searchInput.placeholder = lblSearch;
+                    searchInput.setAttribute("aria-label", lblSearch);
+                    searchInput.value = currentFilter.query || "";
+                    dd.appendChild(searchInput);
 
                     const list = document.createElement("ul");
                     list.className = "th-filter-list";
 
-                    // Option: (All)
-                    const currentFilter = activeFilters.get(colIdx) || null;
+                    // Option: (Select All)
                     const allItem = document.createElement("li");
                     allItem.className = "th-filter-item";
-                    allItem.innerHTML = `<label style="display:flex;align-items:center;gap:0.4rem;width:100%;cursor:pointer;"><input type="radio" name="th_filter_${colIdx}" ${!currentFilter ? "checked" : ""}> <span>${lblAll}</span></label>`;
-                    allItem.addEventListener("click", (evt) => {
+                    const allLabel = document.createElement("label");
+                    allLabel.style.display = "flex";
+                    allLabel.style.alignItems = "center";
+                    allLabel.style.gap = "0.45rem";
+                    allLabel.style.width = "100%";
+                    allLabel.style.cursor = "pointer";
+
+                    const allCheckbox = document.createElement("input");
+                    allCheckbox.type = "checkbox";
+                    allCheckbox.checked = workingValues.size === uniqueVals.length;
+                    const allSpan = document.createElement("span");
+                    allSpan.textContent = lblSelectAll;
+                    allLabel.appendChild(allCheckbox);
+                    allLabel.appendChild(allSpan);
+                    allItem.appendChild(allLabel);
+                    list.appendChild(allItem);
+
+                    const itemCheckboxes = new Map();
+                    uniqueVals.forEach((val) => {
+                        const item = document.createElement("li");
+                        item.className = "th-filter-item";
+                        const label = document.createElement("label");
+                        label.style.display = "flex";
+                        label.style.alignItems = "center";
+                        label.style.gap = "0.45rem";
+                        label.style.width = "100%";
+                        label.style.cursor = "pointer";
+
+                        const cb = document.createElement("input");
+                        cb.type = "checkbox";
+                        cb.checked = workingValues.has(val);
+                        itemCheckboxes.set(val, cb);
+
+                        const span = document.createElement("span");
+                        const displayVal = val || "—";
+                        span.textContent = `${displayVal} (${counts.get(val)})`;
+                        label.appendChild(cb);
+                        label.appendChild(span);
+                        item.appendChild(label);
+                        list.appendChild(item);
+
+                        cb.addEventListener("change", () => {
+                            if (cb.checked) {
+                                workingValues.add(val);
+                            } else {
+                                workingValues.delete(val);
+                            }
+                            allCheckbox.checked = workingValues.size === uniqueVals.length;
+                        });
+                    });
+                    dd.appendChild(list);
+
+                    allCheckbox.addEventListener("change", () => {
+                        const check = allCheckbox.checked;
+                        if (check) {
+                            uniqueVals.forEach((v) => workingValues.add(v));
+                        } else {
+                            workingValues.clear();
+                        }
+                        itemCheckboxes.forEach((cb) => { cb.checked = check; });
+                    });
+
+                    // Live filtering of visible list items based on search input
+                    function filterListItems() {
+                        const q = searchInput.value.trim().toLowerCase();
+                        uniqueVals.forEach((val) => {
+                            const cb = itemCheckboxes.get(val);
+                            const li = cb ? cb.closest("li") : null;
+                            if (!li) return;
+                            const match = !q || val.toLowerCase().includes(q);
+                            li.style.display = match ? "" : "none";
+                        });
+                    }
+                    searchInput.addEventListener("input", filterListItems);
+
+                    // Actions footer: Clear (Reset) & Apply
+                    const actions = document.createElement("div");
+                    actions.className = "th-filter-actions";
+
+                    const clearBtn = document.createElement("button");
+                    clearBtn.type = "button";
+                    clearBtn.className = "th-filter-btn-clear";
+                    clearBtn.textContent = lblClear;
+                    clearBtn.addEventListener("click", (evt) => {
                         evt.stopPropagation();
                         activeFilters.delete(colIdx);
                         btn.classList.remove("is-active");
                         applyFilters();
                         closeCurrentDropdown();
                     });
-                    list.appendChild(allItem);
+                    actions.appendChild(clearBtn);
 
-                    uniqueVals.forEach((val) => {
-                        const item = document.createElement("li");
-                        item.className = "th-filter-item";
-                        const isChecked = currentFilter && currentFilter.has(val) && currentFilter.size === 1;
-                        const displayVal = val || "—";
-                        item.innerHTML = `<label style="display:flex;align-items:center;gap:0.4rem;width:100%;cursor:pointer;"><input type="radio" name="th_filter_${colIdx}" ${isChecked ? "checked" : ""}> <span>${displayVal} (${counts.get(val)})</span></label>`;
-                        item.addEventListener("click", (evt) => {
-                            evt.stopPropagation();
-                            activeFilters.set(colIdx, new Set([val]));
-                            btn.classList.add("is-active");
-                            applyFilters();
-                            closeCurrentDropdown();
-                        });
-                        list.appendChild(item);
-                    });
-                    dd.appendChild(list);
+                    const applyBtn = document.createElement("button");
+                    applyBtn.type = "button";
+                    applyBtn.className = "th-filter-btn-apply";
+                    applyBtn.textContent = lblApply;
+                    applyBtn.addEventListener("click", (evt) => {
+                        evt.stopPropagation();
+                        const query = searchInput.value.trim();
+                        const allSelected = workingValues.size === uniqueVals.length;
+                        const hasActiveValues = !allSelected;
+                        const hasQuery = query.length > 0;
 
-                    if (searchInput) {
-                        searchInput.addEventListener("input", () => {
-                            const q = searchInput.value.trim().toLowerCase();
-                            Array.from(list.children).forEach((li, idx) => {
-                                if (idx === 0) return; // keep (All) visible
-                                const text = li.textContent.toLowerCase();
-                                li.style.display = (!q || text.includes(q)) ? "" : "none";
-                            });
-                        });
-                    }
-
-                    // Clear filter footer action if active
-                    if (currentFilter) {
-                        const actions = document.createElement("div");
-                        actions.className = "th-filter-actions";
-                        const clearBtn = document.createElement("button");
-                        clearBtn.type = "button";
-                        clearBtn.className = "th-filter-clear-btn";
-                        clearBtn.textContent = lblClear;
-                        clearBtn.addEventListener("click", (evt) => {
-                            evt.stopPropagation();
+                        if (!hasActiveValues && !hasQuery) {
                             activeFilters.delete(colIdx);
                             btn.classList.remove("is-active");
-                            applyFilters();
-                            closeCurrentDropdown();
-                        });
-                        actions.appendChild(clearBtn);
-                        dd.appendChild(actions);
-                    }
+                        } else {
+                            activeFilters.set(colIdx, {
+                                values: hasActiveValues ? new Set(workingValues) : null,
+                                query: hasQuery ? query : "",
+                            });
+                            btn.classList.add("is-active");
+                        }
+                        applyFilters();
+                        closeCurrentDropdown();
+                    });
+                    actions.appendChild(applyBtn);
+                    dd.appendChild(actions);
+
+                    // Press Enter in search field applies filter immediately
+                    searchInput.addEventListener("keydown", (evt) => {
+                        if (evt.key === "Enter") {
+                            evt.preventDefault();
+                            applyBtn.click();
+                        }
+                    });
 
                     document.body.appendChild(dd);
                     openDropdown = dd;
                     activeBtn = btn;
                     btn.classList.add("is-open");
-                    if (searchInput) searchInput.focus();
+                    searchInput.focus();
+                    if (searchInput.value) searchInput.select();
                 });
             });
         });
